@@ -434,84 +434,85 @@ function ControlRow({
   return (
     <>
       {showSection && <p className="ice-section">{control.section}</p>}
-      <div className={selected ? 'ice-control selected' : 'ice-control'} role="listitem">
-      <button type="button" className="ice-control-head" onClick={onSelect}>
-        <span>{control.label}</span>
-        <VerificationBadge status={control.status} compact />
-      </button>
-
-      {spec.kind === 'toggle' && (
-        <button
-          type="button"
-          className="ice-switch"
-          role="switch"
-          aria-checked={value === true}
-          aria-label={control.label}
-          onClick={() => {
-            const next = !(value === true)
-            onSelect()
-            onChange(next, `${control.label}: ${next ? 'On' : 'Off'}`)
-          }}
-        >
-          <span className="ice-switch-track" data-on={value === true}>
-            <span className="ice-switch-thumb" />
-          </span>
-          <small>{value === true ? 'On' : 'Off'}</small>
+        <div className={selected ? 'ice-control selected' : 'ice-control'} role="listitem">
+        <button type="button" className="ice-control-head" onClick={onSelect}>
+          <span>{control.label}</span>
+          <VerificationBadge status={control.status} compact />
         </button>
-      )}
 
-      {spec.kind === 'choice' && (
-        <div className="ice-segment" role="radiogroup" aria-label={control.label}>
-          {spec.options.map((option) => (
-            <button
-              key={`${menuId}-${control.id}-${option}`}
-              type="button"
-              role="radio"
-              aria-checked={value === option}
-              className={value === option ? 'active' : ''}
-              onClick={() => {
-                onSelect()
-                onChange(option, `${control.label}: ${option}`)
-              }}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      )}
+        {spec.kind === 'toggle' && (
+          <button
+            type="button"
+            className="ice-switch"
+            role="switch"
+            aria-checked={value === true}
+            aria-label={control.label}
+            onClick={() => {
+              const next = !(value === true)
+              onSelect()
+              onChange(next, `${control.label}: ${next ? 'On' : 'Off'}`)
+            }}
+          >
+            <span className="ice-switch-track" data-on={value === true}>
+              <span className="ice-switch-thumb" />
+            </span>
+            <small>{value === true ? 'On' : 'Off'}</small>
+          </button>
+        )}
 
-      {spec.kind === 'action' && (
-        <div className="ice-actions">
-          {spec.actions.map((label) => (
-            <button
-              key={`${menuId}-${control.id}-${label}`}
-              type="button"
-              onClick={() => {
-                onSelect()
-                onAction(`${control.label}: ${label}`)
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+        {spec.kind === 'choice' && (
+          <div className="ice-segment" role="radiogroup" aria-label={control.label}>
+            {spec.options.map((option) => (
+              <button
+                key={`${menuId}-${control.id}-${option}`}
+                type="button"
+                role="radio"
+                aria-checked={value === option}
+                className={value === option ? 'active' : ''}
+                onClick={() => {
+                  onSelect()
+                  onChange(option, `${control.label}: ${option}`)
+                }}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {spec.kind === 'action' && (
+          <div className="ice-actions">
+            {spec.actions.map((label) => (
+              <button
+                key={`${menuId}-${control.id}-${label}`}
+                type="button"
+                onClick={() => {
+                  onSelect()
+                  onAction(`${control.label}: ${label}`)
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   )
 }
 
 function ControlDetail({ control }: { control: InfotainmentControl }) {
   const { tx, t, alt } = useLanguage()
   const descriptionAlt = alt(control.description)
-
-  // Export-market evidence never becomes an Egypt claim on its own.
-  const egyptPlay = control.status === 'confirmed-export' ? 'verify' : control.status
-  const egyptWild = control.status === 'confirmed-export' ? 'likely' : control.status
+  const tipAlt = control.egyptTip && alt(control.egyptTip)
+  const warningAlt = control.warning && alt(control.warning)
 
   return (
     <aside className="ice-detail">
       <p className="eyebrow">{tx('Selected setting', 'الإعداد المحدد')}</p>
       <h3>{control.label}</h3>
+      {control.section && <p className="ice-detail-section">{control.section}</p>}
+
       <p>{t(control.description)}</p>
       {descriptionAlt && (
         <AltBlock>
@@ -519,19 +520,38 @@ function ControlDetail({ control }: { control: InfotainmentControl }) {
         </AltBlock>
       )}
 
-      <div className="ice-detail-grid">
-        <div>
-          <strong>{tx('Egypt Play', 'مصر Play')}</strong>
-          <VerificationBadge status={egyptPlay} />
+      {control.warning && (
+        <div className="ice-callout warning">
+          <strong>{tx('Warning', 'تحذير')}</strong>
+          <p>{t(control.warning)}</p>
+          {warningAlt && (
+            <AltBlock>
+              <p>{warningAlt}</p>
+            </AltBlock>
+          )}
         </div>
-        <div>
-          <strong>{tx('Egypt Wild', 'مصر Wild')}</strong>
-          <VerificationBadge status={egyptWild} />
+      )}
+
+      {control.egyptTip && (
+        <div className="ice-callout egypt">
+          <strong>{tx('For Egypt', 'لمصر')}</strong>
+          <p>{t(control.egyptTip)}</p>
+          {tipAlt && (
+            <AltBlock>
+              <p>{tipAlt}</p>
+            </AltBlock>
+          )}
         </div>
-        <div>
-          <strong>{tx('Export evidence', 'دليل تصدير')}</strong>
-          <VerificationBadge status={control.status} />
-        </div>
+      )}
+
+      <div className="ice-detail-status">
+        <VerificationBadge status={control.status} />
+        <small>
+          {tx(
+            'From the official V27 infotainment settings guide for Egypt.',
+            'من دليل إعدادات شاشة V27 الرسمي لمصر.',
+          )}
+        </small>
       </div>
     </aside>
   )
