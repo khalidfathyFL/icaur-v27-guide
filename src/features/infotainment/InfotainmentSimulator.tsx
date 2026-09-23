@@ -5,23 +5,24 @@ import {
   Camera,
   Car,
   ChevronLeft,
+  CircleDot,
+  Contrast,
   Fan,
-  Gauge,
   Home,
   Lightbulb,
   MapPin,
   Mic,
   Minus,
-  Monitor,
   Music,
   Phone,
   Plus,
-  Settings,
-  ShieldCheck,
+  Radar,
   Signal,
   Snowflake,
   Volume2,
   Wifi,
+  Wrench,
+  Zap,
 } from 'lucide-react'
 import {
   DRIVE_MODES,
@@ -52,15 +53,15 @@ const Vehicle540View = lazy(() =>
 
 const ICONS: Record<MenuIcon | HomeTile['icon'], typeof Car> = {
   car: Car,
-  gauge: Gauge,
-  shield: ShieldCheck,
+  wheel: CircleDot,
+  radar: Radar,
   lightbulb: Lightbulb,
-  battery: BatteryCharging,
+  energy: Zap,
   mic: Mic,
-  monitor: Monitor,
+  display: Contrast,
   volume: Volume2,
   wifi: Wifi,
-  settings: Settings,
+  service: Wrench,
   nav: MapPin,
   media: Music,
   phone: Phone,
@@ -185,10 +186,15 @@ export function InfotainmentSimulator() {
 
                 <div className="ice-panel">
                   <div className="ice-controls" role="list">
-                    {activeMenu.controls.map((control) => (
+                    {activeMenu.controls.map((control, index) => (
                       <ControlRow
                         key={control.id}
                         control={control}
+                        // The car groups its settings under sub-headings; show each once.
+                        showSection={
+                          control.section !== undefined &&
+                          control.section !== activeMenu.controls[index - 1]?.section
+                        }
                         menuId={activeMenu.id}
                         value={valueOf(activeMenu.id, control.id)}
                         selected={activeControl?.id === control.id}
@@ -409,6 +415,7 @@ function ControlRow({
   menuId,
   value,
   selected,
+  showSection,
   onSelect,
   onChange,
   onAction,
@@ -417,6 +424,7 @@ function ControlRow({
   menuId: string
   value: boolean | string | undefined
   selected: boolean
+  showSection: boolean
   onSelect: () => void
   onChange: (value: boolean | string, toast: string) => void
   onAction: (toast: string) => void
@@ -424,7 +432,9 @@ function ControlRow({
   const spec = control.control
 
   return (
-    <div className={selected ? 'ice-control selected' : 'ice-control'} role="listitem">
+    <>
+      {showSection && <p className="ice-section">{control.section}</p>}
+      <div className={selected ? 'ice-control selected' : 'ice-control'} role="listitem">
       <button type="button" className="ice-control-head" onClick={onSelect}>
         <span>{control.label}</span>
         <VerificationBadge status={control.status} compact />
