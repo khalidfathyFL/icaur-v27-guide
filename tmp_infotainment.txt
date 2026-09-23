@@ -1,0 +1,1296 @@
+OWNER'S GUIDE               ·   ‫دليل المالك‬
+
+
+
+
+iCAUR V27
+Infotainment Settings
+                                      ‫دليل إعدادات نظام المعلومات والرتفيه‬
+
+A plain-language walkthrough of every menu in the central
+touchscreen — written for owners in Egypt.
+
+                                                             ّ
+                                      .‫موجه لمالك السيارة في مرص‬                                 ّ
+                                                                 — ‫مبسط لكل قائمة في الشاشة المركزية‬ ‫رشح‬
+
+
+
+
+Covers: the Settings menu of the iCAUR V27 (range-extender SUV)
+Edition: Version 2 — 18 September 2026 · English / ‫العربية‬
+Note: Menus vary slightly between software versions and trim levels.
+Before you start                                                                                                             ‫قبل أن تبدأ‬
+
+This guide explains what each setting in your V27's touchscreen               ،‫يرشح هذا الدليل وظيفة كل إعداد في الشاشة المركزية لسيارتك‬
+actually does, in order, exactly as the menus appear on screen.                              .‫بالرتتيب نفسه الذي تظهر به القوائم عىل الشاشة‬
+
+Open Settings from the app tray along the bottom of the screen.            ‫ يحتوي العمود‬.‫ من رشيط التطبيقات أسفل الشاشة‬Settings ‫افتح‬
+The menu column on the left holds ten sections, and you scroll                    ً
+                                                                         ‫رأسيا — ومعظم‬ ‫ ويتم التمرير داخل كل قسم‬،‫األيرس عىل عرشة أقسام‬
+each one vertically — most pages are longer than one screen, so
+                                                                           ‫ لذا استمر في التمرير قبل أن تفرتض أن‬،‫الصفحات أطول من الشاشة‬
+keep scrolling before assuming a setting isn't there.
+                                                                                                                           .‫اإلعداد غري موجود‬
+
+Wherever you see a small ⓘ next to a setting name, tapping it                 ‫ اضغط عليها ليعرض لك‬،‫ بجوار اسم أي إعداد‬ⓘ ‫عند وجود عالمة‬
+shows the car's own explanation of that feature. It is worth                 ‫ وهي المرجع األدق عندما تتغري‬.‫النظام رشحه الخاص لتلك الخاصية‬
+using: it is the most reliable source when a menu changes after a
+                                                                                                                .‫القوائم بعد تحديث الربمجيات‬
+software update.
+
+
+   SAFETY / ‫تنبيه‬
+   Set these up while parked. Nothing in this guide needs to be           ‫ ال يوجد في هذا الدليل ما‬.‫اضبط هذه اإلعدادات والسيارة متوقفة‬
+   changed while the car is moving, and several of the menus                 ً
+                                                                         ‫أصال إال‬ ‫ كما أن عدة قوائم ال تستجيب‬،‫يستدعي التغيري أثناء القيادة‬
+   require the vehicle to be in P before they will respond at all.
+                                                                                                              .P ‫إذا كانت السيارة عىل وضع‬
+
+
+
+UNDERSTANDING YOUR V27 FIRST                                                                                           ً
+                                                                                                                       ‫أوال‬ ‫افهم سيارتك‬
+Most of the confusion new owners have comes from the                     ‫ ومن المفيد‬،‫معظم اللبس لدى المالك الجدد سببه نظام الدفع نفسه‬
+powertrain, so it is worth being clear before reaching the Energy                                     .‫توضيحه قبل الوصول إىل قائمة الطاقة‬
+menu.
+
+The V27 is an EREV — an extended-range electric vehicle. The              ‫ العجالت‬.‫ أي سيارة كهربائية ممتدة المدى‬EREV ‫ من نوع‬V27 ‫سيارة‬
+wheels are driven only by electric motors. The 1.5-litre turbo             ‫ أما محرك البزنين توربو سعة‬.‫تدار بالكامل بواسطة محركات كهربائية‬
+petrol engine never drives the wheels; it is a generator that                                    ّ
+                                                                           ‫كمولد ينتج الكهرباء لتغذية‬          ً
+                                                                                                      ‫ بل يعمل‬،‫إطالقا‬ ‫ لرت فال يدير العجالت‬1.5
+produces electricity to feed the motors and top up the battery
+                                                                                               .‫المحركات وشحن البطارية عند انخفاض شحنها‬
+when the charge runs low.
+
+That is why the screen shows you three separate range figures:                Electric Range :‫لهذا تعرض الشاشة ثالثة أرقام منفصلة للمدى‬
+Electric Range (what's left in the battery), Fuel Range (what the                       ّ
+                                                                             ‫للمولد إنتاجه من‬ ‫ (ما يمكن‬Fuel Range ‫ و‬،)‫(المتبقي في البطارية‬
+generator can produce from the petrol in the tank), and Total
+                                                                            ‫ ولهذا‬.)‫ (مجموع االثنني‬Total Range ‫ و‬،)‫البزنين الموجود في الخزان‬
+Range (the two added together). It is also why you can drive the
+                                                                                                            ً
+                                                                         ‫شهورا دون زيارة محطة بزنين طالما تشحنها‬                       ً
+                                                                                                                   ‫أيضا يمكنك قيادة السيارة‬
+car for months without ever visiting a petrol station, as long as
+you charge it — and why you never have to worry about being                                .‫— ودون قلق من التعطل في الطريق إذا لم تفعل‬
+stranded if you don't.
+
+
+
+
+                                                                     2                                                             iCAUR V27
+1. Vehicle Settings                                                                                                 ‫إعدادات السيارة‬
+
+Windows, doors, locking behaviour, mirrors, wipers, button                ‫النوافذ واألبواب وسلوك القفل والمرايا والمساحات وتخصيص األزرار‬
+customization and seats.                                                                                                          .‫والمقاعد‬
+
+
+
+
+Window controls, auto-close in rain and auto lock behaviour                        ‫ وسلوك القفل‬،‫ والغلق التلقائي عند المطر‬،‫التحكم في النوافذ‬
+
+
+WINDOWS                                                                                                                            ‫النوافذ‬
+All Open / Ventilate / All Close
+One-touch control of all four windows. Ventilate opens them a               ‫ يفتحها فتحة‬Ventilate ‫ خيار‬.‫تحكم بلمسة واحدة في النوافذ األربع‬
+small amount rather than fully — the quickest way to flush hot                                                              ً
+                                                                        ‫ وهو أرسع طريقة لطرد الهواء الساخن‬،‫بدال من فتحها بالكامل‬ ‫صغرية‬
+air out of a car that has been standing in the sun.
+                                                                                                              .‫من سيارة وقفت تحت الشمس‬
+
+Auto Close in Rain
+The rain sensor closes any open windows by itself when it                                       ً
+                                                                        ‫ الحظ‬.‫تلقائيا عند اكتشاف المطر‬ ‫يغلق حساس المطر النوافذ المفتوحة‬
+detects rain. Remember that an automatic car wash will trigger it                             ً
+                                                                             ‫ وهو أمر مفيد في‬،‫أيضا‬     ّ ‫أن مغسلة السيارات األوتوماتيكية ُت‬
+                                                                                                    ‫فعله‬
+too, which is usually a good thing.
+                                                                                                                                      .‫العادة‬
+
+Passenger Window Lock
+Disables the window switches in the other doors so only the                                                                               ّ
+                                                                            .‫يعطل أزرار النوافذ في باقي األبواب بحيث ال يتحكم فيها إال السائق‬
+driver can operate the windows. The setting most parents turn                                                           ّ
+                                                                                                         .‫يفعله معظم اآلباء‬ ‫وهو أول إعداد‬
+on first.
+
+
+AUTO LOCK CONTROL                                                                                          ‫التحكم في القفل التلقائي‬
+Auto Close on Lock / Auto Ventilation on Lock
+Decides what the windows do when you lock the car. Auto Close                ‫ يغلقها‬Auto Close ‫ خيار‬.‫يحدد ما تفعله النوافذ عند قفل السيارة‬
+shuts everything. Auto Ventilation leaves the windows slightly                          ً
+                                                                           ‫قليال حىت ال تتحول‬ ‫ يرتكها مفتوحة‬Auto Ventilation ‫ بينما‬،‫بالكامل‬
+open so the cabin doesn't turn into an oven while parked.
+                                                                                                            .‫المقصورة إىل فرن أثناء الوقوف‬
+
+
+                                                                    3                                                             iCAUR V27
+EXTERIOR REARVIEW MIRRORS                                                                                                      ‫المرايا الجانبية‬
+Mirror Fold
+Folds or unfolds the mirrors immediately. Useful in tight garages                                                 ً
+                                                                                ‫ مفيد في الجراجات الضيقة والشوارع‬.‫فورا‬ ‫يطوي المرايا أو يفردها‬
+and narrow side streets.                                                                                                                  .‫الجانبية‬
+
+Mirror Adjustment
+Opens the on-screen controls for aiming each mirror.                                                .‫يفتح أدوات ضبط اتجاه كل مرآة من الشاشة‬
+
+Auto Fold on Lock
+The mirrors fold in automatically whenever you lock the car, and                                                          ً
+                                                                                                       ُ ،‫تلقائيا عند قفل السيارة‬
+                                                                                         .‫وتفرد عند فتحها‬                         ‫ُتطوى المرايا‬
+unfold when you unlock it.
+
+Mirrors tilt down when reversing
+The mirror glass dips as you select reverse so you can see the               ‫ينخفض زجاج المرآة عند اختيار الرجوع للخلف حىت ترى الرصيف والعجلة‬
+kerb and your rear wheel. It saves a lot of scraped alloys on high              ‫يوفر عليك الكثري من خدوش الجنوط عىل أرصفة القاهرة‬   ّ .‫الخلفية‬
+Cairo kerbs.
+                                                                                                                                        .‫المرتفعة‬
+
+
+
+
+Mirror options, auto wiper sensitivity and the centre display shortcut         ‫ واختصار الشاشة المركزية‬،‫ وحساسية المساحات التلقائية‬،‫خيارات المرايا‬
+
+
+WIPERS                                                                                                                              ‫المساحات‬
+Auto Wiper Sensitivity — Low / Medium / High / Maximum
+How eagerly the rain sensor triggers the wipers when the stalk is              ‫مدى رسعة استجابة حساس المطر لتشغيل المساحات عندما يكون‬
+set to automatic. Higher settings wipe more often for the same               ‫ اإلعدادات األعىل تمسح أكرث لنفس كمية‬.‫الذراع عىل الوضع التلقائي‬
+amount of water.
+                                                                                                                                           .‫المياه‬
+
+
+
+
+                                                                         4                                                             iCAUR V27
+   FOR EGYPT / ‫في مرص‬
+   Keep this on Low. Dust settling on the windscreen can trip a                   ّ ‫ األتربة المرتاكمة عىل الزجاج قد ُت‬.Low ‫اضبطه عىل‬
+                                                                          ‫فعل الحساس‬
+   sensitive rain sensor, and dry wiping on a dusty screen               ‫ والمسح الجاف عىل زجاج مرتب يخدش الزجاج ويتلف ريش‬،‫الحساس‬
+   scratches the glass and ruins the blades.
+                                                                                                                              .‫المساحات‬
+
+
+Rear Wiper / Rear Wash
+Operates the rear wiper and washer directly from the screen.                                                                    ّ
+                                                                            .‫يشغل مساحة الزجاج الخلفي ورشاش المياه مبارشة من الشاشة‬
+
+
+
+
+Steering wheel and key fob button customization, and the Car Lock                     ‫ وخيارات قفل السيارة‬،‫تخصيص أزرار عجلة القيادة والمفتاح‬
+options
+
+
+BUTTON CUSTOMIZATION                                                                                                     ‫تخصيص األزرار‬
+Center Display Custom Shortcut
+Assigns two separate actions to the physical control below the          ‫ واحدة عند‬:‫يخصص وظيفتني منفصلتني للمفتاح الفعيل أسفل الشاشة‬
+screen: one for a short press and one for scrolling it. Volume on          ‫ التحكم في الصوت بالتدوير هو‬.‫الضغط القصري وأخرى عند التدوير‬
+the scroll is the sensible default; the short press can be set to
+                                                                                ‫ أما الضغط القصري فاضبطه عىل أكرث وظيفة‬،‫الخيار المنطقي‬
+whatever you reach for most.
+                                                                                                                                .‫تستخدمها‬
+
+Steering Wheel Customization
+Chooses which function the customisable steering wheel button                                                       ّ
+                                                                            .‫يشغلها الزر القابل للتخصيص في عجلة القيادة‬ ‫يحدد الوظيفة اليت‬
+triggers.
+
+Key Fob Button Customization — Find My Car / A/C On
+Sets what the extra button on your remote does. A/C On starts                       ّ
+                                                                        ‫يشغل التكييف عن‬ A/C On ‫ خيار‬.‫يحدد وظيفة الزر اإلضافي في الريموت‬
+the air conditioning remotely so the cabin is cool before you             ‫بُعد لتربيد المقصورة قبل وصولك إىل السيارة — وهو بال منازع أفيد‬
+reach the car — easily the most valuable setting on this page in
+                                                                                              .‫إعداد في هذه الصفحة خالل الصيف المرصي‬
+an Egyptian summer.
+
+
+
+                                                                    5                                                            iCAUR V27
+Locking behaviour while driving and parking, and the Driving Habit               Driving Habit ‫ وملفات التعريف‬،‫سلوك القفل أثناء القيادة والركن‬
+profiles
+
+
+CAR LOCK                                                                                                                     ‫قفل السيارة‬
+Door Lock
+Locks or unlocks the doors from the screen.                                                               .‫يقفل األبواب أو يفتحها من الشاشة‬
+
+Auto Unlock on Approach
+The car unlocks by itself when it senses the smart key nearby.                    ً
+                                                                            .‫قريبا منها‬                           ً
+                                                                                        ‫تلقائيا عند استشعار المفتاح الذكي‬ ‫تفتح السيارة أقفالها‬
+Convenient with full hands; turn it off if you would rather the car         ‫مريح حني تكون يداك مشغولتني؛ أطفئه إذا كنت تفضل بقاء السيارة‬
+stayed locked until you press something.
+                                                                                                                   .‫مقفلة حىت تضغط بنفسك‬
+
+Auto Lock on Walk Away
+The car locks itself once the key has moved a certain distance                       .‫تقفل السيارة نفسها بمجرد ابتعاد المفتاح مسافة معينة‬
+away.
+
+Auto Lock When Driving
+Locks all doors automatically once you pass 15 km/h. Worth                        ّ ‫ ي‬.‫س‬/‫ كم‬15 ‫تلقائيا بمجرد تجاوز رسعة‬
+                                                                          ‫ُفضل إبقاؤه‬                           ً       ‫يقفل جميع األبواب‬
+leaving on in city traffic.                                                                                                               ّ
+                                                                                                                                       ً ‫مفع‬
+                                                                                                                      .‫ال في زحام المدينة‬
+
+Auto Unlock When Parking
+Unlocks the doors when you shift into P and unbuckle your                               .‫ وفك حزام األمان‬P ‫يفتح األبواب عند التحويل إىل وضع‬
+seatbelt.
+
+
+                                                                      6                                                            iCAUR V27
+Key Left Behind Reminder
+Warns you to take your phone and key with you before leaving                              .‫ين ّبهك ألخذ هاتفك ومفتاحك قبل مغادرة السيارة‬
+the vehicle.
+
+
+DRIVING HABIT                                                                                     ‫ — ملفات السائق‬Driving Habit
+Seat 1 / Seat 2 / Seat 3
+Three stored driver profiles, so the car can hold different                  ‫ بحيث تحتفظ السيارة بتفضيالت‬،‫ثالثة ملفات محفوظة للسائقني‬
+preferences for different people in the household. Tap the ⓘ                ‫ بجوار العنوان‬ⓘ ‫ اضغط عىل‬.‫مختلفة ألكرث من شخص في األرسة‬
+beside the heading for the exact behaviour on your software
+                                                                                          .‫لمعرفة السلوك الدقيق في نسخة برنامج سيارتك‬
+version.
+
+
+
+
+Easy Entry/Exit and the on-screen seat adjustment controls                     ‫ وأدوات ضبط المقعد من الشاشة‬،‫خاصية سهولة الركوب والزنول‬
+
+
+SEAT                                                                                                                          ‫المقاعد‬
+Easy Entry/Exit
+The driver's seat slides back when you switch the car off to give       ،‫يرتاجع مقعد السائق للخلف عند إطفاء السيارة ليمنحك مساحة للزنول‬
+you room to get out, then returns to your position when you                            ً
+                                                                         ‫فعال في سيارة بهذا‬ ‫ مفيد‬.‫ثم يعود إىل وضعك المحفوظ عند عودتك‬
+return. Genuinely useful in a vehicle this tall.
+                                                                                                                                .‫االرتفاع‬
+
+
+
+
+                                                                    7                                                         iCAUR V27
+Driver Seat / Passenger Seat
+On-screen arrows for adjusting the seat you have selected —             ‫ والتقديم‬،‫ زاوية الظهر‬:‫أسهم عىل الشاشة لضبط المقعد المختار‬
+backrest angle, forward and back, and height. The driver can                                  ً
+                                                                   ‫أيضا ضبط مقعد الراكب األمامي من‬ ‫ يمكن للسائق‬.‫ واالرتفاع‬،‫والتأخري‬
+adjust the front passenger seat from here too.
+                                                                                                                               .‫هنا‬
+
+
+
+
+                                                               8                                                         iCAUR V27
+2. Driver Assistance Settings                                                                          ‫إعدادات مساعدة السائق‬
+
+Braking behaviour, stability systems, driver monitoring and the                  .‫ وتنبيه الرسعة‬،‫ ومراقبة السائق‬،‫ وأنظمة الثبات‬،‫سلوك الفرامل‬
+speed warning.
+
+
+
+
+Braking, stability and driving mode assistance                                                    ‫الفرامل والثبات وأنظمة مساعدة وضع القيادة‬
+
+
+DRIVING MODE ASSIST                                                                                            ‫مساعدة أوضاع القيادة‬
+Hill Descent Control
+On a steep descent, the car holds a low, steady speed by itself so           ‫ تحافظ السيارة عىل رسعة منخفضة ثابتة‬،‫عىل المنحدرات الشديدة‬
+you can keep both feet off the pedals and concentrate on                                       ّ
+                                                                            ‫ مخصص‬.‫وتركز عىل التوجيه‬ ‫بنفسها حىت ترفع قدميك عن الدواسات‬
+steering. For off-road and steep unpaved slopes, not for normal
+                                                                                      .‫ ال للطرق العادية‬،‫للطرق الوعرة والمنحدرات غري الممهدة‬
+roads.
+
+AutoHold
+When you come to a stop, the brakes stay applied after you lift             ،‫عند التوقف تبقى الفرامل مضغوطة بعد رفع قدمك عن الدواسة‬
+your foot off the pedal, and release when you press the                                               ً
+                                                                          ‫ يزيل معظم إرهاق القيادة في‬.‫مجددا‬ ‫وتنطلق عند الضغط عىل البزنين‬
+accelerator again. It removes most of the fatigue of stop-and-go
+                                                                                                                            .‫الزحام المتقطع‬
+traffic.
+
+Regenerative Braking
+When you lift off the accelerator, the electric motor slows the              ‫ يبطئ المحرك الكهربائي السيارة‬،‫عند رفع قدمك عن دواسة البزنين‬
+car and turns that momentum back into charge. It is what gives                                                                         ّ
+                                                                          ‫ وهو ما يمنح السيارة الكهربائية‬.‫ويحول هذه الحركة إىل شحن للبطارية‬
+an EV its distinctive "one-pedal" feel, and it is where a good part
+                                                                             ‫ ومنه يأتي جزء كبري من كفاءتها داخل‬،»‫إحساس «الدواسة الواحدة‬
+of your efficiency in city driving comes from.
+                                                                                                                                    .‫المدينة‬
+
+
+
+
+                                                                      9                                                           iCAUR V27
+Parking Brake
+Applies and releases the electronic parking brake. It appears                            ً
+                                                                               ‫باهتا وغري قابل‬                                             ّ
+                                                                                               ‫ يظهر‬.‫يشغل فرملة االنتظار اإللكرتونية أو يحررها‬
+greyed out while the vehicle is moving.                                                                            .‫للضغط أثناء حركة السيارة‬
+
+Electronic Stability Control
+Detects a skid and brakes individual wheels to keep the car               ‫يكتشف االنزالق ويفرمل كل عجلة عىل حدة إلبقاء السيارة في االتجاه‬
+pointing where you steered. Leave it on. The only common                                                 ً
+                                                                          ‫ السبب الوحيد المعتاد إلطفائه‬.‫دائما‬ ‫ال‬ ّ
+                                                                                                              ً ‫مفع‬                 ّ ‫الذي‬
+                                                                                                                    ‫ اتركه‬.‫وجهتها إليه‬
+reason to switch it off is to rock the car free when bogged down
+                                                                                                .‫هو تحرير السيارة عند الغرز في الرمال العميقة‬
+in deep sand.
+
+Brake Disc Cleaning
+Because regenerative braking does most of the slowing, the                   ‫ ُتستخدم أقراص‬،‫ألن الفرملة التوليدية تقوم بمعظم عملية اإلبطاء‬
+ordinary brake discs are used lightly and can develop surface rust                                      ّ
+                                                                             .‫فيتكون عليها صدأ سطحي أو رصير‬    ‫الفرامل العادية بشكل خفيف‬
+or a squeal. Switching this on temporarily holds back                                      ً
+                                                                          ‫تفعيل هذه الخاصية يقلل الفرملة التوليدية مؤقتا حىت تعمل الفرامل‬
+regeneration so the friction brakes do the work and wipe the
+                                                                          ً
+                                                                          ‫قليال‬ ‫ تنخفض الكفاءة‬.‫االحتكاكية وتنظف األقراص خالل عدة وقفات‬
+discs clean over the next several stops. Efficiency dips slightly
+while it runs, and it switches itself off when finished.                                   .‫ وتتوقف من تلقاء نفسها عند االنتهاء‬،‫أثناء عملها‬
+
+
+   WHEN TO USE IT / ‫مىت تستخدمها‬
+   After heavy rain, after a car wash, or after the car has stood         ‫ أو بعد وقوفها فرتة طويلة‬،‫ أو بعد غسيل السيارة‬،‫بعد المطر الغزير‬
+   unused for a long stretch — particularly on the North Coast,                       ّ ‫دون استخدام — خاصة في الساحل الشمايل حيث ي‬
+                                                                          ‫رسع هواء البحر‬
+   where salt air rusts discs quickly.
+                                                                                                                      .‫المالح صدأ األقراص‬
+
+
+Trailer Mode
+Tells the car it is pulling a trailer, so the parking sensors and                 ‫ فتأخذ حساسات الركن وأنظمة‬،‫يُخرب السيارة بأنها تجر مقطورة‬
+assistance systems account for the extra length behind you.                      ‫ أطفئه بعد فك‬.‫المساعدة الطول اإلضافي خلفك في الحسبان‬
+Switch it off again once the trailer is unhitched.
+                                                                                                                                   .‫المقطورة‬
+
+
+
+
+                                                                     10                                                            iCAUR V27
+Driver safety monitoring and the adjustable speed warning                                     ‫مراقبة سالمة السائق وتنبيه الرسعة القابل للضبط‬
+
+
+DRIVER SAFETY MONITORING                                                                                         ‫مراقبة سالمة السائق‬
+Fatigue Monitoring
+Uses the driver-facing camera to watch for signs of drowsiness —             ‫تستخدم الكامريا الموجهة نحو السائق لرصد عالمات النعاس مثل‬
+eyes closing, head dropping — and warns you to rest.                                    .‫ وتن ّبهك إىل رضورة الراحة‬،‫إغالق العينني أو ميل الرأس‬
+
+Attention Monitoring
+Warns you when your eyes have been off the road for too long,                           ً
+                                                                         ‫غالبا بسبب النظر إىل‬ ،‫ين ّبهك عندما تبتعد عيناك عن الطريق فرتة طويلة‬
+typically looking down at a phone.                                                                                                    .‫الهاتف‬
+
+Speed Warning
+Sounds an alert when you exceed the speed you set with the −                                                                      ً
+                                                                             ‫ ويتحكم خيار‬.+ ‫ و‬− ‫تنبيها عند تجاوز الرسعة اليت تحددها بزري‬ ‫يصدر‬
+and + buttons. Sensitivity (Low or High) controls how insistently                      .‫ (منخفض أو مرتفع) في مدى إلحاح التنبيه‬Sensitivity
+it nags.
+
+
+   FOR EGYPT / ‫في مرص‬
+   120 km/h matches the highest limit on Egyptian motorways,             ،‫س هي الحد األقىص عىل الطرق الرسيعة المرصية‬/‫ كم‬120 ‫رسعة‬
+   and radar cameras on the Cairo–Alexandria and Sokhna roads             ‫ اضبط التنبيه‬.‫ورادارات طريق القاهرة–اإلسكندرية والسخنة ال ترحم‬
+   are unforgiving. Setting the warning at or just below the
+                                                                         .‫عند الحد المسموح أو أقل منه بقليل — فهذه هي فائدة الخاصية‬
+   posted limit is the point of the feature.
+
+
+
+
+                                                                    11                                                             iCAUR V27
+3. ADAS                                                                                       )ADAS( ‫أنظمة القيادة المساعدة‬
+
+Cruise control and the active safety systems that can intervene in                                           ّ
+                                                                                 ‫الفعالة اليت قد تتدخل في التوجيه‬ ‫مثبت الرسعة وأنظمة السالمة‬
+your steering and braking.                                                                                                            .‫والفرملة‬
+
+
+
+
+Cruise mode and the safety assistance systems                                                        ‫وضع مثبت الرسعة وأنظمة مساعدة السالمة‬
+
+Cruise Mode Switch — Adaptive / Constant Speed
+Adaptive Cruise Control holds your set speed but also keeps a                  ‫ يحافظ عىل الرسعة المحددة ويحافظ‬Adaptive Cruise Control ‫خيار‬
+gap to the vehicle ahead, slowing and accelerating for you.                   ‫ أما‬.‫ فيبطئ ويتسارع نيابة عنك‬،‫كذلك عىل مسافة من السيارة أمامك‬
+Constant Speed Cruise Control is the traditional kind: it holds
+                                                                              ‫ يحافظ عىل‬:‫ فهو المثبت التقليدي‬Constant Speed Cruise Control
+the speed you set and nothing more, so you brake yourself.
+                                                                                                              .‫ وتتوىل أنت الفرملة‬،‫الرسعة فقط‬
+
+
+   FOR EGYPT / ‫في مرص‬
+   Adaptive cruise is excellent on open desert roads. In dense              ‫ أما في زحام‬.‫المثبت التكيفي ممتاز عىل الطرق الصحراوية المفتوحة‬
+   Cairo traffic, where cars cut into your gap constantly, it brakes            ‫ فإنه‬،‫القاهرة حيث تدخل السيارات في المسافة أمامك باستمرار‬
+   more often than you would and can feel nervous — many                                    ّ         ً
+                                                                            ‫يفضل كثري من المالك‬ ‫متوترا — لذا‬ ‫يفرمل أكرث مما تفعل أنت ويبدو‬
+   owners switch to constant speed in the city.
+                                                                                                      .‫التحويل إىل المثبت الثابت داخل المدينة‬
+
+
+
+
+                                                                       12                                                            iCAUR V27
+INTELLIGENT DRIVER ASSISTANCE                                                                                     ‫المساعدة الذكية للسائق‬
+Leading Vehicle Departure Alert
+When you are stopped in traffic and the car in front pulls away                                                            ً
+                                                                              ،‫متوقفا في الزحام وتتحرك السيارة أمامك دون أن تنتبه‬ ‫عندما تكون‬
+without you noticing, the system prompts you to move. A small               ‫توفر عليك الكثري من كالكسات من‬ّ ‫ خاصية صغرية‬.‫ين ّبهك النظام للتحرك‬
+feature that saves a lot of horn from behind.
+                                                                                                                                             .‫خلفك‬
+
+
+SAFETY ASSISTANCE                                                                                                  ‫أنظمة مساعدة السالمة‬
+Emergency Lane Keeping Assist
+Steers the car back into its lane, but only when drifting out                   ‫ لكن فقط عندما يؤدي االنحراف إىل‬،‫يعيد توجيه السيارة إىل حارتها‬
+would cause a collision — with an oncoming vehicle, a vehicle                    ‫ أو بالخروج عن حافة‬،‫ أو بسيارة بجوارك‬،‫اصطدام — بسيارة قادمة‬
+alongside you, or off the edge of the road. It stays out of the way
+                                                                                                                  .‫ وفيما عدا ذلك ال يتدخل‬.‫الطريق‬
+the rest of the time.
+
+Reverse Brake Assist
+Brakes automatically while you are reversing if it detects an                                      ً
+                                                                                ‫عائقا خلفك أو سيارة تعرب‬                            ً
+                                                                                                         ‫تلقائيا أثناء الرجوع للخلف إذا رصد‬ ‫يفرمل‬
+obstacle behind you or a vehicle crossing your path. Valuable                                                                 ً
+                                                                                     .‫ مفيد جدا عند الخروج من موقف ضيق محدود الرؤية‬.‫طريقك‬
+when backing out of a parking space with poor visibility.
+
+Forward Collision Warning Assist
+Warns you when you are closing on the vehicle ahead too                        ‫ ويهيئ الفرامل‬،‫ين ّبهك عند االقرتاب من السيارة أمامك برسعة زائدة‬
+quickly, and prepares the brakes.                                                                                                           .‫للعمل‬
+
+Forward Collision Warning Sensitivity — Early / Medium / Late
+How soon the warning arrives. Early gives you more notice but               ً
+                                                                           ،‫كثريا‬                 ً
+                                                                                  ‫وقتا أطول لكنه يتكرر‬ ‫ يمنحك‬Early ‫ خيار‬.‫يحدد توقيت وصول التنبيه‬
+triggers more often; Late only speaks up when the situation is                                          ً
+                                                                                                 ً.‫قريبا فعال‬ ‫ ال ين ّبه إال عندما يصبح الموقف‬Late ‫و‬
+genuinely close.
+
+
+   FOR EGYPT / ‫في مرص‬
+   Egyptian traffic follows far more closely than these systems                   ‫المسافات بني السيارات في مرص أقرص بكثري مما تفرتضه هذه‬
+   assume. On Early the car will warn you constantly and you                ‫ ستن ّبهك السيارة باستمرار حىت تتوقف عن‬Early ‫ عىل وضع‬.‫األنظمة‬
+   will stop paying attention to it — which defeats the purpose.                                                             ً
+                                                                           ‫ يبقي التنبيه ذا‬Late ‫ وضع‬.‫ وهو ما يُفقده قيمته‬،‫أصال‬   ‫االنتباه للتنبيه‬
+   Late keeps the warning meaningful. Whatever you choose,
+                                                                                                  ّ
+                                                                                              ً.‫مفعال‬                               ً
+                                                                                                      ‫ اترك النظام نفسه‬،‫وأيا كان اختيارك‬ .‫معىن‬
+   leave the system itself switched on.
+
+
+
+
+                                                                      13                                                                 iCAUR V27
+Forward collision warning sensitivity and lane departure warning                             ‫حساسية تنبيه االصطدام األمامي وتنبيه مغادرة الحارة‬
+
+Lane Departure Warning — Off / Warning Only / Warning + Steering Assist
+Alerts you when you cross a lane line without signalling. The               ‫ ويضيف الخيار الثالث‬.‫ين ّبهك عند عبور خط الحارة دون استخدام اإلشارة‬
+third option adds a gentle steering correction to nudge you back.                                                               ً
+                                                                                                  .‫خفيفا في التوجيه إلعادتك إىل مسارك‬ ً
+                                                                                                                                      ‫تصحيحا‬
+
+
+   FOR EGYPT / ‫في مرص‬
+   On most Egyptian roads the lane markings are faint, repainted              ‫عىل معظم الطرق المرصية تكون خطوط الحارات باهتة أو مُ عاد‬
+   at odd angles, or simply ignored by everyone, so the system               ‫ فين ّبه النظام ويشد عجلة‬،‫رسمها بزوايا غريبة أو يتجاهلها الجميع‬
+   warns and tugs at the wheel constantly with no real lane to
+                                                                             ‫ هو‬Off ‫ لذا فإن‬.‫القيادة باستمرار دون حارة حقيقية يبقيك داخلها‬
+   keep you in. Off is the practical setting here. On a well-marked
+                                                                           ‫ أما عىل طريق واضح العالمات في الخارج فأعد‬.‫اإلعداد العميل هنا‬
+   road abroad, turn it back on — it is a useful safety net when
+   the markings can actually be trusted.                                   .‫تفعيله — فهو وسيلة أمان مفيدة عندما يمكن الوثوق بالخطوط‬
+
+
+
+
+                                                                      14                                                            iCAUR V27
+4. Lighting                                                                                                                     ‫اإلضاءة‬
+
+Split into two tabs at the top of the page: Interior Lights and                                                                       ّ
+                                                                       .‫ اإلضاءة الداخلية واإلضاءة الخارجية‬:‫مقسمة إىل تبويبني أعىل الصفحة‬
+Exterior Lights.
+
+
+
+
+Interior Lights — ambient colour picker and saved favourites                  ‫اإلضاءة الداخلية — اختيار لون اإلضاءة المحيطة واأللوان المفضلة‬
+
+
+INTERIOR LIGHTS                                                                                                        ‫اإلضاءة الداخلية‬
+On / Theme / Music Rhythm / Custom
+How the ambient lighting chooses its colour. Theme follows a              ً
+                                                                       ‫ و‬،‫جاهزا‬ ً
+                                                                                ‫نمطا‬ ‫ يتبع‬Theme ‫ خيار‬.‫يحدد كيف تختار اإلضاءة المحيطة لونها‬
+preset scheme, Music Rhythm pulses in time with whatever is              ‫ يتيح لك اختيار‬Custom ‫ و‬،‫ ينبض مع إيقاع الموسيقى‬Music Rhythm
+playing, and Custom lets you pick the colour yourself.
+                                                                                                                              .‫اللون بنفسك‬
+
+Ambient Lighting
+The colour spectrum. Drag the circle anywhere across it to set         ،‫ اسحب الدائرة إىل أي موضع لضبط لون المقصورة‬.‫رشيط ألوان الطيف‬
+the cabin colour, and use My Favorites below to store the ones                 .‫ أسفله لحفظ األلوان اليت تعود إليها‬My Favorites ‫واستخدم‬
+you return to.
+
+Brightness
+Intensity of the ambient lights. Worth lowering at night so the                                          ّ ‫ ي‬.‫شدة اإلضاءة المحيطة‬
+                                                                                                ً ‫ُفضل خفضها‬
+                                                                        ‫ليال حىت ال تشتتك االنعكاسات‬
+reflections in the windscreen don't distract you.                                                                       .‫عىل الزجاج األمامي‬
+
+Ambient Light Effect — Always On / Breathing
+Always On holds a steady colour; Breathing fades slowly in and                                            ً
+                                                                            ‫ يجعله يخفت ويعلو‬Breathing ‫ و‬،‫ثابتا‬ ‫ يبقي اللون‬Always On ‫خيار‬
+out. The ceiling lights stay steady either way — they don't                ‫ أما إضاءة السقف فتبقى ثابتة في الحالتني ألنها ال تدعم تأثري‬.‫ببطء‬
+support the breathing effect.
+                                                                                                                                   .‫التنفس‬
+
+
+
+
+                                                                  15                                                             iCAUR V27
+Ambient Lighting Zones — Dome Light
+Includes or excludes the roof lighting from the ambient colour          .‫يضم إضاءة السقف إىل نظام ألوان اإلضاءة المحيطة أو يستثنيها منه‬
+scheme.
+
+
+
+
+Ambient light effect, zones and the scene effects                                           ‫تأثري اإلضاءة المحيطة ومناطقها وتأثريات المشاهد‬
+
+
+SCENE EFFECTS                                                                                                         ‫تأثريات المشاهد‬
+Auto Dome Light
+The interior light comes on by itself when you unlock the car or                                            ً
+                                                                            ،‫تلقائيا عند فتح قفل السيارة أو فتح باب‬ ‫تيضء إضاءة المقصورة‬
+open a door, and fades out once you are moving.                                                                     .‫وتخفت بعد بدء الحركة‬
+
+Ambient Lighting Alert
+The ambient strips flash to reinforce a safety warning — for            ‫تومض رشائط اإلضاءة لتعزيز تنبيهات السالمة — مثل وجود سيارة في‬
+example when a vehicle is in your blind spot as you signal. A           ‫ تنبيه تلتقطه بطرف عينك دون أن‬.‫النقطة العمياء أثناء إعطائك اإلشارة‬
+warning you catch in your peripheral vision rather than one you
+                                                                                                                                 .‫تبحث عنه‬
+have to look for.
+
+Welcome Ambient Lighting
+A short lighting sequence that plays as you unlock and approach             .‫تسلسل إضاءة قصري يعمل عند فتح القفل واالقرتاب من السيارة‬
+the car.
+
+
+
+
+                                                                   16                                                           iCAUR V27
+Exterior Lights — find my car, follow me home and turn signal blink        ‫ وعدد ومضات‬،‫ وإضاءة المرافقة‬،‫اإلضاءة الخارجية — تحديد مكان السيارة‬
+                                                                                                                                      ‫اإلشارة‬
+
+
+EXTERIOR LIGHTS                                                                                                           ‫اإلضاءة الخارجية‬
+Find My Car — Off / 15s / 30s / 60s / 120s
+Flashes the exterior lights for the chosen length of time so you           ‫ مفيد‬.‫تومض األضواء الخارجية للمدة المختارة حىت تتعرف عىل سيارتك‬
+can spot the car. Genuinely handy in a large mall garage — pair it                                                                  ً
+                                                                              ‫فعال في جراج مول كبري — واربطه بزر الريموت من صفحة إعدادات‬
+with the key fob button on the Vehicle Settings page.
+                                                                                                                                        .‫السيارة‬
+
+Follow Me Home Lights — Off / 15s / 30s / 60s / 120s
+The headlights stay on for the selected time after you lock the            ‫تبقى المصابيح األمامية مضاءة للمدة المختارة بعد قفل السيارة لتنري‬
+car, lighting your way to the door. Useful on an unlit driveway or                .‫ مفيد في مدخل غري مضاء أو داخل كمبوند‬.‫طريقك حىت الباب‬
+in a compound.
+
+Turn Signal Blink — 3 / 5 / 7
+How many times the indicator flashes when you tap the stalk                 ‫عدد ومضات اإلشارة عند لمس الذراع لمسة خفيفة دون تثبيته — أي‬
+lightly without holding it — the lane-change signal. Higher                       ً
+                                                                             ‫وقتا أطول‬  ‫ األرقام األعىل تمنح السائقني اآلخرين‬.‫إشارة تغيري الحارة‬
+numbers give other drivers longer to notice you.
+                                                                                                                                     .‫لمالحظتك‬
+
+
+
+
+                                                                      17                                                             iCAUR V27
+5. Energy                                                                                                                              ‫الطاقة‬
+
+The most important section in the car, and the one worth                    ‫ الشحن‬:‫ ويضم تبويبني‬.‫ ويستحق القراءة مرتني‬،‫أهم قسم في السيارة‬
+reading twice. Two tabs: Charging and Discharging.                                                                                       .‫والتفريغ‬
+
+
+
+
+Battery level, the three range figures and the charge limit                                      ‫ وحد الشحن‬،‫ وأرقام المدى الثالثة‬،‫مستوى البطارية‬
+
+
+CHARGING — THE STATUS DISPLAY                                                                                      ‫الشحن — شاشة الحالة‬
+The top of the page shows the battery percentage, whether a                   ‫ وما إذا كان كابل الشحن‬،‫يعرض أعىل الصفحة نسبة شحن البطارية‬
+charging cable is connected, and the three range figures                        :‫رشحت في بداية هذا الدليل‬ ُ ‫ وأرقام المدى الثالثة اليت‬،‫موصوال‬
+                                                                                                                                       ً
+explained at the start of this guide: Electric Range, Fuel Range
+                                                                                                  .Total Range ‫ و‬Fuel Range ‫ و‬Electric Range
+and Total Range.
+
+Charge Limit
+The green bar sets how full the battery will charge, with markers           :‫ وعليه عالمتان‬،‫يحدد الرشيط األخرض مدى امتالء البطارية عند الشحن‬
+for Daily and Trip. Daily stops short of full; Trip charges all the        ‫ ويشحن‬Trip ‫ و‬،‫ لالستخدام اليومي ويتوقف قبل االمتالء الكامل‬Daily
+way for a long journey.                                                                                                    ً
+                                                                                                              .‫استعدادا لرحلة طويلة‬ ‫بالكامل‬
+
+
+   BATTERY NOTE / ‫مالحظة عن البطار ية‬
+   The V27 uses an LFP (lithium iron phosphate) battery. Unlike             ً
+                                                                            ‫وخالفا‬ .)‫ (فوسفات حديد الليثيوم‬LFP ‫ بطارية من نوع‬V27 ‫تستخدم‬
+   the older chemistry in many EVs, LFP is happy being charged                 ‫ ال تترضر بطاريات‬،‫للرتكيبات األقدم في كثري من السيارات الكهربائية‬
+   to 100%, and a full charge about once a month actually helps            ً‫ بل إن الشحن الكامل مرة واحدة شهريا‬،%100 ‫ من الشحن حىت‬LFP
+   the car read the remaining charge accurately. You do not need
+                                                                                ‫ ال داعي‬.‫تقريبا يساعد السيارة عىل قراءة الشحن المتبقي بدقة‬ً
+   to baby it at 80%.
+                                                                                                                            .%80 ‫لالقتصار عىل‬
+
+
+Fuel Cap Unlock
+Releases the fuel filler flap for the petrol that feeds the range                       ّ
+                                                                                .‫مولد المدى‬ ‫يفتح غطاء خزان الوقود الخاص بالبزنين الذي يغذي‬
+extender.
+
+
+                                                                      18                                                                iCAUR V27
+Driving Range Display — NEDC / WLTC
+Which test standard the car uses to estimate range. NEDC                    NEDC ‫ معيار‬.‫يحدد معيار االختبار الذي تعتمده السيارة في تقدير المدى‬
+produces a larger, more optimistic number. WLTC is the newer                                                     ً
+                                                                               ‫ أحدث وأقرب إىل الواقع‬WLTC ‫ بينما‬،‫تفاؤال‬            ً
+                                                                                                                        ‫رقما أكرب وأكرث‬ ‫يعطي‬
+and more realistic standard and will usually be closer to what                                                  ً                      ً
+                                                                                                               .‫فعال‬ ‫وغالبا ما يطابق ما تحققه‬
+you actually achieve.
+
+
+   RECOMMENDED / ‫التوصية‬
+   Set it to WLTC. A smaller number you can trust is worth far              ‫ رقم أصغر تثق به أفضل بكثري من رقم كبري يخ ّيب‬.WLTC ‫اضبطه عىل‬
+   more than a big one that keeps disappointing you —                                  .‫ظنك باستمرار — خاصة وأنت ال تزال تتعرف عىل السيارة‬
+   especially while you are still learning the car.
+
+
+
+
+Charging restrictions and the four Energy Modes                                                               ‫قيود الشحن وأوضاع الطاقة األربعة‬
+
+
+CHARGING RESTRICTION                                                                                                          ‫قيود الشحن‬
+Slow Charging Current Limit
+Caps the current the car will draw when AC charging. Lowering it             ‫ خفضه يجعل‬.‫يحدد أقىص تيار تسحبه السيارة عند الشحن بالتيار المرتدد‬
+makes charging slower but gentler on the supply.                                                     .‫الشحن أبطأ لكنه أخف عىل مصدر الكهرباء‬
+
+
+   FOR EGYPT / ‫في مرص‬
+   This matters more here than almost anywhere. Older                                              ً
+                                                                               ‫ فالمباني القديمة‬.‫تقريبا‬ ‫هذا اإلعداد أهم هنا من أي مكان آخر‬
+   buildings, long cable runs and shared meters often cannot                                     ً
+                                                                               ‫كثريا ما تعجز عن تحمل‬  ‫والكابالت الطويلة والعدادات المشرتكة‬
+   sustain a full-current draw for hours. If your breaker trips, the
+                                                                            ‫ أو خفتت‬،‫ أو سخن الكابل‬،‫ إذا فصل القاطع‬.‫سحب تيار كامل لساعات‬
+   cable gets hot, or the lights dim when charging starts, reduce
+                                                                                              ً
+                                                                              — ‫بدال من المجازفة‬              ّ
+                                                                                                 ‫فخفض هذا الرقم‬    ،‫اإلضاءة عند بدء الشحن‬
+   this figure rather than hoping for the best — and have an
+   electrician confirm what your supply can carry before                         ‫واستعن بكهربائي لتحديد ما تتحمله وصلتك قبل الشحن بالتيار‬
+   charging at full current overnight.                                                                                  .‫الكامل طوال الليل‬
+
+
+
+
+                                                                       19                                                           iCAUR V27
+Scheduled Charging
+Sets a window during which the car will charge — for example                                          ً
+                                                                                 — 01:00 ‫ إىل‬00:00 ‫مثال من‬ — ‫يحدد فرتة زمنية تشحن فيها السيارة‬
+00:00 to 01:00 — so you can plug in when you arrive home but                                                                        ّ
+                                                                                    ‫توصل الكابل فور وصولك للمزنل لكن السحب يتم في ساعات‬ ‫بحيث‬
+only draw power during off-peak hours.
+                                                                                                                                    .‫انخفاض األحمال‬
+
+Stationary Charging — Start Engine to Charge
+Runs the petrol range extender while the car is parked so it can                                                                       ّ
+                                                                                 ‫مولد البزنين والسيارة متوقفة لشحن البطارية دون الحاجة إىل‬  ّ
+                                                                                                                                           ‫يشغل‬
+recharge the battery without a charging point. Useful where                           .‫ مفيد في األماكن اليت ال يتوفر فيها مصدر كهرباء‬.‫نقطة شحن‬
+there is nowhere to plug in.
+
+
+   WARNING / ‫تحذير‬
+   Never use Stationary Charging in a closed garage, basement                     ‫ال تستخدم الشحن أثناء التوقف داخل جراج مغلق أو موقف تحت‬
+   car park or any enclosed space. The engine is running and                        ً
+                                                                                ‫تماما كأي‬ ‫ فالمحرك يعمل ويُخرج عوادم‬.‫األرض أو أي مكان مغلق‬
+   producing exhaust fumes exactly as a petrol car would.                                    ً
+                                                                                  ‫وبعيدا عن النوافذ‬ ‫ استخدمه في الهواء الطلق فقط‬.‫سيارة بزنين‬
+   Outdoors only, and away from open windows.
+                                                                                                                                        .‫المفتوحة‬
+
+
+Auto Unlock AC Charging Connector
+Releases the charging cable automatically once charging is                                                               ً
+                                                                                   ‫ فتسحبه ببساطة عند‬،‫تلقائيا بمجرد اكتمال الشحن‬ ‫يحرر كابل الشحن‬
+complete, so you can simply pull it out when you return.                                                                                       .‫عودتك‬
+
+Manual Battery Preconditioning
+Brings the battery to its ideal temperature before charging, so it                                                                            ّ
+                                                                                     ‫يجهز البطارية عىل درجة حرارتها المثالية قبل الشحن حىت تستقبل‬
+accepts power at the fastest rate it safely can. Start it around                                                    ّ
+                                                                                   ‫ شغله قبل وصولك إىل شاحن رسيع بنحو‬.‫الطاقة بأرسع معدل آمن‬
+twenty minutes before you reach a fast charger.
+                                                                                                                                      .‫عرشين دقيقة‬
+
+
+ENERGY MODE                                                                                                                        ‫أوضاع الطاقة‬
+This is where you tell the car how to balance battery and petrol.              :‫ واألوضاع الثالثة‬.‫من هنا تحدد للسيارة كيف توازن بني البطارية والبزنين‬
+The three modes:
+
+  Mode                                  What it does / ‫ما تفعله‬                                     When to use it / ‫مىت تستخدمه‬
+
+  Hybrid                                The car decides moment to moment, blending battery          Mixed driving when you don't want to think
+                               ‫هجني‬     and generator for the best overall efficiency.              about it.
+                                               ّ
+                                        ‫والمولد ألفضل‬ ‫ وتمزج بني البطارية‬،‫تقرر السيارة لحظة بلحظة‬     ‫القيادة المختلطة عندما ال ترغب في التفكري في‬
+                                                                                  .‫كفاءة إجمالية‬                                               .‫األمر‬
+
+
+  Fuel Priority                         Leans on the petrol generator and preserves what is in      On the motorway when you want to arrive
+                       ‫أولوية الوقود‬    the battery.                                                in the city with charge still in hand.
+                                                                                   ّ
+                                               .‫مولد البزنين ويحافظ عىل ما في البطارية‬ ‫يعتمد عىل‬          ‫عىل الطريق الرسيع عندما تريد الوصول إىل‬
+                                                                                                                             .‫المدينة وبحوزتك شحن‬
+
+
+  Electric Priority                     Uses the battery first and only starts the generator        The everyday default. Electricity is far
+                      ‫أولوية الكهرباء‬   when charge runs low.                                       cheaper per kilometre than petrol.
+                                                             ّ
+                                             ‫المولد إال عند انخفاض‬  ّ
+                                                                   ‫يشغل‬     ً
+                                                                        ‫أوال وال‬ ‫يستخدم البطارية‬     ‫ فالكهرباء أرخص بكثري‬.‫الوضع االفرتايض اليومي‬
+                                                                                         .‫الشحن‬                             .‫من البزنين لكل كيلومرت‬
+
+
+
+
+                                                                        20                                                                 iCAUR V27
+Force Range Extender — shown as “Force Range Ex…”
+This sits in the same row as the three modes, but it is not a                   ً
+                                                                           ‫رابعا — بل‬ ً
+                                                                                      ‫وضعا‬ ‫ لكنه ليس‬،‫يوجد في الصف نفسه مع األوضاع الثالثة‬
+fourth mode — it is a toggle that layers on top of them. Select              ‫ فيظل االثنان‬،‫ اخرت أولوية الوقود ثم اضغط عليه‬.‫مفتاح يعمل فوقها‬
+Fuel Priority and then tap it, and both stay lit: the car keeps the           ّ
+                                                                             ‫المولد‬   ‫ تحتفظ السيارة باالسرتاتيجية اليت اخرتتها بينما يعمل‬:‫مضاءين‬
+strategy you chose while the generator works harder to build
+                                                                                                       ً
+                                                                           .‫بدال من مجرد الحفاظ عىل مستواها‬ ‫بجهد أكرب لبناء شحن في البطارية‬
+charge in the battery instead of merely holding it steady. Tap it
+                                                                                ً
+                                                                           ‫وقودا أكرث‬ ‫ ويستهلك‬.‫واضغط عليه مرة أخرى للعودة إىل الوضع وحده‬
+again to return to the mode on its own. It burns more fuel while
+it is active and the engine is audible.                                                               ً
+                                                                                                     .‫مسموعا‬ ‫أثناء تفعيله ويكون صوت المحرك‬
+
+
+   GETTING THE MOST FROM IT / ‫لتحقيق أقىص استفادة‬
+   A useful habit on long trips: run Fuel Priority on the open                    ‫ عىل‬Fuel Priority ‫ استخدم‬:‫عادة مفيدة في الرحالت الطويلة‬
+   road, where the generator is working at its most efficient and                                          ّ
+                                                                           ‫المولد بأعىل كفاءته وال تضيف البطارية‬ ‫الطريق المفتوح حيث يعمل‬
+   the battery brings you no advantage, then switch to Electric                                                            ّ ‫ ثم‬،‫مزية ُتذكر‬
+                                                                                 — ‫ عند دخول المدينة‬Electric Priority ‫حول إىل‬
+   Priority once you reach town — where stop-start traffic is
+                                                                                    ‫فزحام الوقوف والتحرك هو بالضبط ما تتفوق فيه القيادة‬
+   exactly where electric drive shines and regenerative braking
+   puts charge back in.                                                             .‫الكهربائية وتعيد فيه الفرملة التوليدية الشحن إىل البطارية‬
+
+
+
+RUNNING MAINLY ON PETROL                                                                             ‫القيادة عىل البزنين بشكل أسايس‬
+Home charging is not an option for many owners in Egypt — no                   ‫الشحن المزنيل غري متاح لكثري من المالك في مرص — ال توجد نقطة‬
+charging point in the building, a shared meter, or street parking.            V27 ‫ وسيارة‬.‫ أو الركن في الشارع‬،‫ أو الع ّداد مشرتك‬،‫شحن في العقار‬
+The V27 is built to cope with exactly that. It never has to be                                                  ً
+                                                                            ‫ فهي ال تحتاج إىل التوصيل بالكهرباء‬:‫تحديدا‬ ‫مصممة للتعامل مع هذا‬
+plugged in, and running it on petrol alone does the car no harm.
+                                                                                                                                         ً
+                                                                                                      .‫ وال يرضها العمل عىل البزنين وحده‬،‫إطالقا‬
+
+Your everyday mode is Fuel Priority
+The generator runs as needed and keeps the battery within a                                                                    ّ
+                                                                           ‫ فتظل‬،‫المولد حسب الحاجة ويبقي البطارية ضمن نطاق تشغييل‬    ‫يعمل‬
+working band, so the electric motors always have power to draw                              ً
+                                                                            ‫ وكل ما عليك هو‬.‫المحركات الكهربائية قادرة عىل السحب منها دائما‬
+on. You simply refuel as you would in any other car.
+                                                                                                                 .‫الزتود بالوقود كأي سيارة أخرى‬
+
+Use Force Range Extender before the city
+On a motorway run, switch it on to build charge in the battery,                                                       ّ ،‫عىل الطريق الرسيع‬
+                                                                             ‫ ثم دع هذا الشحن‬،‫شغله لبناء شحن في البطارية‬
+then let that charge carry you through stop-and-go traffic —                  ‫يحملك داخل زحام المدينة — حيث تكون القيادة الكهربائية في أعىل‬
+which is where electric drive is at its most efficient and where
+                                                                                                              .‫كفاءتها ويكون المحرك في أدناها‬
+the engine is at its least.
+
+Expect real consumption well above the headline figure
+The very low advertised fuel figures assume you start every                                                    ً
+                                                                            ‫جدا المعلن عنها تفرتض أنك تبدأ كل رحلة‬ ‫أرقام االستهالك المنخفضة‬
+journey with a full battery. Once you are running on petrol alone,          ‫ أما عند االعتماد عىل البزنين وحده فيستقر االستهالك‬.‫ببطارية ممتلئة‬
+consumption settles into ordinary SUV territory. That is normal
+                                                                           ‫ وهذا أمر طبيعي وليس‬.‫عند مستويات سيارات الدفع الرباعي المعتادة‬
+and not a fault.
+                                                                                                                                            ً
+                                                                                                                                           .‫عطال‬
+
+Take any charge you can get
+A relative's house, a mall charger, a hotel on the coast — even a             ‫ أو فندق عىل الساحل — حىت‬،‫ أو شاحن في مول‬،‫مزنل أحد األقارب‬
+partial charge displaces petrol at a much lower cost per                    ‫ ولست‬.‫الشحن الجزئي يحل محل البزنين بتكلفة أقل بكثري لكل كيلومرت‬
+kilometre. You do not need a home wallbox to benefit.
+                                                                                                               .‫بحاجة إىل شاحن مزنيل لالستفادة‬
+
+
+                                 ً
+   IF YOU NEVER PLUG IN AT ALL / ‫إطالقا‬ ‫إذا لم تشحن‬
+   The car will run indefinitely on petrol and protects a reserve                  ‫ستعمل السيارة عىل البزنين إىل ما ال نهاية وتحتفظ لنفسها‬
+   of charge for itself, so you will not be stranded. Even so, give        ‫ ومع ذلك امنح البطارية شحنة‬.‫ فلن تتعطل بك‬،‫باحتياطي من الشحن‬
+   the battery a full charge about once a month: the LFP pack                                               ً      ً
+                                                                            ‫ كما‬،‫ تستفيد من ذلك‬LFP ‫ فبطارية‬:‫تقريبا‬ ‫شهريا‬ ‫كاملة مرة واحدة‬
+   benefits from it, and it lets the car read the remaining charge
+                                                                                              .‫يساعد السيارة عىل قراءة الشحن المتبقي بدقة‬
+   accurately.
+
+
+
+
+                                                                      21                                                              iCAUR V27
+Discharging — the 220V external power supply and wireless charging                 ‫ فولت والشحن الالسلكي‬220 ‫التفريغ — إمداد الكهرباء الخارجي‬
+
+
+DISCHARGING                                                                                                                           ‫التفريغ‬
+This tab turns the car into a power source. With the external                                                                            ّ
+                                                                              ‫ فبتوصيل كابل اإلمداد‬.‫يحول هذا التبويب السيارة إىل مصدر كهرباء‬
+power cable plugged in, the V27 supplies 220V AC — enough to                                                           ً         ّ
+                                                                          ‫ فولت — يكفي لتشغيل إضاءة أو ثالجة أو‬220 ‫ تيارا‬V27 ‫ توفر‬،‫الخارجي‬
+run lights, a fridge, tools or a coffee machine.
+                                                                                                                 .‫عدة كهربائية أو ماكينة قهوة‬
+
+External Power Supply Limit
+How far the battery is allowed to drain while powering external              ‫يحدد الحد الذي يُسمح للبطارية بالزنول إليه أثناء تغذية أجهزة خارجية‬
+equipment before the car cuts the supply. It protects you from            ‫ وهو يحميك من العودة إىل سيارة فارغة‬.‫قبل أن تقطع السيارة اإلمداد‬
+returning to a flat car.
+                                                                                                                                        .‫الشحن‬
+
+Fuel-Based Power Supply
+When the battery reaches that limit, the range extender starts                                       ّ
+                                                                            ‫مولد المدى في العمل ليستمر‬  ‫ يبدأ‬،‫عند وصول البطارية إىل ذلك الحد‬
+and keeps generating so the power supply continues from                         ّ
+                                                                               ‫مولد‬     ً
+                                                                                    ‫عمليا إىل‬ ‫ وبذلك تتحول سيارتك‬.‫اإلمداد بالكهرباء من البزنين‬
+petrol. In effect, your car becomes a quiet generator with a very                                                    ً
+                                                                                                                    .‫جدا‬ ‫هادئ بخزان وقود كبري‬
+large fuel tank.
+
+
+   WORTH KNOWING / ‫معلومة مفيدة‬
+   This is one of the V27's genuinely useful party tricks in Egypt          ‫ فائدة في مرص — شاليه في الساحل أثناء‬V27 ‫هذه من أكرث مزايا‬
+   — a North Coast chalet during a power cut, a desert camp, a            ‫ أو فعالية‬،‫ أو موقع إنشاءات‬،‫ أو مخيم في الصحراء‬،‫انقطاع الكهرباء‬
+   construction site, or an outdoor event. Bear in mind that if                  ّ
+                                                                              ً ‫مفع‬
+                                                                              ‫ال‬    ‫ إذا كان خيار اإلمداد بالبزنين‬:‫ لكن انتبه‬.‫في الهواء الطلق‬
+   Fuel-Based Power Supply is enabled, the engine will start by
+                                                                                                                       ً
+                                                                            ‫ لذا يجب أن تكون‬،‫تلقائيا عند نفاد شحن البطارية‬    ‫فسيعمل المحرك‬
+   itself when the battery runs down, so the car must be
+   outdoors.                                                                                                  .‫السيارة خارج األماكن المغلقة‬
+
+
+Wireless Charging
+Enables the phone charging pad in the console. Place the phone                                                                   ّ
+                                                                            ‫ ضع الهاتف عىل القاعدة‬.‫يفعل قاعدة شحن الهاتف في الكونسول‬
+on the pad to start charging.                                                                                                      .‫ليبدأ الشحن‬
+
+
+
+                                                                     22                                                              iCAUR V27
+FOR EGYPT / ‫في مرص‬
+Wireless charging generates heat, and a phone left on the pad                                                  ّ ‫الشحن الالسلكي‬
+                                                                      ‫ والهاتف المرتوك عىل القاعدة داخل‬،‫يولد حرارة‬
+in a hot cabin can overheat and stop charging — or throttle          ‫ في‬.‫مقصورة ساخنة قد ترتفع حرارته فيتوقف الشحن أو يقل أداؤه‬
+itself. On long summer drives a cable is often the better                                  ً
+                                                                                     .‫خيارا أفضل‬ ‫الرحالت الصيفية الطويلة يكون الكابل‬
+choice.
+
+
+
+
+                                                                23                                                          iCAUR V27
+6. Voice                                                                                                            ‫األوامر الصوتية‬
+
+The voice assistant, woken by saying "Hello iCAUR".                                       ."Hello iCAUR" ‫ ويُستدعى بقول‬،‫المساعد الصوتي‬
+
+
+
+
+Conversation duration and sound source localization                                                        ‫مدة المحادثة وتحديد مصدر الصوت‬
+
+Conversation Duration — Off / 10s / 15s / 20s
+How long the assistant keeps listening after it answers, so you         ً
+                                                                        ‫تاليا‬ ً
+                                                                              ‫أمرا‬                      ً
+                                                                                   ‫ حىت تعطيه‬،‫مستمعا بعد ر ّده‬ ‫المدة اليت يظل فيها المساعد‬
+can give a follow-up command without repeating the wake                Hello" ‫ يعين أن كل أمر يحتاج إىل قول‬Off ‫ وخيار‬.‫دون تكرار كلمة التنبيه‬
+word. Off means every command needs "Hello iCAUR" first.                                                                        ً
+                                                                                                                               .‫أوال‬ "iCAUR
+
+Sound Source Localization — Off / Driver Seat / Auto
+Which seat the microphones listen to. Driver Seat means only            ‫ يعين‬Driver Seat ‫ خيار‬.‫يحدد المقعد الذي تستمع إليه الميكروفونات‬
+the driver can issue commands — worth setting if passengers or          ‫أن السائق وحده من يصدر األوامر — مفيد إذا كان الركاب أو األطفال‬
+children keep waking the assistant by accident. Auto works out
+                                                                            .‫ فيحدد المتحدث ويستجيب له‬Auto ‫ أما‬.‫يوقظون المساعد بالخطأ‬
+who spoke and responds to them.
+
+Voice Assistant
+Turns the assistant on or off entirely. The ▶ button beside it          ً
+                                                                        ‫نموذجا‬              ّ
+                                                                               ‫ويشغل زر ▶ بجواره‬  ً
+                                                                                                 .‫تماما‬                          ّ
+                                                                                                        ‫يشغل المساعد الصوتي أو يوقفه‬
+plays a sample of the wake word.                                                                                              .‫لكلمة التنبيه‬
+
+
+7. Display                                                                                                                     ‫الشاشة‬
+
+
+
+
+                                                                  24                                                             iCAUR V27
+Time, language, time zone and screen cleaning                                                  ‫الوقت واللغة والمنطقة الزمنية وتنظيف الشاشة‬
+
+Time Display — 12-Hour / 24-Hour
+Clock format on the screen and instrument cluster.                                         .‫صيغة عرض الساعة عىل الشاشة ولوحة العدادات‬
+
+Language Settings
+The interface language for the whole system. A full Arabic                 ‫ وتظهر جميع‬،‫ وتتوفر واجهة عربية كاملة‬.‫لغة واجهة النظام بالكامل‬
+interface is available, and every menu in this guide appears in                         .‫القوائم الواردة في هذا الدليل بالعربية بمجرد اختيارها‬
+Arabic once it is selected.
+
+Time Zone Settings
+Should read (UTC+3:00) Cairo in Egypt. Egypt moves its clocks                      ّ ‫ وألن مرص‬.‫ في مرص‬Cairo )UTC+3:00( ‫يجب أن يكون عىل‬
+                                                                          ‫تغري التوقيت‬
+for daylight saving in spring and autumn, so if the time drifts by          ‫ فإذا اختلفت الساعة بمقدار ساعة واحدة فراجع‬،‫في الربيع والخريف‬
+an hour, check this page before assuming a fault.
+                                                                                                    .‫هذه الصفحة قبل أن تفرتض وجود عطل‬
+
+Screen Cleaning
+Temporarily locks the touchscreen so you can wipe it without                .‫مؤقتا حىت تمسحها دون الضغط عىل يشء بالخطأ‬ ً     ‫يقفل الشاشة‬
+pressing things by accident. Use a soft microfibre cloth, dry or                     ً  ً
+                                                                           ‫استخدم قطعة ميكروفايرب ناعمة جافة أو مبللة قليال جدا — وتجنب‬
+very slightly damp — never glass cleaner or anything with                                                                          ً
+                                                                           ‫تماما منظفات الزجاج أو أي مادة تحتوي عىل كحول ألنها تزيل طبقة‬
+alcohol in it, which strips the screen's anti-glare coating.
+                                                                                                                          .‫مقاومة االنعكاس‬
+
+
+
+
+                                                                     25                                                            iCAUR V27
+8. Sound                                                                                                                            ‫الصوت‬
+
+Audio tuning, the individual volume levels, and the car's own                 ‫ وأصوات التنبيه الخاصة‬،‫ ومستويات الصوت المنفصلة‬،‫ضبط الصوت‬
+alert sounds.                                                                                                                         .‫بالسيارة‬
+
+
+
+
+Sound mode, effects and soundstage                                                                       ‫وضع الصوت والمؤثرات والمرسح الصوتي‬
+
+Sound Mode — Private / DriverCentric / Whole Cabin
+Where the audio is aimed. Private keeps it close to the front so a                                 ً
+                                                                           ‫قريبا من المقاعد األمامية حىت‬ ‫ يبقيه‬Private ‫ خيار‬.‫يحدد وجهة الصوت‬
+sleeping passenger in the back is less disturbed, DriverCentric                               ّ DriverCentric ‫ و‬،‫نائما في الخلف‬
+                                                                          ،‫يركزه عىل مقعد السائق‬                              ً   ً
+                                                                                                                                  ‫راكبا‬ ‫ال يزعج‬
+focuses the stage on the driver's seat, and Whole Cabin fills the                                                       ّ Whole Cabin ‫و‬
+                                                                                               .‫يوزعه عىل المقصورة بالتساوي‬
+car evenly.
+
+Sound Effects — Standard / Surround / Concert Hall / Subwoofer
+Preset audio characters. Standard is neutral; Concert Hall adds             ‫ يضيف صدى‬Concert Hall‫ و‬،‫ محايد‬Standard ‫ فـ‬.‫أنماط صوتية جاهزة‬
+reverberation; Subwoofer emphasises bass.                                                         .‫ يربز األصوات المنخفضة‬Subwoofer‫ و‬،‫القاعة‬
+
+Soundstage — Sound Field & Equalizer
+Sound Field positions the focal point of the audio within the                  ‫ بينما يفتح‬،‫ نقطة تركزي الصوت داخل المقصورة‬Sound Field ‫يحدد‬
+cabin. Equalizer opens manual control over the frequency                                                                 ً
+                                                                                 ‫يدويا في توازن الرتددات إذا لم تناسبك األنماط‬ ً
+                                                                                                                               ‫تحكما‬ Equalizer
+balance if the presets don't suit you.
+                                                                                                                                      .‫الجاهزة‬
+
+
+
+
+                                                                     26                                                             iCAUR V27
+The five independent volume sliders                                                     ‫أرشطة التحكم الخمسة المنفصلة لمستوى الصوت‬
+
+
+VOLUME                                                                                                          ‫مستوى الصوت‬
+Five independent sliders — Media, Navigation, Voice, Call, and        Alarm ‫ و‬Call ‫ و‬Voice ‫ و‬Navigation ‫ و‬Media :‫خمسة أرشطة منفصلة‬
+Alarm Sounds & Engine Sound. Setting navigation prompts a                     ً
+                                                                           ‫قليال من‬ ‫ واضبط صوت المالحة أعىل‬.Sounds & Engine Sound
+little above your music means you hear the turn instruction
+                                                                      ‫الموسيقى لتسمع تعليمات االنعطاف دون الحاجة لتعديل الصوت في‬
+without having to reach for the volume every time.
+                                                                                                                          .‫كل مرة‬
+
+
+
+
+                                                                 27                                                      iCAUR V27
+Call notification, pedestrian reminder tone and smart sound effects                 ‫ والمؤثرات الصوتية الذكية‬،‫ ونغمة تنبيه المشاة‬،‫تنبيه المكالمات‬
+
+Incoming Call Notification — Off / Voice Announce / Ringtone
+How the car announces a call. Voice Announce reads out who is               ‫ ينطق‬Voice Announce ‫ خيار‬.‫طريقة إعالن السيارة عن مكالمة واردة‬
+calling, which keeps your eyes on the road.                                                             .‫اسم المتصل فتبقى عيناك عىل الطريق‬
+
+Low-speed Pedestrian Reminder — Starry Sky / Wind Chant / Engine
+Electric cars are nearly silent at low speed, so the V27 plays a           V27 ‫ لذا ُتصدر‬،‫السيارات الكهربائية شبه صامتة عند الرسعات المنخفضة‬
+sound through an external speaker to warn pedestrians it is                                                                              ً
+                                                                            ‫ ومن هنا تختار نوع‬.‫صوتا عرب سماعة خارجية لتنبيه المشاة إىل حركتها‬
+moving. This chooses which sound. It cannot be switched off,
+                                                                            ‫ وال ينبغي ذلك — ففي الشوارع المزدحمة‬،‫ وال يمكن إيقافه‬.‫الصوت‬
+and it should not be — in crowded streets and car parks it is the
+                                                                                         .‫والمواقف هو التنبيه الوحيد الذي ين ّبه الناس لوجودك‬
+only warning people get that you are there.
+
+
+SMART SOUND EFFECTS                                                                                             ‫المؤثرات الصوتية الذكية‬
+Touchscreen Sound Effects
+The click you hear when tapping the screen.                                                         .‫صوت النقر الذي تسمعه عند لمس الشاشة‬
+
+Notification Tone
+The chime for system messages and alerts.                                                                         .‫نغمة رسائل النظام والتنبيهات‬
+
+Speed-dependent Volume Compensation
+Raises the volume gradually as you go faster to compensate for                                                ً
+                                                                           ‫تدريجيا مع زيادة الرسعة لتعويض ضجيج الطريق‬ ‫يرفع مستوى الصوت‬
+road and wind noise, and lowers it again as you slow down.                                         ّ
+                                                                                                ً ‫مفع‬
+                                                                               ‫ال وستتوقف عن تعديل‬    ‫ اتركه‬.‫ ويخفضه مع التباطؤ‬،‫والهواء‬
+Leave it on and you will stop fiddling with the volume knob.
+                                                                                                                                .‫الصوت باستمرار‬
+
+Door Open Volume Reduction
+Drops the volume automatically when a door is opened, so you                                                           ً
+                                                                            ‫ حىت ال يصل صوتك إىل الشارع‬،‫تلقائيا عند فتح أي باب‬ ‫يخفض الصوت‬
+don't blast the street — or the person you have stopped to                                                          .‫— أو إىل من توقفت لتحيته‬
+greet.
+
+
+                                                                      28                                                              iCAUR V27
+9. Connections                                                                                                                 ‫االتصال‬
+
+
+
+
+Wi-Fi, Bluetooth, CarPlay and Android Auto                                                       Android Auto‫ و‬CarPlay‫الواي فاي والبلوتوث و‬
+
+Wi-Fi
+Connects the car to a wireless network — a home network or                                                                         ّ
+                                                                          ‫يوصل السيارة بشبكة السلكية — شبكة المزنل أو نقطة اتصال هاتفك‬
+your phone's hotspot — for online services and software                                           .‫— للخدمات اإللكرتونية وتحديثات الربمجيات‬
+updates.
+
+Bluetooth
+Pairs phones for calls and audio. The name shown beneath it is            ‫ واالسم الظاهر أسفله هو ما سرياه‬.‫يقرن الهواتف للمكالمات والصوت‬
+what your phone will see when searching for the car.                                                          .‫هاتفك عند البحث عن السيارة‬
+
+Apple CarPlay / Android Auto
+Mirrors your phone's maps, music and messages onto the car's                  ‫ ويوضح‬.‫ينقل خرائط هاتفك وموسيقاه ورسائله إىل شاشة السيارة‬
+screen. The entry shows which device is connected, or "Not                 ‫ بشكل‬CarPlay ‫ وإذا انقطع‬."Not Connected" ‫السطر الجهاز المتصل أو‬
+Connected". If CarPlay drops out repeatedly, try a different cable                                                      ً
+                                                                            .‫كابال آخر قبل أي يشء — فهو السبب في أغلب الحاالت‬ ‫متكرر فج ّرب‬
+before anything else — it is the cause more often than not.
+
+
+
+
+                                                                     29                                                          iCAUR V27
+10. Safety & Service                                                                                                ‫السالمة والصيانة‬
+
+Maintenance and workshop functions. Most owners visit this                                                   ً
+                                                                            — ‫نادرا ما يزور معظم المالك هذه الصفحة‬ .‫وظائف الصيانة والورشة‬
+page rarely — but when you need it, you need it.                                                             .‫لكن عند الحاجة إليها ال بديل عنها‬
+
+
+
+
+Towing mode, exhaust gas detection and wiper maintenance                                     ‫ ووضع صيانة المساحات‬،‫ وفحص العادم‬،‫وضع السحب‬
+
+Towing Mode
+Prepares the vehicle to be moved by a recovery truck without               ‫يهيئ السيارة لنقلها بونش أو سطحة دون أن تقاوم أنظمتها الحركة أو‬
+the car's own systems resisting or the alarm sounding. Check the           ،‫ راجع اإلجراء الدقيق في دليل المالك قبل تحميل السيارة‬.‫ينطلق اإلنذار‬
+exact procedure in your owner's manual before the car is
+                                                                                             .‫فالمتطلبات تختلف بني السحب والنقل عىل سطحة‬
+loaded, as the requirements differ depending on whether it is
+towed or carried on a flatbed.
+
+Exhaust Gas Detection
+Puts the vehicle into the state required for the annual emissions            ‫ بحيث يعمل‬،‫يضع السيارة في الحالة المطلوبة الختبار العادم السنوي‬
+test, so the range extender runs as the inspection equipment                             ّ .‫مولد المدى بالشكل الذي تتوقعه أجهزة الفحص‬
+                                                                              ‫فعله في مركز‬                                               ّ
+expects. Turn it on at the testing centre and off again afterwards.
+                                                                                                                  .‫الفحص وأطفئه بعد االنتهاء‬
+
+
+   FOR EGYPT / ‫في مرص‬
+   This is the setting to remember at your annual licence                  .‫هذا هو اإلعداد الذي يجب تذكره عند فحص تجديد الرخصة السنوي‬
+   renewal inspection. Because the petrol engine in an EREV                       ‫ ال يعمل بشكل متواصل‬EREV ‫فألن محرك البزنين في سيارة‬
+   does not run continuously the way a conventional engine
+                                                                             ‫ قد تعجز مراكز الفحص عن أخذ قراءة بدونه‬،‫كالمحركات التقليدية‬
+   does, testing centres can struggle to get a reading without it
+                                                                           ‫— وقد يخربك فاحص غري معتاد عىل هذه السيارات بأنها رسبت بينما‬
+   — and an inspector unfamiliar with the car may tell you the
+   vehicle has failed when it simply was not in the right mode.                                        .‫هي فقط لم تكن في الوضع الصحيح‬
+
+
+
+
+                                                                      30                                                            iCAUR V27
+Front Wiper Maintenance / Rear Wiper Maintenance
+Moves the wiper arms into the service position so you can lift               ‫ينقل أذرع المساحات إىل وضع الصيانة حىت ترفعها عن الزجاج لتغيري‬
+them off the glass to change blades or clear them in winter. Only         ‫ والمساحات‬N ‫ أو‬P ‫ وال يعمل إال والسيارة عىل وضع‬.‫الريش أو تنظيفها‬
+works with the car in P or N and the wipers and washer switched
+                                                                                                                          .‫والرشاش مطفأة‬
+off.
+
+Power Off
+Shuts the vehicle down completely. The car must be powered                               ّ
+                                                                         ‫مشغلة ومتوقفة وعىل‬                           ً
+                                                                                              ‫ ويشرتط أن تكون السيارة‬.‫تماما‬ ‫يطفئ السيارة‬
+on, stationary and in P. Use it when you want everything                             ً     ً
+                                                                             ‫ استخدمه عندما تريد إطفاء كل يشء فعليا بدال من وضع‬.P ‫وضع‬
+genuinely off rather than in standby.
+                                                                                                                                .‫االستعداد‬
+
+
+
+
+                                                                    31                                                           iCAUR V27
+A recommended starting setup                                                                                        ‫إعدادات مقرتحة للبداية‬
+
+If you have just taken delivery and want a sensible baseline for                   ‫إذا كنت قد استلمت سيارتك للتو وتريد نقطة انطالق منطقية تناسب‬
+Egyptian conditions, start here and adjust to taste.                                                 .‫ فابدأ من هنا ثم ع ّدل حسب تفضيلك‬،‫ظروف مرص‬
+
+
+ Setting                                Set to                     Why / ‫السبب‬
+
+ Auto Wiper Sensitivity                 Low                        Dust triggers sensitive rain sensors; dry wiping scratches glass.
+                                                                                                                                       ّ ‫األتربة ُت‬
+                                                                                                    .‫ والمسح الجاف يخدش الزجاج‬،‫فعل الحساس‬
+
+
+ Key Fob Button                         A/C On                     Cool the cabin before you get in.
+                                                                                                                             .‫لتربيد المقصورة قبل ركوبك‬
+
+
+ Auto Lock When Driving                 On                         Doors secured in city traffic.
+                                                                                                                           .‫تأمني األبواب في زحام المدينة‬
+
+
+ Mirrors tilt on reverse                On                         Protects wheels against high kerbs.
+                                                                                                                   .‫يحمي الجنوط من األرصفة المرتفعة‬
+
+
+ AutoHold                               On                         Removes the strain of stop-and-go traffic.
+                                                                                                                              .‫يزيل إرهاق الزحام المتقطع‬
+
+
+ Electronic Stability Control           On                         Leave on unless freeing the car from sand.
+                                                                                                                                                ّ
+                                                                                                                                             ً ‫مفع‬
+                                                                                                            .‫ال إال عند تحرير السيارة من الرمال‬    ‫اتركه‬
+
+
+ Speed Warning                          On, 120 km/h               Matches the motorway limit and the radar cameras.
+                                                                                                         .‫يوافق الحد األقىص للطرق الرسيعة والرادارات‬
+
+
+ Forward Collision Warning              On — Late                  Stays useful instead of crying wolf in close traffic.
+                                                                                                              .‫داع‬                      ً    ً
+                                                                                                               ٍ ‫يبقى مفيدا بدال من التنبيه المتكرر بال‬
+
+ Lane Departure Warning                 Off                        Lane markings here are too inconsistent for it to be useful.
+                                                                                       .‫خطوط الحارات هنا غري منتظمة بما يكفي لتكون الخاصية مفيدة‬
+
+
+ Driving Range Display                  WLTC                       A realistic range figure you can plan around.
+                                                                                                        .‫رقم مدى واقعي يمكنك التخطيط عىل أساسه‬
+
+
+ Energy Mode                            Depends on charging        Electric Priority if you charge at home; Fuel Priority if you cannot.
+                                                                           .‫ وأولوية الوقود إذا كنت ال تستطيع‬،‫أولوية الكهرباء إذا كنت تشحن في المزنل‬
+
+
+ Slow Charging Current                  Match your supply          Protects home wiring on a long overnight charge.
+                                                                                                         .‫يحمي أسالك المزنل أثناء الشحن اللييل الطويل‬
+
+
+ Speed-dependent Volume                 On                         No more adjusting volume as speed changes.
+                                                                                                                 .‫ال حاجة لتعديل الصوت مع تغري الرسعة‬
+
+
+ Time Zone                              UTC+3 Cairo                Re-check after the seasonal clock change.
+                                                                                                                    .‫راجعه بعد تغيري التوقيت الموسمي‬
+
+
+
+FIVE THINGS WORTH REMEMBERING                                                                                         ‫خمسة أمور تستحق التذكر‬
+  • The engine is a generator. It never drives the wheels. If it starts while you are sitting still, that is normal behaviour, not a fault.
+                                               ً
+                                              .‫عطال‬                                               ً
+                                                    ‫ وإذا عمل والسيارة واقفة فهذا سلوك طبيعي وليس‬.‫إطالقا‬                              ّ
+                                                                                                         ‫ وهو ال يدير العجالت‬.‫مولد كهرباء‬ ‫المحرك‬
+
+
+
+
+                                                                        32                                                                      iCAUR V27
+• Charging to 100% is fine. The LFP battery is designed for it.
+                                                                                        .‫ مصممة لذلك‬LFP ‫ فبطارية‬.‫ ال رضر منه‬%100 ‫الشحن حىت‬
+
+• Never run Stationary Charging indoors. A running engine in an enclosed space is dangerous.
+                                                                                                                               ّ
+                                                             .‫ فتشغيل المحرك في مكان مغلق خطر‬.‫تشغل الشحن أثناء التوقف في مكان مغلق‬ ‫ال‬
+
+• Force Range Extender builds charge, it does not save it. It runs the petrol generator to charge the battery while you drive, and uses
+  more fuel while it does. Use it before a city stretch, not as an everyday setting.
+                              ً
+   ‫ استخدمه قبل‬.‫وقودا أكرث خالل ذلك‬                                               ّ
+                                    ‫ ويستهلك‬،‫مولد البزنين لشحن البطارية أثناء القيادة‬  ّ
+                                                                                      ‫يشغل‬        ّ
+                                                                                           ‫ فهو‬.‫يوفره‬ ‫ يبين الشحن وال‬Force Range Extender ‫وضع‬
+                                                                                                           .‫ ال كإعداد يومي‬،‫مرحلة داخل المدينة‬
+
+• Use the ⓘ icons. They explain each setting in the car's own words, and they stay accurate through software updates.
+                                                    .‫ وتبقى دقيقة مع تحديثات الربمجيات‬،‫ فهي ترشح كل إعداد بلغة النظام نفسه‬.ⓘ ‫استخدم عالمات‬
+
+
+
+
+ ABOUT THIS GUIDE / ‫عن هذا الدليل‬
+ Prepared from the Settings menus of a 2026 iCAUR V27 in Egypt. 2026 ‫ موديل‬iCAUR V27 ‫ُأع ّد هذا الدليل من قوائم اإلعدادات في سيارة‬
+                                                                                                  ً
+ The screenshots are photographs taken from an actual vehicle. It ‫ ويغطي الدليل‬.‫فوتوغرافيا من سيارة حقيقية‬   ‫ والصور مأخوذة‬.‫في مرص‬
+ covers the Settings section of the touchscreen; the home screen,
+                                                                        ‫قسم اإلعدادات في الشاشة فقط؛ أما الشاشة الرئيسية والتكييف‬
+ climate controls, 540° camera, drive modes and the General
+                                                                   ‫ فغري مشمولة في‬General ‫ درجة وأوضاع القيادة وقائمة‬540 ‫وكامريا‬
+ menu are not included in this edition. Menu names and options
+ differ between trim levels and software versions, and this guide     ‫ وتختلف مسميات القوائم وخياراتها بني الفئات ونسخ‬.‫هذه النسخة‬
+ does not replace the official owner's manual — where the two            ‫ وال يغين هذا الدليل عن دليل المالك الرسمي — وعند‬،‫الربمجيات‬
+ disagree, follow the manual.                                                                             .‫االختالف يُعتمد دليل المالك‬
+
+
+
+
+                                                                    33                                                             iCAUR V27
+

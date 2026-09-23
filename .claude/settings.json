@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(npm run lint 2>&1)",
+      "WebFetch(domain:www.contactcars.com)"
+    ]
+  }
+}
