@@ -12,7 +12,9 @@
   "dependencies": {
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.8.0",
+    "jose": "^6.2.12",
     "lucide-react": "^1.47.0",
+    "mongodb": "^7.6.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "three": "^0.186.0"

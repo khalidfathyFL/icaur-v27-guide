@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { resolveRoute } from './app/routes'
+import { AuthProvider } from './auth/AuthProvider'
 import { SiteFooter } from './components/SiteFooter'
 import { SiteHeader } from './components/SiteHeader'
 import { LanguageProvider } from './i18n/LanguageProvider'
@@ -14,7 +15,9 @@ export default function App() {
     <ThemeProvider>
       <LanguageProvider>
         <TrimProvider>
-          <Shell />
+          <AuthProvider>
+            <Shell />
+          </AuthProvider>
         </TrimProvider>
       </LanguageProvider>
     </ThemeProvider>

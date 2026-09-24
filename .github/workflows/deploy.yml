@@ -32,6 +32,10 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Set this as a repository variable to switch on accounts, posts and
+          # suggested edits. Left unset, the site builds as a static guide.
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
