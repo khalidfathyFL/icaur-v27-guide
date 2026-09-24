@@ -5,6 +5,8 @@ import { searchFeatures } from '../features/search/searchFeatures'
 import { useLanguage } from '../i18n/languageContext'
 import { LANGUAGES, type Language } from '../i18n/translator'
 import { guideHref } from '../lib/links'
+import { useAuth } from '../auth/authContext'
+import { apiConfigured } from '../lib/api'
 import { useTheme, type Theme } from '../theme/themeContext'
 import { TRIMS, useTrim } from '../vehicle/trimContext'
 import { VerificationBadge } from './VerificationBadge'
@@ -19,6 +21,7 @@ const NAV_ITEMS = [
   { href: '/reviews', en: 'Reviews', ar: 'المراجعات' },
   { href: '/videos', en: 'Videos', ar: 'الفيديوهات' },
   { href: '/sources', en: 'Sources', ar: 'المصادر' },
+  { href: '/blog', en: 'Posts', ar: 'المقالات' },
   { href: '/glossary', en: 'Glossary', ar: 'القاموس' },
 ]
 
@@ -34,6 +37,7 @@ export function SiteHeader({
   const { tx, pair, language, setLanguage } = useLanguage()
   const { theme, setTheme } = useTheme()
   const { trim, setTrim } = useTrim()
+  const { user, isAdmin, signOut } = useAuth()
   const [query, setQuery] = useState('')
 
   const results = useMemo(() => searchFeatures(query), [query])
@@ -111,6 +115,30 @@ export function SiteHeader({
             </select>
           </label>
         </div>
+
+        {apiConfigured && (
+          <div className="account-controls">
+            {user ? (
+              <>
+                {isAdmin && (
+                  <a className="account-link" href="#/admin">
+                    {tx('Review queue', 'قائمة المراجعة')}
+                  </a>
+                )}
+                <a className="account-link" href="#/contribute">
+                  {tx('Contribute', 'ساهم')}
+                </a>
+                <button className="account-link" type="button" onClick={signOut}>
+                  {tx('Sign out', 'خروج')}
+                </button>
+              </>
+            ) : (
+              <a className="account-link" href="#/signin">
+                {tx('Sign in', 'تسجيل الدخول')}
+              </a>
+            )}
+          </div>
+        )}
 
         <div className="trim-toggle" role="group" aria-label={tx('Trim selector', 'اختيار الفئة')}>
           {TRIMS.map((option) => (
