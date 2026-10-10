@@ -61,12 +61,17 @@ export async function readJsonBody<T>(request: Request): Promise<T> {
   }
 }
 
-/** Splits `/api/posts/123/review` into `['posts', '123', 'review']`. */
+/** A base keeps this working even if the runtime hands us a path-only url. */
+function requestUrl(request: Request): URL {
+  const host = request.headers.get('host') ?? 'localhost'
+  return new URL(request.url, `https://${host}`)
+}
+
+/** Splits `/api/posts/123/review` into ['posts', '123', 'review']. */
 export function pathSegments(request: Request): string[] {
-  const { pathname } = new URL(request.url)
-  return pathname.replace(/^\/api\/?/, '').split('/').filter(Boolean)
+  return requestUrl(request).pathname.replace(/^\/api\/?/, '').split('/').filter(Boolean)
 }
 
 export function searchParams(request: Request): URLSearchParams {
-  return new URL(request.url).searchParams
+  return requestUrl(request).searchParams
 }

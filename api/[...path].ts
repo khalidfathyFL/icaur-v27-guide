@@ -19,35 +19,41 @@ const ROUTES: Record<string, RouteHandler> = {
  * A single catch-all function rather than a file per endpoint: Vercel's Hobby
  * plan caps how many serverless functions a deployment may have, and one
  * function also means one warm Mongo pool instead of several.
+ *
+ * Exported as an object with a `fetch` method, which is what tells Vercel to
+ * use the Web handler signature. A bare default function is read as the
+ * classic Node `(req, res)` handler, where `request.headers.get` does not
+ * exist and `request.url` is only a path.
  */
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders(request) })
-  }
-
-  try {
-    const segments = pathSegments(request)
-
-    // Reports whether the function itself is healthy and which settings are
-    // present, without ever echoing their values.
-    if (segments[0] === 'health') {
-      return json(request, {
-        ok: true,
-        env: {
-          MONGODB_URI: Boolean(process.env.MONGODB_URI),
-          MONGODB_DB: Boolean(process.env.MONGODB_DB),
-          JWT_SECRET: Boolean(process.env.JWT_SECRET),
-          ALLOWED_ORIGINS: Boolean(process.env.ALLOWED_ORIGINS),
-        },
-      })
+export default {
+  async fetch(request: Request): Promise<Response> {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders(request) })
     }
 
-    const route = ROUTES[segments[0] ?? '']
+    try {
+      const segments = pathSegments(request)
 
-    if (!route) throw new HttpError(404, 'Unknown endpoint.')
+      // Reports whether the function is alive and which settings are present,
+      // without ever echoing their values.
+      if (segments[0] === 'health') {
+        return json(request, {
+          ok: true,
+          env: {
+            MONGODB_URI: Boolean(process.env.MONGODB_URI),
+            MONGODB_DB: Boolean(process.env.MONGODB_DB),
+            JWT_SECRET: Boolean(process.env.JWT_SECRET),
+            ALLOWED_ORIGINS: Boolean(process.env.ALLOWED_ORIGINS),
+          },
+        })
+      }
 
-    return await route(request, segments.slice(1))
-  } catch (error) {
-    return errorResponse(request, error)
-  }
+      const route = ROUTES[segments[0] ?? '']
+      if (!route) throw new HttpError(404, 'Unknown endpoint.')
+
+      return await route(request, segments.slice(1))
+    } catch (error) {
+      return errorResponse(request, error)
+    }
+  },
 }
