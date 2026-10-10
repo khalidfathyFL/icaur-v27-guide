@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb'
 import { readSession, requireAdmin, requireUser } from '../_lib/auth.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
+import { sanitizeRichText, toPlainText } from '../_lib/sanitize.js'
 import {
   requireLocalized,
   requireReviewStatus,
@@ -104,8 +105,16 @@ async function createPost(request: Request): Promise<Response> {
   const body = await readJsonBody<Record<string, unknown>>(request)
 
   const title = requireLocalized(body.title, 'Title', 200)
-  const content = requireLocalized(body.body, 'Post', 20000)
-  const excerpt = requireLocalized(body.excerpt ?? { en: content.en.slice(0, 200), ar: '' }, 'Summary', 400)
+  const raw = requireLocalized(body.body, 'Post', 40000)
+
+  // The editor produces HTML, so it is cleaned before it is stored, never on
+  // the way out: a post is written once and read many times, and the endpoint
+  // can be called without the editor.
+  const content = { en: sanitizeRichText(raw.en), ar: sanitizeRichText(raw.ar) }
+  const excerpt = {
+    en: toPlainText(content.en).slice(0, 300),
+    ar: toPlainText(content.ar).slice(0, 300),
+  }
 
   const now = new Date().toISOString()
   const doc = {
@@ -153,8 +162,15 @@ async function updatePost(request: Request, id: string): Promise<Response> {
   const update: Partial<PostDoc> = { updatedAt: new Date().toISOString() }
 
   if (body.title !== undefined) update.title = requireLocalized(body.title, 'Title', 200)
-  if (body.body !== undefined) update.body = requireLocalized(body.body, 'Post', 20000)
-  if (body.excerpt !== undefined) update.excerpt = requireLocalized(body.excerpt, 'Summary', 400)
+
+  if (body.body !== undefined) {
+    const raw = requireLocalized(body.body, 'Post', 40000)
+    update.body = { en: sanitizeRichText(raw.en), ar: sanitizeRichText(raw.ar) }
+    update.excerpt = {
+      en: toPlainText(update.body.en).slice(0, 300),
+      ar: toPlainText(update.body.ar).slice(0, 300),
+    }
+  }
 
   // A contributor's edit re-enters moderation; an admin's does not.
   if (!isAdmin) update.status = 'pending'

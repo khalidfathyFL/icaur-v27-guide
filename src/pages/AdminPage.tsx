@@ -1,25 +1,48 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Check, X } from 'lucide-react'
-import { PageFrame, SectionHeading } from '../components/layout'
-import { StatusPill } from '../components/StatusPill'
+import {
+  BadgeDollarSign,
+  FileEdit,
+  LayoutDashboard,
+  Newspaper,
+  ShieldCheck,
+  Store,
+  Users,
+  Wrench,
+} from 'lucide-react'
+import { AdminShell, type AdminNavGroup } from '../components/admin/AdminShell'
+import { PageFrame } from '../components/layout'
 import { useAuth } from '../auth/authContext'
 import { useLanguage } from '../i18n/languageContext'
-import {
-  ApiError,
-  api,
-  apiConfigured,
-  type ApiPost,
-  type ApiSuggestion,
-  type ReviewStatus,
-} from '../lib/api'
+import { api, apiConfigured } from '../lib/api'
+import { DealerAdmin, PostQueue, PricingAdmin, SuggestionQueue, UserAdmin } from './admin/sections'
 import { ServiceUnavailable } from './AccountPage'
 
-type Tab = 'posts' | 'suggestions'
+/** Counts of work waiting, shown as badges on the sidebar. */
+function usePendingCounts() {
+  const [counts, setCounts] = useState({ posts: 0, suggestions: 0 })
+
+  const refresh = useCallback(() => {
+    Promise.allSettled([
+      api.listPosts({ status: 'pending' }),
+      api.listSuggestions({ queue: true, status: 'pending' }),
+    ]).then(([posts, suggestions]) => {
+      setCounts({
+        posts: posts.status === 'fulfilled' ? posts.value.posts.length : 0,
+        suggestions: suggestions.status === 'fulfilled' ? suggestions.value.suggestions.length : 0,
+      })
+    })
+  }, [])
+
+  useEffect(refresh, [refresh])
+
+  return { counts, refresh }
+}
 
 export function AdminPage() {
   const { tx } = useLanguage()
   const { user, loading, isAdmin } = useAuth()
-  const [tab, setTab] = useState<Tab>('posts')
+  const [active, setActive] = useState('posts')
+  const { counts, refresh } = usePendingCounts()
 
   if (!apiConfigured) return <ServiceUnavailable />
 
@@ -31,16 +54,16 @@ export function AdminPage() {
     )
   }
 
-  // Server-side checks are what actually protect the data; this only keeps the
-  // page tidy for someone who is not an admin.
+  // The server checks this on every privileged call; this only keeps the page
+  // tidy for someone who is not an admin.
   if (!user || !isAdmin) {
     return (
       <PageFrame
         eyebrow="Admin"
         title={tx('Admins Only', 'للمشرفين فقط')}
         intro={tx(
-          'This page is for reviewing contributions. Sign in with an admin account to use it.',
-          'هذه الصفحة لمراجعة المساهمات. سجل الدخول بحساب مشرف لاستخدامها.',
+          'This workspace is for reviewing contributions and maintaining the market data. Sign in with an admin account to use it.',
+          'هذه المساحة لمراجعة المساهمات وإدارة بيانات السوق. سجل الدخول بحساب مشرف لاستخدامها.',
         )}
       >
         <a className="primary-action" href="#/signin">
@@ -50,233 +73,67 @@ export function AdminPage() {
     )
   }
 
+  const groups: AdminNavGroup[] = [
+    {
+      key: 'moderation',
+      label: tx('Moderation', 'المراجعة'),
+      icon: ShieldCheck,
+      items: [
+        {
+          key: 'posts',
+          label: tx('Posts', 'المقالات'),
+          icon: Newspaper,
+          badge: counts.posts,
+          subgroup: tx('Awaiting review', 'في انتظار المراجعة'),
+        },
+        {
+          key: 'suggestions',
+          label: tx('Corrections', 'التصحيحات'),
+          icon: FileEdit,
+          badge: counts.suggestions,
+          subgroup: tx('Awaiting review', 'في انتظار المراجعة'),
+        },
+      ],
+    },
+    {
+      key: 'catalogue',
+      label: tx('Market data', 'بيانات السوق'),
+      icon: Wrench,
+      items: [
+        { key: 'dealers', label: tx('Dealers', 'الوكلاء'), icon: Store },
+        { key: 'pricing', label: tx('Prices', 'الأسعار'), icon: BadgeDollarSign },
+      ],
+    },
+    {
+      key: 'people',
+      label: tx('People', 'الأشخاص'),
+      icon: Users,
+      items: [{ key: 'users', label: tx('Accounts', 'الحسابات'), icon: LayoutDashboard }],
+    },
+  ]
+
   return (
     <PageFrame
       eyebrow="Admin"
-      title={tx('Review Queue', 'قائمة المراجعة')}
+      title={tx('Admin Workspace', 'مساحة الإدارة')}
       intro={tx(
-        'Approve or reject what contributors have sent. Approved posts appear on the site immediately; approved corrections are a note to update the content.',
-        'وافق أو ارفض ما أرسله المساهمون. المقالات المقبولة تظهر على الموقع فورا، والتصحيحات المقبولة تذكير بتحديث المحتوى.',
+        'Approve or reject what contributors send, and keep the dealer list and prices current.',
+        'وافق أو ارفض ما يرسله المساهمون، وحافظ على تحديث قائمة الوكلاء والأسعار.',
       )}
     >
-      <div className="trim-toggle admin-tabs" role="group">
-        <button
-          type="button"
-          className={tab === 'posts' ? 'selected' : ''}
-          onClick={() => setTab('posts')}
-        >
-          {tx('Posts', 'المقالات')}
-        </button>
-        <button
-          type="button"
-          className={tab === 'suggestions' ? 'selected' : ''}
-          onClick={() => setTab('suggestions')}
-        >
-          {tx('Corrections', 'التصحيحات')}
-        </button>
-      </div>
-
-      {tab === 'posts' ? <PostQueue /> : <SuggestionQueue />}
+      <AdminShell
+        groups={groups}
+        active={active}
+        onChange={setActive}
+        title={tx('Workspace', 'المساحة')}
+        subtitle={user.name}
+      >
+        {active === 'posts' && <PostQueue onChanged={refresh} />}
+        {active === 'suggestions' && <SuggestionQueue onChanged={refresh} />}
+        {active === 'dealers' && <DealerAdmin />}
+        {active === 'pricing' && <PricingAdmin />}
+        {active === 'users' && <UserAdmin currentUserId={user.id} />}
+      </AdminShell>
     </PageFrame>
-  )
-}
-
-/** Shared review controls for both queues. */
-function ReviewActions({
-  onDecide,
-  busy,
-}: {
-  onDecide: (status: 'approved' | 'rejected', note: string) => void
-  busy: boolean
-}) {
-  const { tx } = useLanguage()
-  const [note, setNote] = useState('')
-
-  return (
-    <div className="review-actions">
-      <input
-        value={note}
-        onChange={(event) => setNote(event.target.value)}
-        placeholder={tx('Note to the author (optional)', 'ملاحظة للكاتب (اختياري)')}
-        maxLength={1000}
-      />
-      <button type="button" className="approve" disabled={busy} onClick={() => onDecide('approved', note)}>
-        <Check size={16} /> {tx('Approve', 'قبول')}
-      </button>
-      <button type="button" className="reject" disabled={busy} onClick={() => onDecide('rejected', note)}>
-        <X size={16} /> {tx('Reject', 'رفض')}
-      </button>
-    </div>
-  )
-}
-
-function useQueueFilter() {
-  const [status, setStatus] = useState<ReviewStatus | 'all'>('pending')
-  const { tx } = useLanguage()
-
-  const control = (
-    <label className="select-control queue-filter">
-      <span>{tx('Show', 'عرض')}</span>
-      <select value={status} onChange={(event) => setStatus(event.target.value as ReviewStatus | 'all')}>
-        <option value="pending">{tx('Awaiting review', 'في انتظار المراجعة')}</option>
-        <option value="approved">{tx('Published', 'منشور')}</option>
-        <option value="rejected">{tx('Not accepted', 'غير مقبول')}</option>
-        <option value="all">{tx('Everything', 'الكل')}</option>
-      </select>
-    </label>
-  )
-
-  return { status, control }
-}
-
-function PostQueue() {
-  const { t, tx } = useLanguage()
-  const { status, control } = useQueueFilter()
-  const [posts, setPosts] = useState<ApiPost[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [busyId, setBusyId] = useState<string | null>(null)
-
-  const load = useCallback(() => {
-    api
-      .listPosts({ status })
-      .then(({ posts: list }) => setPosts(list))
-      .catch((caught) =>
-        setError(caught instanceof ApiError ? caught.message : tx('Could not load.', 'تعذر التحميل.')),
-      )
-  }, [status, tx])
-
-  useEffect(load, [load])
-
-  async function decide(id: string, decision: 'approved' | 'rejected', note: string) {
-    setBusyId(id)
-    setError(null)
-    try {
-      await api.reviewPost(id, { status: decision, note: note || undefined })
-      load()
-    } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : tx('Could not save.', 'تعذر الحفظ.'))
-    } finally {
-      setBusyId(null)
-    }
-  }
-
-  return (
-    <>
-      <SectionHeading eyebrow={tx('Posts', 'المقالات')} title={tx('Contributor Posts', 'مقالات المساهمين')} compact />
-      {control}
-      {error && <p className="form-error">{error}</p>}
-      {posts.length === 0 && <p className="muted-note">{tx('Nothing here.', 'لا يوجد شيء هنا.')}</p>}
-
-      <div className="review-list">
-        {posts.map((post) => (
-          <article className="review-card" key={post.id}>
-            <header>
-              <div>
-                <h3>{t(post.title)}</h3>
-                <small>
-                  {post.authorName} · {new Date(post.createdAt).toLocaleDateString()}
-                </small>
-              </div>
-              <StatusPill status={post.status} />
-            </header>
-
-            <p className="review-excerpt">{t(post.excerpt)}</p>
-            <a className="inline-link" href={`#/blog/${post.slug}`}>
-              {tx('Read the full post', 'اقرأ المقال كاملا')}
-            </a>
-
-            {post.status === 'pending' && (
-              <ReviewActions busy={busyId === post.id} onDecide={(decision, note) => decide(post.id, decision, note)} />
-            )}
-          </article>
-        ))}
-      </div>
-    </>
-  )
-}
-
-function SuggestionQueue() {
-  const { tx } = useLanguage()
-  const { status, control } = useQueueFilter()
-  const [suggestions, setSuggestions] = useState<ApiSuggestion[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [busyId, setBusyId] = useState<string | null>(null)
-
-  const load = useCallback(() => {
-    api
-      .listSuggestions({ queue: true, status })
-      .then(({ suggestions: list }) => setSuggestions(list))
-      .catch((caught) =>
-        setError(caught instanceof ApiError ? caught.message : tx('Could not load.', 'تعذر التحميل.')),
-      )
-  }, [status, tx])
-
-  useEffect(load, [load])
-
-  async function decide(id: string, decision: 'approved' | 'rejected', note: string) {
-    setBusyId(id)
-    setError(null)
-    try {
-      await api.reviewSuggestion(id, { status: decision, note: note || undefined })
-      load()
-    } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : tx('Could not save.', 'تعذر الحفظ.'))
-    } finally {
-      setBusyId(null)
-    }
-  }
-
-  return (
-    <>
-      <SectionHeading
-        eyebrow={tx('Corrections', 'التصحيحات')}
-        title={tx('Suggested Edits', 'التصحيحات المقترحة')}
-        compact
-      />
-      {control}
-      {error && <p className="form-error">{error}</p>}
-      {suggestions.length === 0 && <p className="muted-note">{tx('Nothing here.', 'لا يوجد شيء هنا.')}</p>}
-
-      <div className="review-list">
-        {suggestions.map((suggestion) => (
-          <article className="review-card" key={suggestion.id}>
-            <header>
-              <div>
-                <h3>
-                  {suggestion.target.kind} · {suggestion.target.id}
-                  {suggestion.target.field ? ` · ${suggestion.target.field}` : ''}
-                </h3>
-                <small>
-                  {suggestion.authorName} · {new Date(suggestion.createdAt).toLocaleDateString()}
-                </small>
-              </div>
-              <StatusPill status={suggestion.status} />
-            </header>
-
-            <div className="diff-grid">
-              <div>
-                <strong>{tx('Now', 'الآن')}</strong>
-                <p>{suggestion.current || tx('(not given)', '(غير محدد)')}</p>
-              </div>
-              <div>
-                <strong>{tx('Proposed', 'المقترح')}</strong>
-                <p>{suggestion.proposed}</p>
-              </div>
-            </div>
-
-            <p className="review-reason">
-              <strong>{tx('Source', 'المصدر')}:</strong> {suggestion.reason}
-            </p>
-
-            {suggestion.status === 'pending' && (
-              <ReviewActions
-                busy={busyId === suggestion.id}
-                onDecide={(decision, note) => decide(suggestion.id, decision, note)}
-              />
-            )}
-          </article>
-        ))}
-      </div>
-    </>
   )
 }

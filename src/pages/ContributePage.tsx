@@ -12,6 +12,7 @@ import {
   type ApiSuggestion,
   type SuggestionTarget,
 } from '../lib/api'
+import { RichTextEditor } from '../components/editor/RichTextEditor'
 import { ServiceUnavailable } from './AccountPage'
 import { StatusPill } from '../components/StatusPill'
 
@@ -82,7 +83,6 @@ function PostComposer() {
       await api.createPost({
         title: { en: titleEn, ar: titleAr },
         body: { en: bodyEn, ar: bodyAr },
-        excerpt: { en: bodyEn.slice(0, 200), ar: bodyAr.slice(0, 200) },
       })
       setMessage(tx('Sent for review. Thank you.', 'تم الإرسال للمراجعة. شكرا لك.'))
       setTitleEn('')
@@ -114,33 +114,21 @@ function PostComposer() {
           <input value={titleAr} onChange={(event) => setTitleAr(event.target.value)} maxLength={200} dir="rtl" />
         </label>
 
-        <label>
-          <span>{tx('Post (English)', 'المقال (إنجليزي)')}</span>
-          <textarea
-            value={bodyEn}
-            onChange={(event) => setBodyEn(event.target.value)}
-            required
-            rows={7}
-            maxLength={20000}
-          />
-        </label>
+        <div className="editor-field">
+          <span className="editor-label">{tx('Post (English)', 'المقال (إنجليزي)')}</span>
+          <RichTextEditor value={bodyEn} onChange={setBodyEn} />
+        </div>
 
-        <label>
-          <span>{tx('Post (Arabic)', 'المقال (عربي)')}</span>
-          <textarea
-            value={bodyAr}
-            onChange={(event) => setBodyAr(event.target.value)}
-            rows={7}
-            maxLength={20000}
-            dir="rtl"
-          />
-          <small>
+        <div className="editor-field">
+          <span className="editor-label">{tx('Post (Arabic)', 'المقال (عربي)')}</span>
+          <RichTextEditor value={bodyAr} onChange={setBodyAr} dir="rtl" />
+          <small className="editor-hint">
             {tx(
               'Write whichever language you are comfortable in. An admin can fill in the other side.',
               'اكتب باللغة التي تريحك، ويمكن للمشرف إكمال اللغة الأخرى.',
             )}
           </small>
-        </label>
+        </div>
 
         {error && <p className="form-error">{error}</p>}
         {message && <p className="form-success">{message}</p>}

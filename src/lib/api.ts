@@ -176,7 +176,8 @@ export const api = {
 
   readPost: (idOrSlug: string) => request<{ post: ApiPost }>(`posts/${idOrSlug}`),
 
-  createPost: (input: { title: Localized; body: Localized; excerpt?: Localized }) =>
+  /** The excerpt is derived server-side from the sanitized body. */
+  createPost: (input: { title: Localized; body: Localized }) =>
     request<{ post: ApiPost }>('posts', { method: 'POST', body: input, auth: true }),
 
   updatePost: (id: string, input: { title?: Localized; body?: Localized; excerpt?: Localized }) =>

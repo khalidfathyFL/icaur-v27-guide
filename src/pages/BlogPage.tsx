@@ -6,19 +6,14 @@ import { useLanguage } from '../i18n/languageContext'
 import { api, apiConfigured, type ApiPost } from '../lib/api'
 import { ServiceUnavailable } from './AccountPage'
 
-/** Renders a contributor's markdown-ish text without pulling in a parser. */
-function Paragraphs({ text }: { text: string }) {
-  return (
-    <>
-      {text
-        .split(/\n{2,}/)
-        .map((block) => block.trim())
-        .filter(Boolean)
-        .map((block, index) => (
-          <p key={index}>{block}</p>
-        ))}
-    </>
-  )
+/**
+ * Post bodies are HTML from the editor. They are sanitized in the API before
+ * they are ever stored, against an allowlist that matches the editor's
+ * toolbar, so what reaches here has already been stripped of scripts, event
+ * handlers and javascript: URLs.
+ */
+function RichText({ html }: { html: string }) {
+  return <div className="rich-text" dangerouslySetInnerHTML={{ __html: html }} />
 }
 
 export function BlogPage() {
@@ -149,10 +144,10 @@ export function PostPage({ slug }: { slug: string }) {
       )}
 
       <article className="post-body">
-        <Paragraphs text={t(post.body)} />
+        <RichText html={t(post.body)} />
         {bodyAlt && (
           <div className="alt-lang" dir="rtl" lang="ar">
-            <Paragraphs text={bodyAlt} />
+            <RichText html={bodyAlt} />
           </div>
         )}
       </article>
