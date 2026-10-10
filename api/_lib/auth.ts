@@ -2,8 +2,8 @@ import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:cry
 import { promisify } from 'node:util'
 import { SignJWT, jwtVerify } from 'jose'
 import { ObjectId } from 'mongodb'
-import { getDb } from './mongo'
-import { HttpError } from './http'
+import { getDb } from './mongo.js'
+import { HttpError } from './http.js'
 
 const scrypt = promisify(scryptCallback) as (
   password: string,

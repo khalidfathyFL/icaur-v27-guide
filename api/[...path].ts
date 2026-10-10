@@ -1,9 +1,9 @@
-import { handleAuth } from './_routes/auth'
-import { handleDealers } from './_routes/dealers'
-import { handlePosts } from './_routes/posts'
-import { handlePricing } from './_routes/pricing'
-import { handleSuggestions } from './_routes/suggestions'
-import { HttpError, corsHeaders, errorResponse, json, pathSegments } from './_lib/http'
+import { handleAuth } from './_routes/auth.js'
+import { handleDealers } from './_routes/dealers.js'
+import { handlePosts } from './_routes/posts.js'
+import { handlePricing } from './_routes/pricing.js'
+import { handleSuggestions } from './_routes/suggestions.js'
+import { HttpError, corsHeaders, errorResponse, json, pathSegments } from './_lib/http.js'
 
 type RouteHandler = (request: Request, segments: string[]) => Promise<Response>
 

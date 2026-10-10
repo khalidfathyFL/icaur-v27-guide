@@ -1,5 +1,5 @@
 import type { ObjectId } from 'mongodb'
-import { HttpError } from './http'
+import { HttpError } from './http.js'
 
 /** Mirrors the site's bilingual content shape. */
 export type Localized = { en: string; ar: string }

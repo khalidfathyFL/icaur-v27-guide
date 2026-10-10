@@ -1,13 +1,13 @@
 import { ObjectId } from 'mongodb'
-import { requireAdmin, requireUser } from '../_lib/auth'
-import { HttpError, json, readJsonBody, searchParams } from '../_lib/http'
-import { getDb } from '../_lib/mongo'
+import { requireAdmin, requireUser } from '../_lib/auth.js'
+import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
+import { getDb } from '../_lib/mongo.js'
 import {
   requireReviewStatus,
   requireString,
   requireTarget,
   type SuggestionDoc,
-} from '../_lib/models'
+} from '../_lib/models.js'
 
 const PAGE_SIZE = 30
 

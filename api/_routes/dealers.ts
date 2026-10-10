@@ -1,8 +1,8 @@
 import { ObjectId } from 'mongodb'
-import { requireAdmin } from '../_lib/auth'
-import { HttpError, json, readJsonBody } from '../_lib/http'
-import { getDb } from '../_lib/mongo'
-import { optionalString, requireString, type DealerDoc } from '../_lib/models'
+import { requireAdmin } from '../_lib/auth.js'
+import { HttpError, json, readJsonBody } from '../_lib/http.js'
+import { getDb } from '../_lib/mongo.js'
+import { optionalString, requireString, type DealerDoc } from '../_lib/models.js'
 
 function toPublic(dealer: DealerDoc) {
   return {

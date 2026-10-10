@@ -2,14 +2,15 @@ import { ObjectId } from 'mongodb'
 import {
   hashPassword,
   issueToken,
+  requireAdmin,
   requireUser,
   verifyPassword,
   type Role,
   type UserDoc,
-} from '../_lib/auth'
-import { HttpError, json, readJsonBody } from '../_lib/http'
-import { getDb } from '../_lib/mongo'
-import { requireEmail, requirePassword, requireString } from '../_lib/models'
+} from '../_lib/auth.js'
+import { HttpError, json, readJsonBody } from '../_lib/http.js'
+import { getDb } from '../_lib/mongo.js'
+import { requireEmail, requirePassword, requireString } from '../_lib/models.js'
 
 /**
  * The first account to register becomes the admin, which bootstraps the site
@@ -93,7 +94,6 @@ async function me(request: Request): Promise<Response> {
 
 /** Admin-only: list contributors and change a role or block an account. */
 async function users(request: Request, segments: string[]): Promise<Response> {
-  const { requireAdmin } = await import('../_lib/auth')
   const admin = await requireAdmin(request)
   const db = await getDb()
   const collection = db.collection<UserDoc>('users')
