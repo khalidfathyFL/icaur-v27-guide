@@ -4,6 +4,7 @@ import {
   FileEdit,
   LayoutDashboard,
   Newspaper,
+  PieChart,
   ShieldCheck,
   Store,
   Users,
@@ -14,6 +15,7 @@ import { PageFrame } from '../components/layout'
 import { useAuth } from '../auth/authContext'
 import { useLanguage } from '../i18n/languageContext'
 import { api, apiConfigured } from '../lib/api'
+import { Overview } from './admin/Overview'
 import { DealerAdmin, PostQueue, PricingAdmin, SuggestionQueue, UserAdmin } from './admin/sections'
 import { ServiceUnavailable } from './AccountPage'
 
@@ -41,7 +43,7 @@ function usePendingCounts() {
 export function AdminPage() {
   const { tx } = useLanguage()
   const { user, loading, isAdmin } = useAuth()
-  const [active, setActive] = useState('posts')
+  const [active, setActive] = useState('overview')
   const { counts, refresh } = usePendingCounts()
 
   if (!apiConfigured) return <ServiceUnavailable />
@@ -74,6 +76,12 @@ export function AdminPage() {
   }
 
   const groups: AdminNavGroup[] = [
+    {
+      key: 'overview',
+      label: tx('Overview', 'نظرة عامة'),
+      icon: LayoutDashboard,
+      items: [{ key: 'overview', label: tx('Who owns what', 'من يملك ماذا'), icon: PieChart }],
+    },
     {
       key: 'moderation',
       label: tx('Moderation', 'المراجعة'),
@@ -108,7 +116,7 @@ export function AdminPage() {
       key: 'people',
       label: tx('People', 'الأشخاص'),
       icon: Users,
-      items: [{ key: 'users', label: tx('Accounts', 'الحسابات'), icon: LayoutDashboard }],
+      items: [{ key: 'users', label: tx('Accounts', 'الحسابات'), icon: Users }],
     },
   ]
 
@@ -128,6 +136,7 @@ export function AdminPage() {
         title={tx('Workspace', 'المساحة')}
         subtitle={user.name}
       >
+        {active === 'overview' && <Overview />}
         {active === 'posts' && <PostQueue onChanged={refresh} />}
         {active === 'suggestions' && <SuggestionQueue onChanged={refresh} />}
         {active === 'dealers' && <DealerAdmin />}

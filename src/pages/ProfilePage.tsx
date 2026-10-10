@@ -10,6 +10,7 @@ import {
   PASSWORD_RULE,
   STRONG_PASSWORD,
 } from '../content/places'
+import { colours as CAR_COLOURS } from '../content/egypt'
 import { ApiError, api, apiConfigured } from '../lib/api'
 import { TRIMS } from '../vehicle/trimContext'
 import { ServiceUnavailable } from './AccountPage'
@@ -69,6 +70,7 @@ function ProfileForm() {
   const [country, setCountry] = useState(user?.country ?? '')
   const [city, setCity] = useState(user?.city ?? '')
   const [trim, setTrim] = useState(user?.trim ?? '')
+  const [colour, setColour] = useState(user?.colour ?? '')
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -90,6 +92,7 @@ function ProfileForm() {
         country: country || undefined,
         city: city || undefined,
         trim: trim === 'play' || trim === 'wild' ? trim : undefined,
+        colour: colour || undefined,
       })
       await refresh()
       setMessage(tx('Saved.', 'تم الحفظ.'))
@@ -184,6 +187,19 @@ function ProfileForm() {
             {TRIMS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+
+        <label>
+          <span>{tx('Car colour', 'لون السيارة')}</span>
+          <select value={colour} onChange={(event) => setColour(event.target.value)}>
+            <option value="">{tx('Not set', 'غير محدد')}</option>
+            {CAR_COLOURS.map((option) => (
+              <option key={option.en} value={option.en}>
+                {t(option)}
               </option>
             ))}
           </select>

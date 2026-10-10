@@ -12,6 +12,7 @@ import {
   STRONG_PASSWORD,
 } from '../content/places'
 import { TRIMS } from '../vehicle/trimContext'
+import { colours as CAR_COLOURS } from '../content/egypt'
 
 type Mode = 'signin' | 'register'
 
@@ -27,6 +28,7 @@ export function SignInPage() {
   const [country, setCountry] = useState('')
   const [city, setCity] = useState('')
   const [trim, setTrim] = useState('')
+  const [colour, setColour] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -60,6 +62,7 @@ export function SignInPage() {
           country: country || undefined,
           city: city || undefined,
           trim: trim === 'play' || trim === 'wild' ? trim : undefined,
+          colour: colour || undefined,
         })
       }
       window.location.hash = '#/contribute'
@@ -221,6 +224,19 @@ export function SignInPage() {
                 ))}
               </select>
             </label>
+
+            <label>
+              <span>{tx('Car colour', 'لون السيارة')}</span>
+              <select value={colour} onChange={(event) => setColour(event.target.value)}>
+                <option value="">{tx('Not set', 'غير محدد')}</option>
+                {CAR_COLOURS.map((option) => (
+                  <option key={option.en} value={option.en}>
+                    {t(option)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
           </fieldset>
         )}
 

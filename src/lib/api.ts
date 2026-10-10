@@ -25,8 +25,20 @@ export type ApiUser = {
   country?: string
   city?: string
   trim?: Trim
+  colour?: string
   status?: 'active' | 'blocked'
   createdAt?: string
+}
+
+export type ApiStats = {
+  total: number
+  recent: number
+  byTrim: { value: string | null; count: number }[]
+  byCountry: { value: string | null; count: number }[]
+  byCity: { value: string | null; count: number }[]
+  byColour: { value: string | null; count: number }[]
+  approvedPosts: number
+  pendingSuggestions: number
 }
 
 export type ProfileInput = {
@@ -35,6 +47,7 @@ export type ProfileInput = {
   country?: string
   city?: string
   trim?: Trim
+  colour?: string
 }
 
 export type ApiPost = {
@@ -160,6 +173,8 @@ export const api = {
     request<{ ok: true }>('auth/password', { method: 'POST', body: input, auth: true }),
 
   listUsers: () => request<{ users: ApiUser[] }>('auth/users', { auth: true }),
+
+  stats: () => request<{ stats: ApiStats }>('auth/stats', { auth: true }),
 
   updateUser: (id: string, input: { role?: Role; status?: 'active' | 'blocked' }) =>
     request<{ ok: true }>(`auth/users/${id}`, { method: 'PATCH', body: input, auth: true }),

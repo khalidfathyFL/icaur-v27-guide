@@ -25,6 +25,8 @@ export type UserProfile = {
   city?: string
   /** Which trim they actually own, which tailors what the site shows them. */
   trim?: 'play' | 'wild'
+  /** Body colour, from the launch palette. */
+  colour?: string
 }
 
 export type UserDoc = UserProfile & {
@@ -131,6 +133,7 @@ export function toSessionUser(user: UserDoc): SessionUser {
     country: user.country,
     city: user.city,
     trim: user.trim,
+    colour: user.colour,
   }
 }
 

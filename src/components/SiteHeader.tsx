@@ -307,7 +307,11 @@ function MobileDrawer({ path, onClose }: { path: string; onClose: () => void }) 
             <>
               <a href="#/profile">{tx('Profile', 'ملفي')}</a>
               <a href="#/contribute">{tx('Contribute', 'ساهم')}</a>
-              {isAdmin && <a href="#/admin">{tx('Review queue', 'قائمة المراجعة')}</a>}
+              {isAdmin && (
+                <a href="#/admin" className="account-admin">
+                  {tx('Admin workspace', 'مساحة الإدارة')}
+                </a>
+              )}
               <button type="button" onClick={signOut}>{tx('Sign out', 'خروج')}</button>
             </>
           ) : (

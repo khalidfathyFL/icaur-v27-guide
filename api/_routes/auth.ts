@@ -39,6 +39,7 @@ export async function handleAuth(request: Request, segments: string[]): Promise<
   if (action === 'me' && request.method === 'GET') return me(request)
   if (action === 'me' && request.method === 'PATCH') return updateProfile(request)
   if (action === 'password' && request.method === 'POST') return changePassword(request)
+  if (action === 'stats' && request.method === 'GET') return stats(request)
   if (action === 'users') return users(request, segments.slice(1))
 
   throw new HttpError(404, 'Unknown auth endpoint.')
@@ -74,6 +75,7 @@ async function register(request: Request): Promise<Response> {
     // A governorate only means something alongside Egypt.
     city: country === 'Egypt' ? optionalString(body.city, 'City', { max: 80 }) : undefined,
     trim: optionalTrim(body.trim),
+    colour: optionalString(body.colour, 'Colour', { max: 40 }),
   }
 
   const result = await users.insertOne(doc as UserDoc)
@@ -112,6 +114,55 @@ async function me(request: Request): Promise<Response> {
 }
 
 /**
+ * Who owns what, and where they are. Counts only: this never returns an
+ * individual's details, so the picture of the community cannot be turned back
+ * into a list of people and their phone numbers.
+ */
+async function stats(request: Request): Promise<Response> {
+  await requireAdmin(request)
+  const db = await getDb()
+  const users = db.collection<UserDoc>('users')
+
+  /** Groups by one field, busiest first, with blanks reported separately. */
+  const countBy = async (field: keyof UserDoc) => {
+    const rows = await users
+      .aggregate<{ _id: string | null; count: number }>([
+        { $group: { _id: `${field}`, count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray()
+
+    return rows.map((row) => ({ value: row._id ?? null, count: row.count }))
+  }
+
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+
+  const [total, recent, byTrim, byCountry, byCity, byColour, posts, suggestions] = await Promise.all([
+    users.countDocuments({}),
+    users.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
+    countBy('trim'),
+    countBy('country'),
+    countBy('city'),
+    countBy('colour'),
+    db.collection('posts').countDocuments({ status: 'approved' }),
+    db.collection('suggestions').countDocuments({ status: 'pending' }),
+  ])
+
+  return json(request, {
+    stats: {
+      total,
+      recent,
+      byTrim,
+      byCountry,
+      byCity,
+      byColour,
+      approvedPosts: posts,
+      pendingSuggestions: suggestions,
+    },
+  })
+}
+
+/**
  * Owners edit their own details here. Email and role are deliberately absent:
  * email identifies the account, and nobody promotes themselves.
  */
@@ -125,6 +176,7 @@ async function updateProfile(request: Request): Promise<Response> {
   if (body.phone !== undefined) update.phone = optionalPhone(body.phone)
   if (body.country !== undefined) update.country = optionalString(body.country, 'Country', { max: 80 })
   if (body.trim !== undefined) update.trim = optionalTrim(body.trim)
+  if (body.colour !== undefined) update.colour = optionalString(body.colour, 'Colour', { max: 40 })
 
   // A city only means something alongside its country, and a move abroad should
   // not leave an Egyptian governorate attached to the account.
