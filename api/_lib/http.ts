@@ -67,9 +67,20 @@ function requestUrl(request: Request): URL {
   return new URL(request.url, `https://${host}`)
 }
 
-/** Splits `/api/posts/123/review` into ['posts', '123', 'review']. */
+/**
+ * The route, as segments: `/api/router?p=posts/123/review` becomes
+ * `['posts', '123', 'review']`.
+ *
+ * Vercel's router on this project only delivers single-segment paths to a
+ * function, so the real route travels in `p` rather than in the path. The
+ * pathname is still read as a fallback, which keeps local `vercel dev` and
+ * any future host with working catch-all routing working unchanged.
+ */
 export function pathSegments(request: Request): string[] {
-  return requestUrl(request).pathname.replace(/^\/api\/?/, '').split('/').filter(Boolean)
+  const url = requestUrl(request)
+  const routed = url.searchParams.get('p')
+  const source = routed ?? url.pathname.replace(/^\/api\/?/, '')
+  return source.split('/').filter(Boolean)
 }
 
 export function searchParams(request: Request): URLSearchParams {

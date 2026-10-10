@@ -105,7 +105,12 @@ async function request<T>(
 
   let response: Response
   try {
-    response = await fetch(`${BASE_URL}/api/${path}`, {
+    // The route travels as a query parameter: Vercel only delivers
+    // single-segment paths to the function behind this API.
+    const [route, query] = path.split('?')
+    const url = `${BASE_URL}/api/router?p=${encodeURIComponent(route ?? '')}${query ? `&${query}` : ''}`
+
+    response = await fetch(url, {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
