@@ -1,7 +1,8 @@
-import { useMemo, useRef } from 'react'
-import { Canvas, useFrame, type ThreeElements } from '@react-three/fiber'
+import { useRef } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { ContactShadows, OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
+import { Box, CameraRig } from '../vehicle3d'
 import type { CameraView } from './useInfotainment'
 
 /**
@@ -39,7 +40,7 @@ export function Vehicle540View({ view }: { view: CameraView }) {
       <color attach="background" args={['#0c1218']} />
       <fog attach="fog" args={['#0c1218', 12, 26]} />
 
-      <CameraRig view={view} />
+      <CameraRig position={CAMERA_POSITIONS[view]} />
 
       <ambientLight intensity={0.55} />
       <directionalLight position={[5, 8, 5]} intensity={1.15} castShadow />
@@ -60,18 +61,6 @@ export function Vehicle540View({ view }: { view: CameraView }) {
       />
     </Canvas>
   )
-}
-
-/** Eases the camera toward the selected angle instead of snapping. */
-function CameraRig({ view }: { view: CameraView }) {
-  const target = useMemo(() => new THREE.Vector3(...CAMERA_POSITIONS[view]), [view])
-
-  useFrame((state, delta) => {
-    state.camera.position.lerp(target, Math.min(1, delta * 2.4))
-    state.camera.lookAt(0, 0.55, 0)
-  })
-
-  return null
 }
 
 function Vehicle() {
@@ -181,35 +170,5 @@ function GroundGrid() {
       </mesh>
       <gridHelper args={[30, 30, '#1e2a36', '#161f28']} position={[0, 0, 0]} />
     </>
-  )
-}
-
-/** Small helper so the vehicle body stays readable as a parts list. */
-function Box({
-  args,
-  position,
-  color,
-  emissive,
-  metalness = 0.1,
-  roughness = 0.6,
-}: {
-  args: ThreeElements['boxGeometry']['args']
-  position: [number, number, number]
-  color: string
-  emissive?: string
-  metalness?: number
-  roughness?: number
-}) {
-  return (
-    <mesh position={position} castShadow receiveShadow>
-      <boxGeometry args={args} />
-      <meshStandardMaterial
-        color={color}
-        metalness={metalness}
-        roughness={roughness}
-        emissive={emissive ?? '#000000'}
-        emissiveIntensity={emissive ? 1.6 : 0}
-      />
-    </mesh>
   )
 }
