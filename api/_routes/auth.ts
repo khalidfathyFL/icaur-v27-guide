@@ -11,6 +11,7 @@ import {
 } from '../_lib/auth.js'
 import { HttpError, json, readJsonBody } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
+import { auditableChanges, recordAudit, type AuditEntry } from '../_lib/audit.js'
 import {
   optionalPhone,
   optionalString,
@@ -40,6 +41,7 @@ export async function handleAuth(request: Request, segments: string[]): Promise<
   if (action === 'me' && request.method === 'PATCH') return updateProfile(request)
   if (action === 'password' && request.method === 'POST') return changePassword(request)
   if (action === 'stats' && request.method === 'GET') return stats(request)
+  if (action === 'audit' && request.method === 'GET') return audit(request)
   if (action === 'users') return users(request, segments.slice(1))
 
   throw new HttpError(404, 'Unknown auth endpoint.')
@@ -81,6 +83,12 @@ async function register(request: Request): Promise<Response> {
   const result = await users.insertOne(doc as UserDoc)
   const user = { id: result.insertedId.toHexString(), email, name, role }
 
+  await recordAudit(user, 'user.registered', {
+    target: { kind: 'user', id: user.id, label: email },
+    // Worth recording: the first account becomes the admin automatically.
+    changes: { role },
+  })
+
   return json(request, { user, token: await issueToken(user) }, 201)
 }
 
@@ -112,6 +120,44 @@ async function login(request: Request): Promise<Response> {
 async function me(request: Request): Promise<Response> {
   return json(request, { user: await requireUser(request) })
 }
+
+/**
+ * The activity log, newest first. Read-only by design: there is no endpoint
+ * that edits or deletes an entry, because a log an admin can rewrite proves
+ * nothing.
+ */
+async function audit(request: Request): Promise<Response> {
+  await requireAdmin(request)
+
+  const base = `https://${request.headers.get('host') ?? 'localhost'}`
+  const params = new URL(request.url, base).searchParams
+  const page = Math.max(1, Number(params.get('page') ?? 1) || 1)
+  const actor = params.get('actor')
+
+  const db = await getDb()
+  const entries = await db
+    .collection<AuditEntry>('audit')
+    .find(actor ? { actorId: actor } : {})
+    .sort({ at: -1 })
+    .skip((page - 1) * 50)
+    .limit(50)
+    .toArray()
+
+  return json(request, {
+    entries: entries.map((entry) => ({
+      id: entry._id.toHexString(),
+      action: entry.action,
+      actorName: entry.actorName,
+      actorRole: entry.actorRole,
+      target: entry.target,
+      changes: entry.changes,
+      note: entry.note,
+      at: entry.at,
+    })),
+    page,
+  })
+}
+
 
 /**
  * Who owns what, and where they are. Counts only: this never returns an
@@ -190,6 +236,11 @@ async function updateProfile(request: Request): Promise<Response> {
   const updated = await collection.findOne({ _id: new ObjectId(session.id) })
   if (!updated) throw new HttpError(404, 'This account no longer exists.')
 
+  await recordAudit(session, 'user.profile_updated', {
+    target: { kind: 'user', id: session.id, label: session.email },
+    changes: auditableChanges(update),
+  })
+
   return json(request, { user: toSessionUser(updated) })
 }
 
@@ -217,6 +268,11 @@ async function changePassword(request: Request): Promise<Response> {
     { _id: user._id },
     { $set: { passwordHash: await hashPassword(newPassword), updatedAt: new Date().toISOString() } },
   )
+
+  // The fact of the change is recorded; the password never is.
+  await recordAudit(session, 'user.password_changed', {
+    target: { kind: 'user', id: session.id, label: session.email },
+  })
 
   return json(request, { ok: true })
 }
@@ -260,6 +316,19 @@ async function users(request: Request, segments: string[]): Promise<Response> {
 
     const result = await collection.updateOne({ _id: new ObjectId(id) }, { $set: update })
     if (result.matchedCount === 0) throw new HttpError(404, 'Unknown user.')
+
+    if (update.role) {
+      await recordAudit(admin, 'user.role_changed', {
+        target: { kind: 'user', id },
+        changes: { role: update.role },
+      })
+    }
+    if (update.status) {
+      await recordAudit(admin, 'user.status_changed', {
+        target: { kind: 'user', id },
+        changes: { status: update.status },
+      })
+    }
 
     return json(request, { ok: true })
   }

@@ -3650,3 +3650,140 @@ ol.path-pills li:last-child {
   font-weight: 700;
   color: var(--accent) !important;
 }
+
+/* ---------- owner reports ---------- */
+
+.owner-reports {
+  margin: 2.5rem 0;
+}
+
+.owner-reports-intro {
+  max-width: 70ch;
+  margin-top: -0.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.owner-report-group {
+  margin-bottom: 1.75rem;
+}
+
+.owner-report-group h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: var(--heading);
+}
+
+.owner-report-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0.85rem;
+}
+
+.owner-report {
+  padding: 0.95rem 1.05rem;
+  border: 1px solid var(--line);
+  border-inline-start: 3px solid var(--accent);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+/* Open problems read differently from settled behaviour. */
+.owner-report.issue {
+  border-inline-start-color: #fbbf24;
+}
+
+.owner-report header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.owner-report strong {
+  color: var(--heading);
+  line-height: 1.4;
+}
+
+.owner-report header small {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.owner-report p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+/* ---------- activity log ---------- */
+
+.audit-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.audit-entry {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--line);
+  border-inline-start: 3px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+/* Changes to who can do what, and to prices, stand out from routine activity. */
+.audit-entry.sensitive {
+  border-inline-start-color: var(--accent);
+}
+
+.audit-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.audit-main strong {
+  color: var(--heading);
+}
+
+.audit-main span {
+  color: var(--muted);
+}
+
+.audit-main em {
+  font-style: normal;
+  color: var(--text);
+}
+
+.audit-changes,
+.audit-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.audit-note {
+  font-style: italic;
+}
+
+.audit-entry time {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}

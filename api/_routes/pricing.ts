@@ -1,6 +1,7 @@
 import { requireAdmin } from '../_lib/auth.js'
 import { HttpError, json, readJsonBody } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
+import { recordAudit } from '../_lib/audit.js'
 import { optionalString, type PricingDoc } from '../_lib/models.js'
 
 function toPublic(pricing: PricingDoc) {
@@ -56,6 +57,11 @@ async function upsertPricing(request: Request): Promise<Response> {
     },
     { upsert: true },
   )
+
+  await recordAudit(admin, 'pricing.updated', {
+    target: { kind: 'pricing', id: trim },
+    changes: { priceEgp: Math.round(priceEgp) },
+  })
 
   return json(request, { ok: true })
 }

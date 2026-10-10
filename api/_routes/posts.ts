@@ -3,6 +3,7 @@ import { readSession, requireAdmin, requireUser } from '../_lib/auth.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
 import { sanitizeRichText, toPlainText } from '../_lib/sanitize.js'
+import { recordAudit } from '../_lib/audit.js'
 import {
   requireLocalized,
   requireReviewStatus,
@@ -133,6 +134,10 @@ async function createPost(request: Request): Promise<Response> {
   const db = await getDb()
   const result = await db.collection<PostDoc>('posts').insertOne(doc as PostDoc)
 
+  await recordAudit(user, 'post.created', {
+    target: { kind: 'post', id: result.insertedId.toHexString(), label: title.en },
+  })
+
   return json(request, { post: toPublic({ ...doc, _id: result.insertedId } as PostDoc) }, 201)
 }
 
@@ -176,6 +181,12 @@ async function updatePost(request: Request, id: string): Promise<Response> {
   if (!isAdmin) update.status = 'pending'
 
   await collection.updateOne({ _id: post._id }, { $set: update })
+
+  await recordAudit(user, 'post.updated', {
+    target: { kind: 'post', id: post._id.toHexString(), label: post.title.en },
+    changes: { fields: Object.keys(update).filter((key) => key !== 'updatedAt') },
+  })
+
   const updated = await collection.findOne({ _id: post._id })
 
   return json(request, { post: toPublic(updated as PostDoc) })
@@ -204,6 +215,11 @@ async function reviewPost(request: Request, id: string): Promise<Response> {
 
   if (result.matchedCount === 0) throw new HttpError(404, 'Post not found.')
 
+  await recordAudit(admin, status === 'approved' ? 'post.approved' : 'post.rejected', {
+    target: { kind: 'post', id },
+    note,
+  })
+
   return json(request, { ok: true, status })
 }
 
@@ -221,5 +237,10 @@ async function deletePost(request: Request, id: string): Promise<Response> {
   }
 
   await collection.deleteOne({ _id: post._id })
+
+  await recordAudit(user, 'post.deleted', {
+    target: { kind: 'post', id: post._id.toHexString(), label: post.title.en },
+  })
+
   return json(request, { ok: true })
 }

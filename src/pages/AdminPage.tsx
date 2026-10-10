@@ -4,6 +4,7 @@ import {
   FileEdit,
   LayoutDashboard,
   Newspaper,
+  History,
   PieChart,
   ShieldCheck,
   Store,
@@ -15,6 +16,7 @@ import { PageFrame } from '../components/layout'
 import { useAuth } from '../auth/authContext'
 import { useLanguage } from '../i18n/languageContext'
 import { api, apiConfigured } from '../lib/api'
+import { Activity } from './admin/Activity'
 import { Overview } from './admin/Overview'
 import { DealerAdmin, PostQueue, PricingAdmin, SuggestionQueue, UserAdmin } from './admin/sections'
 import { ServiceUnavailable } from './AccountPage'
@@ -80,7 +82,10 @@ export function AdminPage() {
       key: 'overview',
       label: tx('Overview', 'نظرة عامة'),
       icon: LayoutDashboard,
-      items: [{ key: 'overview', label: tx('Who owns what', 'من يملك ماذا'), icon: PieChart }],
+      items: [
+        { key: 'overview', label: tx('Who owns what', 'من يملك ماذا'), icon: PieChart },
+        { key: 'activity', label: tx('Activity log', 'سجل النشاط'), icon: History },
+      ],
     },
     {
       key: 'moderation',
@@ -137,6 +142,7 @@ export function AdminPage() {
         subtitle={user.name}
       >
         {active === 'overview' && <Overview />}
+        {active === 'activity' && <Activity />}
         {active === 'posts' && <PostQueue onChanged={refresh} />}
         {active === 'suggestions' && <SuggestionQueue onChanged={refresh} />}
         {active === 'dealers' && <DealerAdmin />}

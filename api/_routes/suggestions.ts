@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb'
 import { requireAdmin, requireUser } from '../_lib/auth.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
+import { recordAudit } from '../_lib/audit.js'
 import {
   requireReviewStatus,
   requireString,
@@ -88,6 +89,10 @@ async function createSuggestion(request: Request): Promise<Response> {
   const db = await getDb()
   const result = await db.collection<SuggestionDoc>('suggestions').insertOne(doc as SuggestionDoc)
 
+  await recordAudit(user, 'suggestion.created', {
+    target: { kind: doc.target.kind, id: doc.target.id },
+  })
+
   return json(
     request,
     { suggestion: toPublic({ ...doc, _id: result.insertedId } as SuggestionDoc) },
@@ -117,6 +122,11 @@ async function reviewSuggestion(request: Request, id: string): Promise<Response>
   )
 
   if (result.matchedCount === 0) throw new HttpError(404, 'Suggestion not found.')
+
+  await recordAudit(admin, status === 'approved' ? 'suggestion.approved' : 'suggestion.rejected', {
+    target: { kind: 'suggestion', id },
+    note,
+  })
 
   return json(request, { ok: true, status })
 }

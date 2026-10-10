@@ -44,6 +44,8 @@ async function ensureIndexes(db: Db): Promise<void> {
     db.collection('suggestions').createIndex({ authorId: 1, createdAt: -1 }),
     db.collection('dealers').createIndex({ active: 1, name: 1 }),
     db.collection('pricing').createIndex({ trim: 1 }, { unique: true }),
+    db.collection('audit').createIndex({ at: -1 }),
+    db.collection('audit').createIndex({ actorId: 1, at: -1 }),
   ])
 }
 

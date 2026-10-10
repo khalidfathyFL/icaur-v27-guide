@@ -12,6 +12,7 @@ import {
   warranty,
 } from '../content/egypt'
 import { AltBlock, InfoBlock, PageFrame, SectionHeading } from '../components/layout'
+import { OwnerReports } from '../components/OwnerReports'
 import { VerificationBadge } from '../components/VerificationBadge'
 import { useLanguage } from '../i18n/languageContext'
 import { sourceHref } from '../lib/links'
@@ -155,6 +156,8 @@ export function EgyptPage() {
           </div>
         </section>
       ))}
+
+      <OwnerReports />
 
       <DealerList />
 

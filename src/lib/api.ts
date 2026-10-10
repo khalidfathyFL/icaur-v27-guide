@@ -41,6 +41,17 @@ export type ApiStats = {
   pendingSuggestions: number
 }
 
+export type ApiAuditEntry = {
+  id: string
+  action: string
+  actorName: string
+  actorRole: 'user' | 'admin'
+  target?: { kind: string; id: string; label?: string }
+  changes?: Record<string, unknown>
+  note?: string
+  at: string
+}
+
 export type ProfileInput = {
   name?: string
   phone?: string
@@ -175,6 +186,8 @@ export const api = {
   listUsers: () => request<{ users: ApiUser[] }>('auth/users', { auth: true }),
 
   stats: () => request<{ stats: ApiStats }>('auth/stats', { auth: true }),
+
+  audit: () => request<{ entries: ApiAuditEntry[] }>('auth/audit', { auth: true }),
 
   updateUser: (id: string, input: { role?: Role; status?: 'active' | 'blocked' }) =>
     request<{ ok: true }>(`auth/users/${id}`, { method: 'PATCH', body: input, auth: true }),
