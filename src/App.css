@@ -3514,3 +3514,19 @@ ol.path-pills li:last-child {
 .rich-text p {
   margin-bottom: 1rem;
 }
+
+.optional-fields {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0;
+  padding: 0.9rem 1rem 1.1rem;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+}
+
+.optional-fields legend {
+  padding: 0 0.4rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}

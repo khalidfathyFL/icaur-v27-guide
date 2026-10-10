@@ -58,6 +58,8 @@ async function register(request: Request): Promise<Response> {
   }
 
   const role = await roleForNewUser()
+  const country = optionalString(body.country, 'Country', { max: 80 })
+
   const doc = {
     email,
     name,
@@ -65,6 +67,13 @@ async function register(request: Request): Promise<Response> {
     role,
     status: 'active' as const,
     createdAt: new Date().toISOString(),
+    // Offered during sign-up but never required; the profile page is where
+    // most people will actually fill these in.
+    phone: optionalPhone(body.phone),
+    country,
+    // A governorate only means something alongside Egypt.
+    city: country === 'Egypt' ? optionalString(body.city, 'City', { max: 80 }) : undefined,
+    trim: optionalTrim(body.trim),
   }
 
   const result = await users.insertOne(doc as UserDoc)

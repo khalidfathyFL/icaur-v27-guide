@@ -145,7 +145,7 @@ async function request<T>(
 /* ---------- auth ---------- */
 
 export const api = {
-  register: (input: { name: string; email: string; password: string }) =>
+  register: (input: { name: string; email: string; password: string } & ProfileInput) =>
     request<{ user: ApiUser; token: string }>('auth/register', { method: 'POST', body: input }),
 
   login: (input: { email: string; password: string }) =>

@@ -4,7 +4,14 @@ import { PageFrame } from '../components/layout'
 import { useAuth } from '../auth/authContext'
 import { useLanguage } from '../i18n/languageContext'
 import { apiConfigured, ApiError } from '../lib/api'
-import { PASSWORD_RULE, STRONG_PASSWORD } from '../content/places'
+import {
+  COUNTRIES,
+  EGYPT,
+  EGYPT_GOVERNORATES,
+  PASSWORD_RULE,
+  STRONG_PASSWORD,
+} from '../content/places'
+import { TRIMS } from '../vehicle/trimContext'
 
 type Mode = 'signin' | 'register'
 
@@ -16,6 +23,10 @@ export function SignInPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [phone, setPhone] = useState('')
+  const [country, setCountry] = useState('')
+  const [city, setCity] = useState('')
+  const [trim, setTrim] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -40,7 +51,17 @@ export function SignInPage() {
 
     try {
       if (mode === 'signin') await signIn(email, password)
-      else await register(name, email, password)
+      else {
+        await register({
+          name,
+          email,
+          password,
+          phone: phone || undefined,
+          country: country || undefined,
+          city: city || undefined,
+          trim: trim === 'play' || trim === 'wild' ? trim : undefined,
+        })
+      }
       window.location.hash = '#/contribute'
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : tx('Something went wrong.', 'حدث خطأ ما.'))
@@ -129,6 +150,78 @@ export function SignInPage() {
               autoComplete="new-password"
             />
           </label>
+        )}
+
+        {mode === 'register' && (
+          <fieldset className="optional-fields">
+            <legend>{tx('Your car and location (optional)', 'سيارتك ومكانك (اختياري)')}</legend>
+            <p className="editor-hint">
+              {tx(
+                'You can skip all of this and fill it in later from your profile.',
+                'يمكنك تخطي هذا كله وإكماله لاحقا من ملفك الشخصي.',
+              )}
+            </p>
+
+            <label>
+              <span>{tx('Mobile number', 'رقم الموبايل')}</span>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                maxLength={32}
+                placeholder="+20 1X XXXX XXXX"
+                dir="ltr"
+              />
+            </label>
+
+            <label>
+              <span>{tx('Country', 'الدولة')}</span>
+              <select
+                value={country}
+                onChange={(event) => {
+                  setCountry(event.target.value)
+                  if (event.target.value !== EGYPT) setCity('')
+                }}
+              >
+                <option value="">{tx('Not set', 'غير محدد')}</option>
+                {COUNTRIES.map((option) => (
+                  <option key={option.en} value={option.en}>
+                    {t(option)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {country && (
+              <label>
+                <span>{country === EGYPT ? tx('Governorate', 'المحافظة') : tx('City', 'المدينة')}</span>
+                {country === EGYPT ? (
+                  <select value={city} onChange={(event) => setCity(event.target.value)}>
+                    <option value="">{tx('Not set', 'غير محدد')}</option>
+                    {EGYPT_GOVERNORATES.map((option) => (
+                      <option key={option.en} value={option.en}>
+                        {t(option)}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input value={city} onChange={(event) => setCity(event.target.value)} maxLength={80} />
+                )}
+              </label>
+            )}
+
+            <label>
+              <span>{tx('Which V27 do you own?', 'أي V27 تملك؟')}</span>
+              <select value={trim} onChange={(event) => setTrim(event.target.value)}>
+                <option value="">{tx('Not set / I do not own one yet', 'غير محدد / لا أملك واحدة بعد')}</option>
+                {TRIMS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </fieldset>
         )}
 
         {error && <p className="form-error">{error}</p>}

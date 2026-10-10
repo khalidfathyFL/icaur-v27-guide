@@ -1,5 +1,7 @@
 import { createContext, useContext } from 'react'
-import type { ApiUser } from '../lib/api'
+import type { ApiUser, ProfileInput } from '../lib/api'
+
+export type RegisterInput = { name: string; email: string; password: string } & ProfileInput
 
 export type AuthContextValue = {
   user: ApiUser | null
@@ -7,7 +9,7 @@ export type AuthContextValue = {
   loading: boolean
   isAdmin: boolean
   signIn: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
+  register: (input: RegisterInput) => Promise<void>
   signOut: () => void
   /** Re-reads the signed-in user, after a profile change for example. */
   refresh: () => Promise<void>
