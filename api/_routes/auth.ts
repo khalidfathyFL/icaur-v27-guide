@@ -4,13 +4,21 @@ import {
   issueToken,
   requireAdmin,
   requireUser,
+  toSessionUser,
   verifyPassword,
   type Role,
   type UserDoc,
 } from '../_lib/auth.js'
 import { HttpError, json, readJsonBody } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
-import { requireEmail, requirePassword, requireString } from '../_lib/models.js'
+import {
+  optionalPhone,
+  optionalString,
+  optionalTrim,
+  requireEmail,
+  requirePassword,
+  requireString,
+} from '../_lib/models.js'
 
 /**
  * The first account to register becomes the admin, which bootstraps the site
@@ -29,6 +37,8 @@ export async function handleAuth(request: Request, segments: string[]): Promise<
   if (action === 'register' && request.method === 'POST') return register(request)
   if (action === 'login' && request.method === 'POST') return login(request)
   if (action === 'me' && request.method === 'GET') return me(request)
+  if (action === 'me' && request.method === 'PATCH') return updateProfile(request)
+  if (action === 'password' && request.method === 'POST') return changePassword(request)
   if (action === 'users') return users(request, segments.slice(1))
 
   throw new HttpError(404, 'Unknown auth endpoint.')
@@ -90,6 +100,64 @@ async function login(request: Request): Promise<Response> {
 
 async function me(request: Request): Promise<Response> {
   return json(request, { user: await requireUser(request) })
+}
+
+/**
+ * Owners edit their own details here. Email and role are deliberately absent:
+ * email identifies the account, and nobody promotes themselves.
+ */
+async function updateProfile(request: Request): Promise<Response> {
+  const session = await requireUser(request)
+  const body = await readJsonBody<Record<string, unknown>>(request)
+
+  const update: Record<string, unknown> = { updatedAt: new Date().toISOString() }
+
+  if (body.name !== undefined) update.name = requireString(body.name, 'Name', { min: 2, max: 80 })
+  if (body.phone !== undefined) update.phone = optionalPhone(body.phone)
+  if (body.country !== undefined) update.country = optionalString(body.country, 'Country', { max: 80 })
+  if (body.trim !== undefined) update.trim = optionalTrim(body.trim)
+
+  // A city only means something alongside its country, and a move abroad should
+  // not leave an Egyptian governorate attached to the account.
+  if (body.city !== undefined) update.city = optionalString(body.city, 'City', { max: 80 })
+  if (update.country !== undefined && update.country !== 'Egypt') update.city = undefined
+
+  const db = await getDb()
+  const collection = db.collection<UserDoc>('users')
+  await collection.updateOne({ _id: new ObjectId(session.id) }, { $set: update })
+
+  const updated = await collection.findOne({ _id: new ObjectId(session.id) })
+  if (!updated) throw new HttpError(404, 'This account no longer exists.')
+
+  return json(request, { user: toSessionUser(updated) })
+}
+
+/**
+ * Changing a password requires the current one, so a borrowed unlocked browser
+ * cannot be used to lock the real owner out of their account.
+ */
+async function changePassword(request: Request): Promise<Response> {
+  const session = await requireUser(request)
+  const body = await readJsonBody<Record<string, unknown>>(request)
+
+  const currentPassword = requireString(body.currentPassword, 'Current password', { max: 200 })
+  const newPassword = requirePassword(body.newPassword)
+
+  const db = await getDb()
+  const collection = db.collection<UserDoc>('users')
+  const user = await collection.findOne({ _id: new ObjectId(session.id) })
+  if (!user) throw new HttpError(404, 'This account no longer exists.')
+
+  if (!(await verifyPassword(currentPassword, user.passwordHash))) {
+    throw new HttpError(401, 'Current password is incorrect.')
+  }
+
+  await collection.updateOne(
+    { _id: user._id },
+    { $set: { passwordHash: await hashPassword(newPassword), updatedAt: new Date().toISOString() } },
+  )
+
+  return json(request, { ok: true })
 }
 
 /** Admin-only: list contributors and change a role or block an account. */

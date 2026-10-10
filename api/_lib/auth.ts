@@ -16,7 +16,18 @@ const TOKEN_TTL = '7d'
 
 export type Role = 'user' | 'admin'
 
-export type UserDoc = {
+/** What an owner can tell us about themselves and their car. All optional. */
+export type UserProfile = {
+  /** Mobile number, stored as the owner typed it. */
+  phone?: string
+  country?: string
+  /** Governorate, only meaningful when country is Egypt. */
+  city?: string
+  /** Which trim they actually own, which tailors what the site shows them. */
+  trim?: 'play' | 'wild'
+}
+
+export type UserDoc = UserProfile & {
   _id: ObjectId
   email: string
   name: string
@@ -24,9 +35,10 @@ export type UserDoc = {
   role: Role
   status: 'active' | 'blocked'
   createdAt: string
+  updatedAt?: string
 }
 
-export type SessionUser = {
+export type SessionUser = UserProfile & {
   id: string
   email: string
   name: string
@@ -105,7 +117,21 @@ export async function requireUser(request: Request): Promise<SessionUser> {
   if (!user) throw new HttpError(401, 'This account no longer exists.')
   if (user.status === 'blocked') throw new HttpError(403, 'This account has been blocked.')
 
-  return { id: user._id.toHexString(), email: user.email, name: user.name, role: user.role }
+  return toSessionUser(user)
+}
+
+/** The shape the browser sees: everything except the password hash. */
+export function toSessionUser(user: UserDoc): SessionUser {
+  return {
+    id: user._id.toHexString(),
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    phone: user.phone,
+    country: user.country,
+    city: user.city,
+    trim: user.trim,
+  }
 }
 
 export async function requireAdmin(request: Request): Promise<SessionUser> {

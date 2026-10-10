@@ -119,9 +119,42 @@ export function requireEmail(value: unknown): string {
   return email
 }
 
+/**
+ * Matches the rule the MicroBIM site enforces, so a contributor who has an
+ * account on either site meets the same bar. The client mirrors this regex for
+ * an instant message; this copy is the one that actually protects the account,
+ * because the endpoint can be called without the form.
+ */
+export const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,50}$/
+
 export function requirePassword(value: unknown): string {
-  const password = requireString(value, 'Password', { min: 8, max: 200 })
+  const password = requireString(value, 'Password', { min: 8, max: 50 })
+
+  if (!STRONG_PASSWORD.test(password)) {
+    return bad(
+      'Password needs 8+ characters with an uppercase letter, a lowercase letter, a number and a symbol.',
+    )
+  }
+
   return password
+}
+
+/** Loose on purpose: owners write numbers with +, spaces and dashes. */
+export function optionalPhone(value: unknown): string | undefined {
+  const phone = optionalString(value, 'Phone number', { max: 32 })
+  if (phone === undefined) return undefined
+
+  if (!/^[+]?[\d\s()-]{6,32}$/.test(phone)) {
+    return bad('Enter a phone number using digits, spaces, brackets, + or -.')
+  }
+
+  return phone
+}
+
+export function optionalTrim(value: unknown): 'play' | 'wild' | undefined {
+  if (value === undefined || value === null || value === '') return undefined
+  if (value === 'play' || value === 'wild') return value
+  return bad('Trim must be play or wild.')
 }
 
 export function requireReviewStatus(value: unknown): Exclude<ReviewStatus, 'pending'> {

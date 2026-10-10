@@ -45,14 +45,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(created)
   }, [])
 
+  const refresh = useCallback(async () => {
+    try {
+      const { user: current } = await api.me()
+      setUser(current)
+    } catch {
+      // A failed refresh should not sign the user out mid-edit; the next
+      // authenticated call will surface the real problem.
+    }
+  }, [])
+
   const signOut = useCallback(() => {
     clearToken()
     setUser(null)
   }, [])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, loading, isAdmin: user?.role === 'admin', signIn, register, signOut }),
-    [user, loading, signIn, register, signOut],
+    () => ({ user, loading, isAdmin: user?.role === 'admin', signIn, register, signOut, refresh }),
+    [user, loading, signIn, register, signOut, refresh],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

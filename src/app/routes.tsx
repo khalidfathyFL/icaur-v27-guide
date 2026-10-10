@@ -3,6 +3,7 @@ import { AdminPage } from '../pages/AdminPage'
 import { SignInPage } from '../pages/AccountPage'
 import { BlogPage, PostPage } from '../pages/BlogPage'
 import { ContributePage } from '../pages/ContributePage'
+import { ProfilePage } from '../pages/ProfilePage'
 import { EgyptPage } from '../pages/EgyptPage'
 import { GuidesPage } from '../pages/GuidesPage'
 import { HomePage } from '../pages/HomePage'
@@ -19,9 +20,9 @@ import {
 const GUIDE_PREFIX = '/guides/'
 const BLOG_PREFIX = '/blog/'
 
-const STATIC_ROUTES: Record<string, () => React.ReactElement> = {
+const STATIC_ROUTES: Record<string, (params: URLSearchParams) => React.ReactElement> = {
   '/': () => <HomePage />,
-  '/guides': () => <GuidesPage />,
+  '/guides': (params) => <GuidesPage topic={params.get('topic')} query={params.get('q') ?? ''} />,
   '/egypt': () => <EgyptPage />,
   '/specs': () => <SpecsPage />,
   '/compare/play-vs-wild': () => <ComparePage />,
@@ -32,20 +33,21 @@ const STATIC_ROUTES: Record<string, () => React.ReactElement> = {
   '/blog': () => <BlogPage />,
   '/contribute': () => <ContributePage />,
   '/signin': () => <SignInPage />,
+  '/profile': () => <ProfilePage />,
   '/admin': () => <AdminPage />,
 }
 
-export function resolveRoute(route: string): React.ReactElement {
-  const staticRoute = STATIC_ROUTES[route]
-  if (staticRoute) return staticRoute()
+export function resolveRoute(path: string, params: URLSearchParams): React.ReactElement {
+  const staticRoute = STATIC_ROUTES[path]
+  if (staticRoute) return staticRoute(params)
 
-  if (route.startsWith(GUIDE_PREFIX)) {
-    const feature = getFeature(route.slice(GUIDE_PREFIX.length))
+  if (path.startsWith(GUIDE_PREFIX)) {
+    const feature = getFeature(path.slice(GUIDE_PREFIX.length))
     if (feature) return <FeaturePage feature={feature} />
   }
 
-  if (route.startsWith(BLOG_PREFIX)) {
-    return <PostPage slug={route.slice(BLOG_PREFIX.length)} />
+  if (path.startsWith(BLOG_PREFIX)) {
+    return <PostPage slug={path.slice(BLOG_PREFIX.length)} />
   }
 
   return <NotFoundPage />

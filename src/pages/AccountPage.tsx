@@ -4,22 +4,38 @@ import { PageFrame } from '../components/layout'
 import { useAuth } from '../auth/authContext'
 import { useLanguage } from '../i18n/languageContext'
 import { apiConfigured, ApiError } from '../lib/api'
+import { PASSWORD_RULE, STRONG_PASSWORD } from '../content/places'
 
 type Mode = 'signin' | 'register'
 
 export function SignInPage() {
-  const { tx } = useLanguage()
+  const { t, tx } = useLanguage()
   const { user, signIn, register } = useAuth()
   const [mode, setMode] = useState<Mode>('signin')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
+
+    if (mode === 'register') {
+      if (password !== confirmPassword) {
+        setError(tx('Passwords do not match', 'كلمتا المرور غير متطابقتين'))
+        return
+      }
+      // Mirrors the rule the API enforces, so the message is instant and
+      // specific rather than a round-trip 400.
+      if (!STRONG_PASSWORD.test(password)) {
+        setError(t(PASSWORD_RULE))
+        return
+      }
+    }
+
     setBusy(true)
 
     try {
@@ -98,10 +114,22 @@ export function SignInPage() {
             minLength={8}
             autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
           />
-          {mode === 'register' && (
-            <small>{tx('At least 8 characters.', '8 أحرف على الأقل.')}</small>
-          )}
+          {mode === 'register' && <small>{t(PASSWORD_RULE)}</small>}
         </label>
+
+        {mode === 'register' && (
+          <label>
+            <span>{tx('Confirm password', 'تأكيد كلمة المرور')}</span>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              required
+              minLength={8}
+              autoComplete="new-password"
+            />
+          </label>
+        )}
 
         {error && <p className="form-error">{error}</p>}
 

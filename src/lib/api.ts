@@ -20,8 +20,21 @@ export type ApiUser = {
   email: string
   name: string
   role: Role
+  /** Optional details the owner fills in on their profile. */
+  phone?: string
+  country?: string
+  city?: string
+  trim?: Trim
   status?: 'active' | 'blocked'
   createdAt?: string
+}
+
+export type ProfileInput = {
+  name?: string
+  phone?: string
+  country?: string
+  city?: string
+  trim?: Trim
 }
 
 export type ApiPost = {
@@ -139,6 +152,12 @@ export const api = {
     request<{ user: ApiUser; token: string }>('auth/login', { method: 'POST', body: input }),
 
   me: () => request<{ user: ApiUser }>('auth/me', { auth: true }),
+
+  updateProfile: (input: ProfileInput) =>
+    request<{ user: ApiUser }>('auth/me', { method: 'PATCH', body: input, auth: true }),
+
+  changePassword: (input: { currentPassword: string; newPassword: string }) =>
+    request<{ ok: true }>('auth/password', { method: 'POST', body: input, auth: true }),
 
   listUsers: () => request<{ users: ApiUser[] }>('auth/users', { auth: true }),
 

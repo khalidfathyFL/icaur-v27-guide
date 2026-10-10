@@ -9,6 +9,8 @@ export type AuthContextValue = {
   signIn: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
   signOut: () => void
+  /** Re-reads the signed-in user, after a profile change for example. */
+  refresh: () => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
