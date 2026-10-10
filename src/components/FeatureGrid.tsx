@@ -16,7 +16,7 @@ export function FeatureGrid({ features }: { features: Feature[] }) {
 }
 
 function FeatureCard({ feature }: { feature: Feature }) {
-  const { t, alt, pair, language } = useLanguage()
+  const { t, alt, pair, tx, language } = useLanguage()
   const { trim } = useTrim()
   const category = getCategory(feature.categoryId)
   const summaryAlt = alt(feature.summary)
@@ -34,7 +34,9 @@ function FeatureCard({ feature }: { feature: Feature }) {
       )}
       <div className="card-footer">
         <VerificationBadge status={feature.availability[trim]} />
-        <span>{feature.lastVerified}</span>
+        <span className="card-date">
+          {tx('Checked', 'روجع')} {feature.lastVerified}
+        </span>
       </div>
     </a>
   )

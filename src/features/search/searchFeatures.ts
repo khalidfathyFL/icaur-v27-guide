@@ -17,7 +17,7 @@ const includes = (haystack: string, needle: string) => haystack.toLowerCase().in
  * Ranked feature search across both languages. Owners type Arabic and English
  * interchangeably ("استبن", "spare"), so every field is searched in both.
  */
-export function searchFeatures(rawQuery: string): Feature[] {
+export function searchFeatures(rawQuery: string, limit = MAX_RESULTS): Feature[] {
   const query = rawQuery.trim().toLowerCase()
   if (!query) return []
 
@@ -42,6 +42,6 @@ export function searchFeatures(rawQuery: string): Feature[] {
     })
     .filter((result) => result.score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, MAX_RESULTS)
+    .slice(0, limit)
     .map((result) => result.feature)
 }

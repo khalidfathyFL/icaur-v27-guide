@@ -1,4 +1,13 @@
-import { AlertTriangle, BookOpen, Car, CheckCircle2, Gauge, ShieldCheck, Video } from 'lucide-react'
+import {
+  AlertTriangle,
+  BookOpen,
+  Car,
+  CheckCircle2,
+  Gauge,
+  MessageSquareWarning,
+  ShieldCheck,
+  Video,
+} from 'lucide-react'
 import { getCategory, getFeatures, getSources, getVideos, type Feature } from '../content'
 import type { LocalizedList } from '../content/types'
 import { FeatureGrid } from '../components/FeatureGrid'
@@ -6,6 +15,7 @@ import { AltBlock, InfoBlock, PageFrame, SectionHeading } from '../components/la
 import { StatusRow } from '../components/VerificationBadge'
 import { InfotainmentSimulator } from '../features/infotainment/InfotainmentSimulator'
 import { useLanguage } from '../i18n/languageContext'
+import { apiConfigured } from '../lib/api'
 import { sourceHref } from '../lib/links'
 import { useTrim } from '../vehicle/trimContext'
 
@@ -25,7 +35,12 @@ export function FeaturePage({ feature }: { feature: Feature }) {
 
   return (
     <PageFrame
-      eyebrow={category ? pair(category.name) : ''}
+      breadcrumbs={[
+        { label: tx('Guides', 'الأدلة'), href: '#/guides' },
+        ...(category ? [{ label: t(category.name), href: `#/guides?topic=${category.id}` }] : []),
+        { label: t(feature.name) },
+      ]}
+      eyebrow=""
       title={pair(feature.name)}
       intro={
         <>
@@ -55,10 +70,13 @@ export function FeaturePage({ feature }: { feature: Feature }) {
               </AltBlock>
             )}
             {feature.screenPath && (
-              <div className="path-pills">
-                {feature.screenPath.map((part) => (
-                  <span key={part}>{part}</span>
-                ))}
+              <div className="screen-path">
+                <small>{tx('On the screen', 'على الشاشة')}</small>
+                <ol className="path-pills" aria-label={tx('Screen menu path', 'مسار القائمة على الشاشة')}>
+                  {feature.screenPath.map((part) => (
+                    <li key={part}>{part}</li>
+                  ))}
+                </ol>
               </div>
             )}
           </InfoBlock>
@@ -111,6 +129,22 @@ export function FeaturePage({ feature }: { feature: Feature }) {
               ))}
             </div>
           </InfoBlock>
+
+          <aside className="correction-prompt">
+            <MessageSquareWarning size={20} aria-hidden="true" />
+            <div>
+              <strong>{tx('Is something different on your car?', 'هل هناك اختلاف في سيارتك؟')}</strong>
+              <span>
+                {tx(
+                  'Owners keep this guide accurate. Tell us what you see and an admin will check it.',
+                  'الملاك يحافظون على دقة هذا الدليل. أخبرنا بما تراه وسيراجعه المشرف.',
+                )}
+              </span>
+            </div>
+            <a className="secondary-button" href={apiConfigured ? '#/contribute' : '#/sources'}>
+              {apiConfigured ? tx('Suggest a correction', 'اقترح تصحيحا') : tx('See sources', 'المصادر')}
+            </a>
+          </aside>
         </article>
       </div>
 
