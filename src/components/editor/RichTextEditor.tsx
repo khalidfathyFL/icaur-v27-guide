@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
+import { EmbedNode } from './EmbedNode'
+import { embedTitle, toEmbedUrl } from './embeds'
 import {
   Bold,
   Code,
@@ -10,6 +12,7 @@ import {
   Italic,
   Link2,
   Link2Off,
+  MonitorPlay,
   List,
   ListOrdered,
   Quote,
@@ -60,6 +63,7 @@ export function RichTextEditor({
         // Mirrors the sanitizer, so a pasted javascript: URL never survives.
         protocols: ['http', 'https', 'mailto', 'tel'],
       }),
+      EmbedNode,
     ],
     content: value,
     onUpdate: ({ editor: instance }) => onChange(instance.getHTML()),
@@ -107,6 +111,29 @@ export function RichTextEditor({
     editor.chain().focus().extendMarkRange('link').setLink({ href }).run()
   }
 
+  function addEmbed() {
+    if (!editor) return
+    const raw = window.prompt(
+      tx('Paste a YouTube, Bilibili or Vimeo link', 'الصق رابط يوتيوب أو بيليبيلي أو فيميو'),
+      'https://',
+    )
+    if (!raw) return
+
+    const src = toEmbedUrl(raw)
+    if (!src) {
+      // Everything else stays a link: no other host here has a plain player.
+      window.alert(
+        tx(
+          'That link cannot be embedded. Add it as a normal link instead.',
+          'هذا الرابط لا يمكن تضمينه. أضفه كرابط عادي بدلا من ذلك.',
+        ),
+      )
+      return
+    }
+
+    editor.chain().focus().setEmbed({ src, title: embedTitle(src) }).run()
+  }
+
   return (
     <div className="tiptap">
       <div className="tiptap-toolbar" role="toolbar" aria-label={tx('Formatting', 'التنسيق')}>
@@ -146,6 +173,15 @@ export function RichTextEditor({
           onClick={() => editor.chain().focus().unsetLink().run()}
         >
           <Link2Off size={16} />
+        </button>
+
+        <button
+          type="button"
+          title={tx('Embed a video', 'ضمّن فيديو')}
+          aria-label={tx('Embed a video', 'ضمّن فيديو')}
+          onClick={addEmbed}
+        >
+          <MonitorPlay size={16} />
         </button>
 
         <span className="tiptap-divider" />

@@ -3787,3 +3787,35 @@ ol.path-pills li:last-child {
   font-size: 0.76rem;
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- embedded players ---------- */
+
+/* A 16:9 box, so the player never shifts layout as it loads. */
+.embed-frame {
+  position: relative;
+  margin: 1.25rem 0;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-3);
+}
+
+.embed-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* In the editor the player is a block to select and move, not to interact with. */
+.tiptap-surface .embed-frame {
+  pointer-events: none;
+}
+
+.tiptap-surface .embed-frame.ProseMirror-selectednode,
+.tiptap-surface .ProseMirror-selectednode .embed-frame {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
