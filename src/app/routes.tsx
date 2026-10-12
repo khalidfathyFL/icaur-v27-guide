@@ -60,6 +60,20 @@ export function resolvePanelRoute(path: string, params: URLSearchParams, route: 
   )
 }
 
+/**
+ * Arabic post slugs reach the address bar percent-encoded (`%D8%A7…`), and
+ * `location.hash` hands them back that way. Without decoding, the API is asked
+ * for a slug no post has.
+ */
+function decodeSlug(slug: string): string {
+  try {
+    return decodeURIComponent(slug)
+  } catch {
+    // A malformed escape: let the API answer "not found" for it as typed.
+    return slug
+  }
+}
+
 export function resolveRoute(path: string, params: URLSearchParams): React.ReactElement {
   const staticRoute = STATIC_ROUTES[path]
   if (staticRoute) return staticRoute(params)
@@ -70,7 +84,7 @@ export function resolveRoute(path: string, params: URLSearchParams): React.React
   }
 
   if (path.startsWith(BLOG_PREFIX)) {
-    return <PostPage slug={path.slice(BLOG_PREFIX.length)} />
+    return <PostPage slug={decodeSlug(path.slice(BLOG_PREFIX.length))} />
   }
 
   return <NotFoundPage />
