@@ -276,6 +276,14 @@ export function Dashboard({ counts, onChanged }: { counts: PendingCounts | null;
         {stats ? (
           <>
             <div className="bar-grid">
+              <BarList
+                title={tx('Owners or just interested', 'ملاك أم مهتمون')}
+                // The site and the API deploy separately, so an older API may not send this yet.
+                rows={named(stats.byOwnership ?? [], (value) =>
+                  value === 'owner' ? tx('Own a V27', 'يملكون V27') : tx('Just interested', 'مهتمون فقط'),
+                )}
+                emptyLabel={noOne}
+              />
               <BarList title={tx('Which trim they own', 'الفئة التي يملكونها')} rows={named(stats.byTrim, (value) => TRIM_LABELS[value] ?? value)} emptyLabel={noOne} />
               <BarList title={tx('Country', 'الدولة')} rows={named(stats.byCountry)} emptyLabel={noOne} />
               <BarList title={tx('Governorate', 'المحافظة')} rows={named(stats.byCity)} emptyLabel={noOne} />

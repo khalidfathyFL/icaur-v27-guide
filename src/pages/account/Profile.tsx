@@ -6,7 +6,8 @@ import { useAuth } from '../../auth/authContext'
 import { useLanguage, useShortText } from '../../i18n/languageContext'
 import { COUNTRIES, EGYPT, EGYPT_GOVERNORATES, PASSWORD_RULE, STRONG_PASSWORD } from '../../content/places'
 import { colours as CAR_COLOURS } from '../../content/egypt'
-import { api } from '../../lib/api'
+import { api, type Ownership } from '../../lib/api'
+import { Segmented } from '../../components/Segmented'
 import { errorMessage } from '../../lib/errors'
 import { formatDate } from '../../lib/format'
 import { TRIMS } from '../../vehicle/trimContext'
@@ -55,6 +56,11 @@ function ProfileForm() {
   const { user, refresh } = useAuth()
 
   const [name, setName] = useState(user?.name ?? '')
+  // Accounts from before sign-up asked have no answer; a trim already on file
+  // is a safe sign they own one.
+  const [ownership, setOwnership] = useState<Ownership | ''>(
+    user?.ownership ?? (user?.trim ? 'owner' : ''),
+  )
   const [phone, setPhone] = useState(user?.phone ?? '')
   const [country, setCountry] = useState(user?.country ?? '')
   const [city, setCity] = useState(user?.city ?? '')
@@ -64,6 +70,7 @@ function ProfileForm() {
   const [busy, setBusy] = useState(false)
 
   const inEgypt = country === EGYPT
+  const owner = ownership === 'owner'
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -73,11 +80,12 @@ function ProfileForm() {
     try {
       await api.updateProfile({
         name,
+        ownership: ownership || undefined,
         phone: phone || undefined,
         country: country || undefined,
         city: city || undefined,
-        trim: trim === 'play' || trim === 'wild' ? trim : undefined,
-        colour: colour || undefined,
+        trim: owner && (trim === 'play' || trim === 'wild') ? trim : undefined,
+        colour: owner ? colour || undefined : undefined,
       })
       await refresh()
       toast(tx('Profile saved.', 'تم حفظ الملف الشخصي.'))
@@ -154,31 +162,48 @@ function ProfileForm() {
           </label>
         )}
 
-        <label>
+        <div className="auth-choice">
           <span>
-            <Car size={15} aria-hidden="true" /> {tx('Which V27 do you own?', 'أي V27 تملك؟')}
+            <Car size={15} aria-hidden="true" /> {tx('Do you own a V27?', 'هل تملك V27؟')}
           </span>
-          <select value={trim} onChange={(event) => setTrim(event.target.value)}>
-            <option value="">{tx('Not set / I do not own one yet', 'غير محدد / لا أملك واحدة بعد')}</option>
-            {TRIMS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+          <Segmented<Ownership | ''>
+            label={tx('Do you own a V27?', 'هل تملك V27؟')}
+            value={ownership}
+            onChange={setOwnership}
+            options={[
+              { value: 'owner', label: tx('I own one', 'أملك واحدة') },
+              { value: 'interested', label: tx('Just interested', 'مهتم فقط') },
+            ]}
+          />
+        </div>
 
-        <label>
-          <span>{tx('Car colour', 'لون السيارة')}</span>
-          <select value={colour} onChange={(event) => setColour(event.target.value)}>
-            <option value="">{tx('Not set', 'غير محدد')}</option>
-            {CAR_COLOURS.map((option) => (
-              <option key={option.en} value={option.en}>
-                {t(option)}
-              </option>
-            ))}
-          </select>
-        </label>
+        {owner && (
+          <>
+            <label>
+              <span>{tx('Which V27 do you own?', 'أي V27 تملك؟')}</span>
+              <select value={trim} onChange={(event) => setTrim(event.target.value)}>
+                <option value="">{tx('Not set', 'غير محدد')}</option>
+                {TRIMS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>{tx('Car colour', 'لون السيارة')}</span>
+              <select value={colour} onChange={(event) => setColour(event.target.value)}>
+                <option value="">{tx('Not set', 'غير محدد')}</option>
+                {CAR_COLOURS.map((option) => (
+                  <option key={option.en} value={option.en}>
+                    {t(option)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        )}
       </div>
 
       {error && <p className="form-error">{error}</p>}

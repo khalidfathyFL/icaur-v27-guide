@@ -13,6 +13,7 @@ const TOKEN_KEY = 'icaur-token'
 export const apiConfigured = BASE_URL.length > 0
 
 export type Role = 'user' | 'admin'
+export type Ownership = 'owner' | 'interested'
 export type ReviewStatus = 'pending' | 'approved' | 'rejected'
 
 export type ApiUser = {
@@ -20,6 +21,8 @@ export type ApiUser = {
   email: string
   name: string
   role: Role
+  /** Missing on accounts created before sign-up asked. */
+  ownership?: Ownership
   /** Optional details the owner fills in on their profile. */
   phone?: string
   country?: string
@@ -54,6 +57,7 @@ export type ApiPermissionDefinition = {
 export type ApiStats = {
   total: number
   recent: number
+  byOwnership: { value: string | null; count: number }[]
   byTrim: { value: string | null; count: number }[]
   byCountry: { value: string | null; count: number }[]
   byCity: { value: string | null; count: number }[]
@@ -75,6 +79,7 @@ export type ApiAuditEntry = {
 
 export type ProfileInput = {
   name?: string
+  ownership?: Ownership
   phone?: string
   country?: string
   city?: string

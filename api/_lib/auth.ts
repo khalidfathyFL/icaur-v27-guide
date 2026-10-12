@@ -21,6 +21,11 @@ export type Role = 'user' | 'admin'
 
 /** What an owner can tell us about themselves and their car. All optional. */
 export type UserProfile = {
+  /**
+   * Asked at sign-up. Accounts created before the question existed have none,
+   * which is reported as unknown rather than guessed.
+   */
+  ownership?: 'owner' | 'interested'
   /** Mobile number, stored as the owner typed it. */
   phone?: string
   country?: string
@@ -135,6 +140,7 @@ export function toSessionUser(user: UserDoc): SessionUser {
     email: user.email,
     name: user.name,
     role: user.role,
+    ownership: user.ownership,
     phone: user.phone,
     country: user.country,
     city: user.city,

@@ -3,7 +3,8 @@ import { LogIn, UserPlus } from 'lucide-react'
 import { PageFrame } from '../components/layout'
 import { useAuth } from '../auth/authContext'
 import { useLanguage } from '../i18n/languageContext'
-import { apiConfigured, ApiError } from '../lib/api'
+import { apiConfigured, ApiError, type Ownership } from '../lib/api'
+import { Segmented } from '../components/Segmented'
 import {
   COUNTRIES,
   EGYPT,
@@ -29,6 +30,8 @@ export function SignInPage({ next }: { next?: string | null }) {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [remember, setRemember] = useState(true)
+  // Deliberately unset, so nobody is counted as an owner by not noticing.
+  const [ownership, setOwnership] = useState<Ownership | ''>('')
   const [phone, setPhone] = useState('')
   const [country, setCountry] = useState('')
   const [city, setCity] = useState('')
@@ -42,6 +45,10 @@ export function SignInPage({ next }: { next?: string | null }) {
     setError(null)
 
     if (mode === 'register') {
+      if (!ownership) {
+        setError(tx('Tell us whether you own a V27 or are just interested.', 'أخبرنا هل تملك V27 أم أنك مهتم فقط.'))
+        return
+      }
       if (password !== confirmPassword) {
         setError(tx('Passwords do not match', 'كلمتا المرور غير متطابقتين'))
         return
@@ -59,15 +66,17 @@ export function SignInPage({ next }: { next?: string | null }) {
     try {
       if (mode === 'signin') await signIn(email, password, remember)
       else {
+        const owner = ownership === 'owner'
         await register({
           name,
           email,
           password,
+          ownership: ownership || undefined,
           phone: phone || undefined,
           country: country || undefined,
           city: city || undefined,
-          trim: trim === 'play' || trim === 'wild' ? trim : undefined,
-          colour: colour || undefined,
+          trim: owner && (trim === 'play' || trim === 'wild') ? trim : undefined,
+          colour: owner ? colour || undefined : undefined,
         })
       }
       window.location.hash = `#${safeNext(next)}`
@@ -122,6 +131,21 @@ export function SignInPage({ next }: { next?: string | null }) {
           </label>
         )}
 
+        {mode === 'register' && (
+          <div className="auth-choice">
+            <span>{tx('Do you own a V27?', 'هل تملك V27؟')}</span>
+            <Segmented<Ownership | ''>
+              label={tx('Do you own a V27?', 'هل تملك V27؟')}
+              value={ownership}
+              onChange={setOwnership}
+              options={[
+                { value: 'owner', label: tx('I own one', 'أملك واحدة') },
+                { value: 'interested', label: tx('Just interested', 'مهتم فقط') },
+              ]}
+            />
+          </div>
+        )}
+
         <label>
           <span>{tx('Email', 'البريد الإلكتروني')}</span>
           <input
@@ -173,7 +197,11 @@ export function SignInPage({ next }: { next?: string | null }) {
 
         {mode === 'register' && (
           <fieldset className="optional-fields">
-            <legend>{tx('Your car and location (optional)', 'سيارتك ومكانك (اختياري)')}</legend>
+            <legend>
+              {ownership === 'owner'
+                ? tx('Your car and location (optional)', 'سيارتك ومكانك (اختياري)')
+                : tx('Your location (optional)', 'مكانك (اختياري)')}
+            </legend>
             <p className="editor-hint">
               {tx(
                 'You can skip all of this and fill it in later from your profile.',
@@ -229,30 +257,33 @@ export function SignInPage({ next }: { next?: string | null }) {
               </label>
             )}
 
-            <label>
-              <span>{tx('Which V27 do you own?', 'أي V27 تملك؟')}</span>
-              <select value={trim} onChange={(event) => setTrim(event.target.value)}>
-                <option value="">{tx('Not set / I do not own one yet', 'غير محدد / لا أملك واحدة بعد')}</option>
-                {TRIMS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {ownership === 'owner' && (
+              <>
+                <label>
+                  <span>{tx('Which V27 do you own?', 'أي V27 تملك؟')}</span>
+                  <select value={trim} onChange={(event) => setTrim(event.target.value)}>
+                    <option value="">{tx('Not set', 'غير محدد')}</option>
+                    {TRIMS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-            <label>
-              <span>{tx('Car colour', 'لون السيارة')}</span>
-              <select value={colour} onChange={(event) => setColour(event.target.value)}>
-                <option value="">{tx('Not set', 'غير محدد')}</option>
-                {CAR_COLOURS.map((option) => (
-                  <option key={option.en} value={option.en}>
-                    {t(option)}
-                  </option>
-                ))}
-              </select>
-            </label>
-
+                <label>
+                  <span>{tx('Car colour', 'لون السيارة')}</span>
+                  <select value={colour} onChange={(event) => setColour(event.target.value)}>
+                    <option value="">{tx('Not set', 'غير محدد')}</option>
+                    {CAR_COLOURS.map((option) => (
+                      <option key={option.en} value={option.en}>
+                        {t(option)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </>
+            )}
           </fieldset>
         )}
 

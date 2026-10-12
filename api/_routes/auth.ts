@@ -21,6 +21,7 @@ import {
   optionalString,
   optionalTrim,
   requireEmail,
+  requireOwnership,
   requirePassword,
   requireString,
 } from '../_lib/models.js'
@@ -57,6 +58,8 @@ async function register(request: Request): Promise<Response> {
   const email = requireEmail(body.email)
   const password = requirePassword(body.password)
   const name = requireString(body.name, 'Name', { min: 2, max: 80 })
+  const ownership = requireOwnership(body.ownership)
+  const owner = ownership === 'owner'
 
   const db = await getDb()
   const users = db.collection<UserDoc>('users')
@@ -75,14 +78,17 @@ async function register(request: Request): Promise<Response> {
     role,
     status: 'active' as const,
     createdAt: new Date().toISOString(),
+    ownership,
     // Offered during sign-up but never required; the profile page is where
     // most people will actually fill these in.
     phone: optionalPhone(body.phone),
     country,
     // A governorate only means something alongside Egypt.
     city: country === 'Egypt' ? optionalString(body.city, 'City', { max: 80 }) : undefined,
-    trim: optionalTrim(body.trim),
-    colour: optionalString(body.colour, 'Colour', { max: 40 }),
+    // Trim and colour describe a car someone has, so they are dropped for
+    // anyone who is only interested.
+    trim: owner ? optionalTrim(body.trim) : undefined,
+    colour: owner ? optionalString(body.colour, 'Colour', { max: 40 }) : undefined,
   }
 
   const result = await users.insertOne(doc as UserDoc)
@@ -91,7 +97,7 @@ async function register(request: Request): Promise<Response> {
   await recordAudit(user, 'user.registered', {
     target: { kind: 'user', id: user.id, label: email },
     // Worth recording: the first account becomes the admin automatically.
-    changes: { role },
+    changes: { role, ownership },
   })
 
   return json(request, { user, token: await issueToken(user) }, 201)
@@ -198,9 +204,10 @@ async function stats(request: Request): Promise<Response> {
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [total, recent, byTrim, byCountry, byCity, byColour, posts, suggestions] = await Promise.all([
+  const [total, recent, byOwnership, byTrim, byCountry, byCity, byColour, posts, suggestions] = await Promise.all([
     users.countDocuments({}),
     users.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
+    countBy('ownership'),
     countBy('trim'),
     countBy('country'),
     countBy('city'),
@@ -213,6 +220,7 @@ async function stats(request: Request): Promise<Response> {
     stats: {
       total,
       recent,
+      byOwnership,
       byTrim,
       byCountry,
       byCity,
@@ -238,6 +246,13 @@ async function updateProfile(request: Request): Promise<Response> {
   if (body.country !== undefined) update.country = optionalString(body.country, 'Country', { max: 80 })
   if (body.trim !== undefined) update.trim = optionalTrim(body.trim)
   if (body.colour !== undefined) update.colour = optionalString(body.colour, 'Colour', { max: 40 })
+  if (body.ownership !== undefined) update.ownership = requireOwnership(body.ownership)
+
+  // Someone who no longer owns one should not keep a car on their profile.
+  if (update.ownership === 'interested') {
+    update.trim = undefined
+    update.colour = undefined
+  }
 
   // A city only means something alongside its country, and a move abroad should
   // not leave an Egyptian governorate attached to the account.

@@ -1376,7 +1376,23 @@ body,
   gap: 0.35rem;
 }
 
-.auth-form label > span {
+/* A field whose control is a button group rather than an input, so it cannot be a label. */
+.auth-form .auth-choice {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.auth-form .auth-choice .segmented {
+  display: flex;
+}
+
+.auth-form .auth-choice .segmented button {
+  min-height: 38px;
+  font-size: 0.86rem;
+}
+
+.auth-form label > span,
+.auth-form .auth-choice > span {
   font-size: 0.86rem;
   font-weight: 700;
   color: var(--heading);

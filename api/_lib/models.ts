@@ -172,6 +172,13 @@ export function optionalTrim(value: unknown): 'play' | 'wild' | undefined {
   return bad('Trim must be play or wild.')
 }
 
+export type Ownership = 'owner' | 'interested'
+
+export function requireOwnership(value: unknown): Ownership {
+  if (value === 'owner' || value === 'interested') return value
+  return bad('Tell us whether you own a V27 or are just interested.')
+}
+
 export function requireReviewStatus(value: unknown): Exclude<ReviewStatus, 'pending'> {
   if (value === 'approved' || value === 'rejected') return value
   return bad('Decision must be approved or rejected.')
