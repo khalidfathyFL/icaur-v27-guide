@@ -2112,3 +2112,177 @@ html[dir='rtl'] .panel-drawer {
   font-weight: 600;
   font-size: 13px;
 }
+
+/* ---------- order requests ---------- */
+
+.order-list {
+  display: grid;
+  gap: 12px;
+}
+
+.order-sent {
+  border-inline-start-color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 10%, transparent);
+}
+
+.order-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.order-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.order-card-head:hover {
+  background: var(--panel-inset);
+}
+
+.order-card-head .panel-cell-main {
+  flex: 1;
+}
+
+.order-card-total {
+  color: var(--heading);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.order-card-body {
+  display: grid;
+  gap: 12px;
+  padding: 4px 16px 16px;
+}
+
+.order-card-body p {
+  margin: 0;
+}
+
+.order-steps {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.order-steps li {
+  padding-top: 8px;
+  border-top: 4px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.order-steps li.done {
+  border-top-color: var(--ok);
+}
+
+.order-steps li.current {
+  border-top-color: var(--accent);
+  color: var(--heading);
+}
+
+.order-items {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.order-items td,
+.order-items th {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  font-weight: 500;
+}
+
+.order-items td:last-child {
+  text-align: end;
+  white-space: nowrap;
+}
+
+.order-items td a {
+  color: var(--heading);
+  font-weight: 700;
+}
+
+.order-items td small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.order-items tfoot th {
+  color: var(--muted);
+  text-align: start;
+}
+
+.order-items tfoot td,
+.order-items tfoot th {
+  border-bottom: 0;
+}
+
+.order-items tfoot td {
+  color: var(--heading);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.order-history {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.order-history li {
+  display: grid;
+  gap: 2px;
+  padding-inline-start: 12px;
+  border-inline-start: 3px solid var(--line);
+}
+
+.order-history li:first-child {
+  border-inline-start-color: var(--accent);
+}
+
+.order-history time {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.order-history p {
+  margin: 2px 0 0;
+  white-space: pre-wrap;
+}
+
+.panel-details dd a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+@media (max-width: 640px) {
+  .order-card-head {
+    flex-wrap: wrap;
+  }
+
+  .order-steps li {
+    font-size: 10.5px;
+  }
+}

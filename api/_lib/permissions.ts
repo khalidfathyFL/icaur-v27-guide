@@ -25,6 +25,7 @@ export const PERMISSION_KEYS = [
   'pricing.manage',
   'parts.manage',
   'centers.manage',
+  'orders.manage',
   'users.manage',
   'audit.read',
   'stats.read',
@@ -103,6 +104,13 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     label: 'Manage protection centers',
     description: 'Add, edit and remove protection centers and their packages, prices and photos.',
     group: 'Market data',
+  },
+  {
+    key: 'orders.manage',
+    label: 'Handle order requests',
+    description:
+      "See accessory requests with the customer's phone and address, and move them through ordering, payment and delivery.",
+    group: 'Orders',
   },
   {
     key: 'users.manage',

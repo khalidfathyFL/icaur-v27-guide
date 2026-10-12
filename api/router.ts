@@ -1,8 +1,10 @@
 import { handleAuth } from './_routes/auth.js'
+import { handleCart } from './_routes/cart.js'
 import { handleCenterReviews } from './_routes/centerReviews.js'
 import { handleCenters } from './_routes/centers.js'
 import { handleComments } from './_routes/comments.js'
 import { handleDealers } from './_routes/dealers.js'
+import { handleOrders } from './_routes/orders.js'
 import { handlePartReviews } from './_routes/partReviews.js'
 import { handleParts } from './_routes/parts.js'
 import { handlePosts } from './_routes/posts.js'
@@ -26,6 +28,8 @@ const ROUTES: Record<string, RouteHandler> = {
   'part-reviews': handlePartReviews,
   centers: handleCenters,
   'center-reviews': handleCenterReviews,
+  cart: handleCart,
+  orders: handleOrders,
   uploads: handleUploads,
 }
 

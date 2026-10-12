@@ -50,6 +50,10 @@ async function ensureIndexes(db: Db): Promise<void> {
     db.collection('parts').createIndex({ slug: 1 }, { unique: true }),
     db.collection('parts').createIndex({ active: 1, category: 1, source: 1 }),
     db.collection('centers').createIndex({ slug: 1 }, { unique: true }),
+    db.collection('carts').createIndex({ userId: 1 }, { unique: true }),
+    db.collection('orders').createIndex({ number: 1 }, { unique: true }),
+    db.collection('orders').createIndex({ userId: 1, createdAt: -1 }),
+    db.collection('orders').createIndex({ status: 1, createdAt: -1 }),
     db.collection('centers').createIndex({ active: 1, city: 1 }),
     // One review per owner per thing; a second attempt is a 409, not a duplicate.
     ...reviewIndexes(db, PART_REVIEWS),

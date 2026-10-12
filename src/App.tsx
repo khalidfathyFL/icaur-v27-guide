@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { resolvePanelRoute, resolveRoute } from './app/routes'
 import { AuthProvider } from './auth/AuthProvider'
+import { CartProvider } from './features/orders/CartProvider'
 import { useAuth } from './auth/authContext'
 import { SiteFooter } from './components/SiteFooter'
 import { SiteHeader } from './components/SiteHeader'
@@ -20,7 +21,9 @@ export default function App() {
       <LanguageProvider>
         <TrimProvider>
           <AuthProvider>
-            <Shell />
+            <CartProvider>
+              <Shell />
+            </CartProvider>
           </AuthProvider>
         </TrimProvider>
       </LanguageProvider>

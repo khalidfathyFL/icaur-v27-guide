@@ -8,6 +8,7 @@ import { usePanelGate } from '../../components/panel/usePanelGate'
 import { useLanguage, useShortText } from '../../i18n/languageContext'
 import { apiConfigured } from '../../lib/api'
 import { PostComposer, SuggestionComposer } from './Compose'
+import { MyOrders } from './MyOrders'
 import { MyPosts, MySuggestions } from './MyPosts'
 import { Overview } from './Overview'
 import { Profile, Security } from './Profile'
@@ -41,6 +42,7 @@ export function AccountPanel({ section, routeKey }: { section: string; routeKey:
     suggestions: <MySuggestions />,
     'new-post': <PostComposer />,
     suggest: <SuggestionComposer />,
+    orders: <MyOrders />,
     profile: <Profile />,
     security: <Security />,
   }

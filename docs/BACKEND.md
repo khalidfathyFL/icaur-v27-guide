@@ -103,6 +103,28 @@ promote them.
   queue rules as comments: the **Approve comments** permission works all three
   queues.
 
+## Order requests
+
+Signed-in users can put accessories on a request list (quantity, a note,
+whether they want it fitted). The list is saved on their account. Sending it
+asks for a name, phone, city and optional address and note, and creates a
+request numbered `IC-0001`, `IC-0002`…
+
+- People with **Handle order requests** (`orders.manage`) work the requests at
+  `#/admin/orders`: status (Sent → Confirmed → Ordered → Arrived → Delivered,
+  or Cancelled), a message to the customer, the agreed total, payment
+  received, and a staff-only note. Admins hold it automatically.
+- Users follow their requests at `#/account/orders` and can cancel one until
+  it is confirmed.
+- Payment happens off the site. The total shown when a request is sent is an
+  estimate from the listed prices; the agreed total replaces it once set.
+- A request keeps a copy of each line's name and price as it was when sent,
+  so later edits to an accessory do not change past requests.
+- Phone numbers and addresses are visible only to the requester and to order
+  handlers. The activity log records request numbers and statuses, never
+  contact details. A user can have at most three requests waiting for a first
+  answer at once.
+
 ## Collections
 
 | Collection | Holds |
@@ -116,6 +138,9 @@ promote them.
 | `partReviews` | owner reviews of accessories and their review state |
 | `centers` | protection centers: contact details, photo addresses, and their packages |
 | `centerReviews` | owner reviews of protection centers and their review state |
+| `carts` | each signed-in user's request list, before they send it |
+| `orders` | sent order requests: contact details, a copy of the lines and prices, status history, payment |
+| `counters` | the running number behind request numbers such as `IC-0007` |
 
 Indexes are created automatically on the first request after a cold start.
 

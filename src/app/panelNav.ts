@@ -14,6 +14,7 @@ import {
   PenLine,
   ShieldCheck,
   ShieldPlus,
+  ShoppingBag,
   Star,
   Store,
   UserCog,
@@ -46,6 +47,7 @@ export const ADMIN_GROUPS: PanelGroupDef[] = [
   { key: 'overview', label: { en: 'Overview', ar: 'نظرة عامة' }, icon: LayoutDashboard },
   { key: 'moderation', label: { en: 'Moderation', ar: 'المراجعة' }, icon: ShieldCheck },
   { key: 'market', label: { en: 'Market data', ar: 'بيانات السوق' }, icon: Wrench },
+  { key: 'orders', label: { en: 'Orders', ar: 'الطلبات' }, icon: ShoppingBag },
   { key: 'people', label: { en: 'People', ar: 'الأشخاص' }, icon: Users },
 ]
 
@@ -135,6 +137,14 @@ export const ADMIN_SECTIONS: PanelSection[] = [
     },
   },
   {
+    key: 'orders',
+    group: 'orders',
+    icon: ShoppingBag,
+    permission: 'orders.manage',
+    label: { en: 'Order requests', ar: 'طلبات الشراء' },
+    description: { en: 'Accessories users asked us to order for them', ar: 'الإكسسوارات التي طلبها المستخدمون' },
+  },
+  {
     key: 'protection',
     group: 'market',
     icon: ShieldPlus,
@@ -212,6 +222,13 @@ export const ACCOUNT_SECTIONS: PanelSection[] = [
     icon: FileEdit,
     label: { en: 'Suggest a correction', ar: 'اقترح تصحيحا' },
     description: { en: 'Point out something the site gets wrong', ar: 'أشر إلى خطأ في الموقع' },
+  },
+  {
+    key: 'orders',
+    group: 'home',
+    icon: ShoppingBag,
+    label: { en: 'My orders', ar: 'طلباتي' },
+    description: { en: 'Accessory requests you sent, and where they are', ar: 'طلبات الإكسسوارات التي أرسلتها وحالتها' },
   },
   {
     key: 'profile',

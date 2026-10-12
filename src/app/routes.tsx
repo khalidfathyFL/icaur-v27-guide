@@ -2,6 +2,7 @@ import { getFeature } from '../content'
 import { Redirect } from '../components/Redirect'
 import { AccessoriesPage, AccessoryPage } from '../pages/AccessoriesPage'
 import { AdminPage } from '../pages/AdminPage'
+import { CartPage } from '../pages/CartPage'
 import { ProtectionCenterPage, ProtectionPage } from '../pages/ProtectionPage'
 import { SignInPage } from '../pages/AccountPage'
 import { AccountPanel } from '../pages/account/AccountPanel'
@@ -37,6 +38,7 @@ const STATIC_ROUTES: Record<string, (params: URLSearchParams) => React.ReactElem
   '/blog': () => <BlogPage />,
   '/accessories': (params) => <AccessoriesPage params={params} />,
   '/protection': (params) => <ProtectionPage params={params} />,
+  '/cart': () => <CartPage />,
   '/signin': (params) => <SignInPage next={params.get('next')} />,
   // Both moved into the account panel; old links and bookmarks still land.
   '/contribute': () => <Redirect to="/account/new-post" />,

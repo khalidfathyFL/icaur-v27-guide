@@ -263,6 +263,86 @@ export type CenterDoc = {
   updatedAt: string
 }
 
+/** One accessory a signed-in user wants, before they send the request. */
+export type CartItem = {
+  partId: string
+  quantity: number
+  /** Colour, size, "for the Wild"… */
+  note?: string
+  /** They want it fitted, not only delivered. */
+  fitting: boolean
+  addedAt: string
+}
+
+/** The request list, saved per account so it survives devices and sign-outs. */
+export type CartDoc = {
+  _id: ObjectId
+  userId: string
+  items: CartItem[]
+  updatedAt: string
+}
+
+export const ORDER_STATUSES = ['new', 'confirmed', 'ordered', 'arrived', 'delivered', 'cancelled'] as const
+export type OrderStatus = (typeof ORDER_STATUSES)[number]
+
+export const PAYMENT_STATUSES = ['unpaid', 'deposit', 'paid'] as const
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number]
+
+/**
+ * A line as it was when the request was sent. Prices and names are copied,
+ * because the accessory's own record keeps changing after the order exists.
+ */
+export type OrderItem = {
+  partId: string
+  slug: string
+  name: Localized
+  source: PartSource
+  quantity: number
+  note?: string
+  fitting: boolean
+  /** Item plus shipping and customs, per unit. */
+  unitPriceEgp: number
+  /** Fitting for the whole line, when asked for and known. */
+  installEgp?: number
+}
+
+export type OrderContact = {
+  name: string
+  phone: string
+  whatsapp?: string
+  city: string
+  address?: string
+}
+
+export type OrderEvent = {
+  status: OrderStatus
+  at: string
+  by: string
+  /** Shown to the customer with the status change. */
+  note?: string
+}
+
+export type OrderDoc = {
+  _id: ObjectId
+  /** Human-friendly and sequential, e.g. IC-0007, for phone calls and WhatsApp. */
+  number: string
+  userId: string
+  userEmail: string
+  contact: OrderContact
+  note?: string
+  items: OrderItem[]
+  estimatedTotalEgp: number
+  /** The price agreed with the customer, once there is one. */
+  finalTotalEgp?: number
+  status: OrderStatus
+  history: OrderEvent[]
+  payment: { status: PaymentStatus; amountEgp?: number; note?: string }
+  /** For whoever handles orders; never sent to the customer. */
+  staffNote?: string
+  createdAt: string
+  updatedAt: string
+}
+
 /* ---------- validation ---------- */
 
 const bad = (message: string): never => {

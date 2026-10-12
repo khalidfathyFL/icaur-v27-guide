@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ChevronDown, Globe, Menu, Moon, Search, Sun, UserRound, X } from 'lucide-react'
+import { ChevronDown, Globe, Menu, Moon, Search, ShoppingBag, Sun, UserRound, X } from 'lucide-react'
 import { PRIMARY_NAV, SECONDARY_NAV, isActive, type NavItem } from '../app/navigation'
 import { visibleAdminSections } from '../app/panelNav'
 import { useAuth } from '../auth/authContext'
+import { useCart } from '../features/orders/cartContext'
 import { useSearch } from '../features/search/searchContext'
 import { useLanguage, useShortText } from '../i18n/languageContext'
 import { LANGUAGES, type Language } from '../i18n/translator'
@@ -80,6 +81,7 @@ export function SiteHeader({
 
           <TrimSwitch className="desktop-only" />
           <PreferencesMenu />
+          {apiConfigured && <CartButton />}
           {apiConfigured && <AccountMenu />}
 
           <button
@@ -218,6 +220,27 @@ function PreferencesMenu() {
         </div>
       )}
     </div>
+  )
+}
+
+/** The request list, for signed-in users; the number is how many items are on it. */
+function CartButton() {
+  const tx = useShortText()
+  const { user } = useAuth()
+  const { count } = useCart()
+
+  if (!user) return null
+
+  const label = count > 0 ? tx(`My request list, ${count} items`, `قائمة طلبي، ${count} قطع`) : tx('My request list', 'قائمة طلبي')
+  return (
+    <a className="icon-button cart-button" href="#/cart" aria-label={label} title={label}>
+      <ShoppingBag size={18} aria-hidden="true" />
+      {count > 0 && (
+        <span className="cart-count" aria-hidden="true">
+          {count > 99 ? '99+' : count}
+        </span>
+      )}
+    </a>
   )
 }
 

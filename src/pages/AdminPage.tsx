@@ -17,6 +17,7 @@ import { Centers } from './admin/Centers'
 import { Comments } from './admin/Comments'
 import { Dashboard } from './admin/Dashboard'
 import { Dealers } from './admin/Dealers'
+import { Orders } from './admin/Orders'
 import { Parts } from './admin/Parts'
 import { Permissions } from './admin/Permissions'
 import { Posts } from './admin/Posts'
@@ -76,6 +77,7 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
     comments: counts?.comments,
     'part-reviews': counts?.partReviews,
     'center-reviews': counts?.centerReviews,
+    orders: counts?.orders,
   }
 
   const groups: ShellGroup[] = ADMIN_GROUPS.map((group) => ({
@@ -150,6 +152,8 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
         return <Parts />
       case 'protection':
         return <Centers />
+      case 'orders':
+        return <Orders params={params} onChanged={refresh} />
       case 'users':
         return <Users params={params} />
       case 'roles':

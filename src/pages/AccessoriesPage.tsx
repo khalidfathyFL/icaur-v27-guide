@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ExternalLink, MessageCircle, Package, Phone, Store } from 'lucide-react'
 import { AltBlock, PageFrame } from '../components/layout'
 import { OwnerReviews, Rating } from '../components/OwnerReviews'
+import { AddToRequest } from '../features/orders/AddToRequest'
 import type { Trim } from '../content/types'
 import {
   AVAILABILITY_LABELS,
@@ -328,6 +329,8 @@ export function AccessoryPage({ slug }: { slug: string }) {
           <p className="muted-note part-checked">
             {tx('Price last checked', 'آخر تحقق من السعر')} {formatDate(part.priceCheckedAt, language)}
           </p>
+
+          <AddToRequest part={part} />
         </div>
       </div>
 

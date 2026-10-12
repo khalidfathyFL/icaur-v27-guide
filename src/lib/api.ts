@@ -342,6 +342,70 @@ export type CenterInput = Omit<
   'id' | 'slug' | 'services' | 'packages' | 'fromPriceEgp' | 'ratingAvg' | 'ratingCount' | 'active' | 'checkedAt' | 'updatedAt'
 > & { packages: CenterPackage[] }
 
+/** One line of the request list, as the user edits it. */
+export type CartItemInput = { partId: string; quantity: number; note?: string; fitting: boolean }
+
+/** A line with its accessory as listed now; `part` is null once the accessory is removed. */
+export type ApiCartLine = CartItemInput & {
+  addedAt: string
+  part: {
+    id: string
+    slug: string
+    name: Localized
+    source: PartSource
+    availability: PartAvailability
+    unitPriceEgp: number
+    installEgp?: number
+    leadTimeDays?: { min: number; max: number }
+    image?: PartImage
+  } | null
+}
+
+export type ApiCart = { items: ApiCartLine[]; updatedAt: string | null }
+
+export type OrderStatus = 'new' | 'confirmed' | 'ordered' | 'arrived' | 'delivered' | 'cancelled'
+export type PaymentStatus = 'unpaid' | 'deposit' | 'paid'
+
+export type OrderContact = { name: string; phone: string; whatsapp?: string; city: string; address?: string }
+
+export type ApiOrder = {
+  id: string
+  number: string
+  contact: OrderContact
+  note?: string
+  items: {
+    partId: string
+    slug: string
+    name: Localized
+    source: PartSource
+    quantity: number
+    note?: string
+    fitting: boolean
+    unitPriceEgp: number
+    installEgp?: number
+  }[]
+  estimatedTotalEgp: number
+  finalTotalEgp?: number
+  status: OrderStatus
+  history: { status: OrderStatus; at: string; by: string; note?: string }[]
+  payment: { status: PaymentStatus; amountEgp?: number; note?: string }
+  createdAt: string
+  updatedAt: string
+  /** Only for order handlers. */
+  userEmail?: string
+  staffNote?: string
+}
+
+export type OrderUpdate = {
+  status?: OrderStatus
+  /** Shown to the customer with the status. */
+  statusNote?: string
+  payment?: { status: PaymentStatus; amountEgp?: number; note?: string }
+  /** `null` clears it. */
+  finalTotalEgp?: number | null
+  staffNote?: string
+}
+
 /** Where uploaded photos go; each folder is open only to that listing's editors. */
 export type UploadFolder = 'parts' | 'centers'
 
@@ -651,4 +715,27 @@ export const api = {
 
   deleteReview: (kind: ReviewTarget, reviewId: string) =>
     request<{ ok: true }>(`${REVIEW_ROUTES[kind].route}/${reviewId}`, { method: 'DELETE', auth: true }),
+
+  /* ---------- request list and orders ---------- */
+
+  getCart: () => request<{ cart: ApiCart }>('cart', { auth: true }),
+
+  /** Replaces the whole list and returns it with each accessory as listed now. */
+  saveCart: (items: CartItemInput[]) =>
+    request<{ cart: ApiCart }>('cart', { method: 'PUT', body: { items }, auth: true }),
+
+  /** Sends the saved list as a request and empties it. */
+  createOrder: (input: { contact: OrderContact; note?: string }) =>
+    request<{ order: ApiOrder }>('orders', { method: 'POST', body: input, auth: true }),
+
+  myOrders: () => request<{ orders: ApiOrder[] }>('orders?mine=1', { auth: true }),
+
+  orderQueue: (status: OrderStatus | 'open' | 'all' = 'open') =>
+    request<{ orders: ApiOrder[] }>(`orders?status=${status}`, { auth: true }),
+
+  updateOrder: (id: string, input: OrderUpdate) =>
+    request<{ order: ApiOrder }>(`orders/${id}`, { method: 'PATCH', body: input, auth: true }),
+
+  cancelOrder: (id: string) => request<{ ok: true }>(`orders/${id}/cancel`, { method: 'POST', auth: true }),
+
 }
