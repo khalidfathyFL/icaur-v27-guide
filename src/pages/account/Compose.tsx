@@ -7,6 +7,7 @@ import { useLanguage, useShortText } from '../../i18n/languageContext'
 import { features } from '../../content'
 import { api, type SuggestionTarget } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
+import { postDraftProblem } from '../../lib/postLanguage'
 
 export function PostComposer() {
   const tx = useShortText()
@@ -20,14 +21,20 @@ export function PostComposer() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
+    const title = { en: titleEn, ar: titleAr }
+    const body = { en: bodyEn, ar: bodyAr }
+
+    const problem = postDraftProblem(title, body)
+    if (problem) {
+      setError(tx(problem.en, problem.ar))
+      return
+    }
+
     setError(null)
     setBusy(true)
 
     try {
-      const { post } = await api.createPost({
-        title: { en: titleEn, ar: titleAr },
-        body: { en: bodyEn, ar: bodyAr },
-      })
+      const { post } = await api.createPost({ title, body })
       toast(
         post.status === 'approved'
           ? tx('Published. Thank you.', 'تم النشر. شكرا لك.')
@@ -46,7 +53,7 @@ export function PostComposer() {
         <div className="panel-form-grid">
           <label>
             <span>{tx('Title (English)', 'العنوان (إنجليزي)')}</span>
-            <input value={titleEn} onChange={(event) => setTitleEn(event.target.value)} required maxLength={200} />
+            <input value={titleEn} onChange={(event) => setTitleEn(event.target.value)} maxLength={200} />
           </label>
 
           <label>
@@ -65,8 +72,8 @@ export function PostComposer() {
           <RichTextEditor value={bodyAr} onChange={setBodyAr} dir="rtl" />
           <small className="editor-hint">
             {tx(
-              'Write whichever language you are comfortable in. An admin can fill in the other side.',
-              'اكتب باللغة التي تريحك، ويمكن للمشرف إكمال اللغة الأخرى.',
+              'Write in English, Arabic or both. Leave the other language empty if you only write one.',
+              'اكتب بالإنجليزية أو العربية أو كلتيهما. اترك اللغة الأخرى فارغة إن كتبت بلغة واحدة.',
             )}
           </small>
         </div>

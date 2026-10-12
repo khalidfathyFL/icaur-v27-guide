@@ -116,17 +116,30 @@ export function optionalString(
   return requireString(value, field, { min: 1, max: options?.max ?? 4000 })
 }
 
+/**
+ * Either side may be empty: contributors write in English, Arabic or both.
+ * At least one side must have text.
+ */
 export function requireLocalized(value: unknown, field: string, max = 20000): Localized {
-  if (typeof value !== 'object' || value === null) return bad(`${field} must have en and ar text.`)
+  if (typeof value !== 'object' || value === null) return bad(`${field} must have en or ar text.`)
 
   const candidate = value as Record<string, unknown>
-  return {
-    en: requireString(candidate.en, `${field} (English)`, { max }),
-    // Arabic is optional at submission time; contributors often write one side
-    // first and the other is filled in during review.
-    ar: typeof candidate.ar === 'string' ? candidate.ar.trim().slice(0, max) : '',
+  const side = (text: unknown, label: string): string => {
+    if (text === undefined || text === null) return ''
+    if (typeof text !== 'string') return bad(`${field} (${label}) must be text.`)
+    const trimmed = text.trim()
+    if (trimmed.length > max) return bad(`${field} (${label}) must be at most ${max} characters.`)
+    return trimmed
   }
+
+  const localized = { en: side(candidate.en, 'English'), ar: side(candidate.ar, 'Arabic') }
+  if (!localized.en && !localized.ar) return bad(`${field} needs English or Arabic text.`)
+
+  return localized
 }
+
+/** A one-line label for logs and lists, from whichever language was written. */
+export const firstWritten = (value: Localized): string => value.en || value.ar
 
 export function requireEmail(value: unknown): string {
   const email = requireString(value, 'Email', { max: 200 }).toLowerCase()

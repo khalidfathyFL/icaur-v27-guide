@@ -13,6 +13,7 @@ import {
   type ApiUser,
   type ReviewStatus,
 } from '../../lib/api'
+import { postSide, postTitle } from '../../lib/postLanguage'
 import { TRIMS } from '../../vehicle/trimContext'
 import type { Trim } from '../../content/types'
 
@@ -90,7 +91,7 @@ function QueueEmpty({ status }: { status: ReviewStatus | 'all' }) {
 /* ---------- moderation ---------- */
 
 export function PostQueue({ onChanged }: { onChanged: () => void }) {
-  const { t, tx } = useLanguage()
+  const { tx, language } = useLanguage()
   const { status, control } = useQueueFilter()
   const [posts, setPosts] = useState<ApiPost[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -132,7 +133,7 @@ export function PostQueue({ onChanged }: { onChanged: () => void }) {
           <article className="review-card" key={post.id}>
             <header>
               <div>
-                <h3>{t(post.title)}</h3>
+                <h3>{postTitle(post, language)}</h3>
                 <small>
                   {post.authorName} · {new Date(post.createdAt).toLocaleDateString()}
                 </small>
@@ -140,7 +141,7 @@ export function PostQueue({ onChanged }: { onChanged: () => void }) {
               <StatusPill status={post.status} />
             </header>
 
-            <p className="review-excerpt">{t(post.excerpt)}</p>
+            <p className="review-excerpt">{post.excerpt[postSide(post, language)]}</p>
             <a className="inline-link" href={`#/blog/${post.slug}`}>
               {tx('Read the full post', 'اقرأ المقال كاملا')}
             </a>

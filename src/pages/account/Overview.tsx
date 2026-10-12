@@ -4,11 +4,12 @@ import { StatusPill } from '../../components/StatusPill'
 import { useAuth } from '../../auth/authContext'
 import { useLanguage, useShortText } from '../../i18n/languageContext'
 import { formatDate } from '../../lib/format'
+import { postTitle } from '../../lib/postLanguage'
 import { useMyContributions } from './useMyContributions'
 
 /** The owner's landing page: how their contributions are doing, and where to go next. */
 export function Overview() {
-  const { t, language } = useLanguage()
+  const { language } = useLanguage()
   const tx = useShortText()
   const { user } = useAuth()
   const { posts, suggestions, error } = useMyContributions(tx('Could not load.', 'تعذر التحميل.'))
@@ -22,7 +23,7 @@ export function Overview() {
         ...posts.map((post) => ({
           id: post.id,
           kind: tx('Post', 'مقال'),
-          title: t(post.title) || post.title.en || post.title.ar,
+          title: postTitle(post, language),
           status: post.status,
           note: post.reviewNote,
           date: post.updatedAt,

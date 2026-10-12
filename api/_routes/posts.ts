@@ -6,14 +6,52 @@ import { getDb } from '../_lib/mongo.js'
 import { sanitizeRichText, toPlainText } from '../_lib/sanitize.js'
 import { recordAudit } from '../_lib/audit.js'
 import {
+  firstWritten,
   requireLocalized,
   requireReviewStatus,
   requireString,
   slugify,
+  type Localized,
   type PostDoc,
 } from '../_lib/models.js'
 
 const PAGE_SIZE = 20
+
+/** True when the editor left something a reader would see, not just `<p></p>`. */
+const hasContent = (html: string) => toPlainText(html) !== '' || html.includes('<iframe')
+
+/**
+ * The editor produces HTML, so it is cleaned before it is stored, never on
+ * the way out: a post is written once and read many times, and the endpoint
+ * can be called without the editor. A side left blank in the editor is stored
+ * as empty, so it reads as "not written in this language".
+ */
+function cleanBody(raw: Localized): Localized {
+  const clean = (html: string) => {
+    const safe = sanitizeRichText(html)
+    return hasContent(safe) ? safe : ''
+  }
+  return { en: clean(raw.en), ar: clean(raw.ar) }
+}
+
+const excerptOf = (body: Localized): Localized => ({
+  en: toPlainText(body.en).slice(0, 300),
+  ar: toPlainText(body.ar).slice(0, 300),
+})
+
+/**
+ * A post may be English only, Arabic only, or both, but each language it is
+ * written in needs both a title and a body, or readers of that language would
+ * get half a post.
+ */
+function requireWholeLanguages(title: Localized, body: Localized) {
+  if (!body.en && !body.ar) throw new HttpError(400, 'Write the post in English or Arabic.')
+
+  for (const [side, label] of [['en', 'English'], ['ar', 'Arabic']] as const) {
+    if (title[side] && !body[side]) throw new HttpError(400, `The ${label} title has no ${label} post.`)
+    if (body[side] && !title[side]) throw new HttpError(400, `The ${label} post needs an ${label} title.`)
+  }
+}
 
 /** Shape sent to the browser: no internal ids beyond the hex string. */
 function toPublic(post: PostDoc) {
@@ -107,23 +145,16 @@ async function createPost(request: Request): Promise<Response> {
   const body = await readJsonBody<Record<string, unknown>>(request)
 
   const title = requireLocalized(body.title, 'Title', 200)
-  const raw = requireLocalized(body.body, 'Post', 40000)
-
-  // The editor produces HTML, so it is cleaned before it is stored, never on
-  // the way out: a post is written once and read many times, and the endpoint
-  // can be called without the editor.
-  const content = { en: sanitizeRichText(raw.en), ar: sanitizeRichText(raw.ar) }
-  const excerpt = {
-    en: toPlainText(content.en).slice(0, 300),
-    ar: toPlainText(content.ar).slice(0, 300),
-  }
+  const content = cleanBody(requireLocalized(body.body, 'Post', 40000))
+  requireWholeLanguages(title, content)
 
   const now = new Date().toISOString()
   const doc = {
-    slug: slugify(title.en),
+    // slugify keeps Arabic letters, so an Arabic-only post gets a readable slug too.
+    slug: slugify(firstWritten(title)),
     title,
     body: content,
-    excerpt,
+    excerpt: excerptOf(content),
     authorId: user.id,
     authorName: user.name,
     // Everything waits for review, unless this author has been excused from
@@ -138,7 +169,7 @@ async function createPost(request: Request): Promise<Response> {
   const result = await db.collection<PostDoc>('posts').insertOne(doc as PostDoc)
 
   await recordAudit(user, 'post.created', {
-    target: { kind: 'post', id: result.insertedId.toHexString(), label: title.en },
+    target: { kind: 'post', id: result.insertedId.toHexString(), label: firstWritten(title) },
   })
 
   return json(request, { post: toPublic({ ...doc, _id: result.insertedId } as PostDoc) }, 201)
@@ -172,13 +203,14 @@ async function updatePost(request: Request, id: string): Promise<Response> {
   if (body.title !== undefined) update.title = requireLocalized(body.title, 'Title', 200)
 
   if (body.body !== undefined) {
-    const raw = requireLocalized(body.body, 'Post', 40000)
-    update.body = { en: sanitizeRichText(raw.en), ar: sanitizeRichText(raw.ar) }
-    update.excerpt = {
-      en: toPlainText(update.body.en).slice(0, 300),
-      ar: toPlainText(update.body.ar).slice(0, 300),
-    }
+    update.body = cleanBody(requireLocalized(body.body, 'Post', 40000))
+    update.excerpt = excerptOf(update.body)
   }
+
+  // Checked against what the post will be after the edit, since a request may
+  // change only the title or only the body. Older posts could store a blank
+  // `<p></p>` side, so the stored body goes through the same cleaning.
+  requireWholeLanguages(update.title ?? post.title, update.body ?? cleanBody(post.body))
 
   // A contributor's edit re-enters moderation; an admin's does not.
   if (!isAdmin) update.status = 'pending'
@@ -186,7 +218,7 @@ async function updatePost(request: Request, id: string): Promise<Response> {
   await collection.updateOne({ _id: post._id }, { $set: update })
 
   await recordAudit(user, 'post.updated', {
-    target: { kind: 'post', id: post._id.toHexString(), label: post.title.en },
+    target: { kind: 'post', id: post._id.toHexString(), label: firstWritten(post.title) },
     changes: { fields: Object.keys(update).filter((key) => key !== 'updatedAt') },
   })
 
@@ -242,7 +274,7 @@ async function deletePost(request: Request, id: string): Promise<Response> {
   await collection.deleteOne({ _id: post._id })
 
   await recordAudit(user, 'post.deleted', {
-    target: { kind: 'post', id: post._id.toHexString(), label: post.title.en },
+    target: { kind: 'post', id: post._id.toHexString(), label: firstWritten(post.title) },
   })
 
   return json(request, { ok: true })

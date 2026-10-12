@@ -4,7 +4,7 @@ import { hasPermission, requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
 import { recordAudit } from '../_lib/audit.js'
-import { requireReviewStatus, requireString, type CommentDoc, type PostDoc } from '../_lib/models.js'
+import { firstWritten, requireReviewStatus, requireString, type CommentDoc, type PostDoc } from '../_lib/models.js'
 import { toPlainText } from '../_lib/sanitize.js'
 
 const PAGE_SIZE = 50
@@ -90,7 +90,7 @@ async function createComment(request: Request): Promise<Response> {
 
   const doc = {
     postId,
-    postTitle: post.title.en,
+    postTitle: firstWritten(post.title),
     body: text,
     authorId: user.id,
     authorName: user.name,
@@ -103,7 +103,7 @@ async function createComment(request: Request): Promise<Response> {
   const result = await db.collection<CommentDoc>('comments').insertOne(doc as CommentDoc)
 
   await recordAudit(user, 'comment.created', {
-    target: { kind: 'post', id: postId, label: post.title.en },
+    target: { kind: 'post', id: postId, label: firstWritten(post.title) },
   })
 
   return json(request, { comment: toPublic({ ...doc, _id: result.insertedId } as CommentDoc) }, 201)

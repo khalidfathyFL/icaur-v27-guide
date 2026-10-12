@@ -10,6 +10,7 @@ import { useLanguage, useShortText } from '../../i18n/languageContext'
 import { api, type ApiPost, type ApiSuggestion, type ReviewStatus } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
 import { formatDate } from '../../lib/format'
+import { postDraftProblem, postTitle } from '../../lib/postLanguage'
 import { useMyContributions } from './useMyContributions'
 
 type StatusChoice = ReviewStatus | 'all'
@@ -25,7 +26,7 @@ function useStatusOptions() {
 }
 
 export function MyPosts() {
-  const { t, language } = useLanguage()
+  const { language } = useLanguage()
   const tx = useShortText()
   const toast = useToast()
   const confirm = useConfirm()
@@ -84,7 +85,7 @@ export function MyPosts() {
             width: 'minmax(0, 3fr)',
             render: (post) => (
               <span className="panel-cell-main">
-                <strong>{t(post.title) || post.title.en || post.title.ar}</strong>
+                <strong>{postTitle(post, language)}</strong>
                 {post.reviewNote && <small className="panel-note">“{post.reviewNote}”</small>}
               </span>
             ),
@@ -147,10 +148,18 @@ function EditPostDrawer({ post, onClose, onSaved }: { post: ApiPost; onClose: ()
   const [busy, setBusy] = useState(false)
 
   async function save() {
+    const title = { en: titleEn, ar: titleAr }
+    const body = { en: bodyEn, ar: bodyAr }
+    const problem = postDraftProblem(title, body)
+    if (problem) {
+      setError(tx(problem.en, problem.ar))
+      return
+    }
+
     setBusy(true)
     setError(null)
     try {
-      await api.updatePost(post.id, { title: { en: titleEn, ar: titleAr }, body: { en: bodyEn, ar: bodyAr } })
+      await api.updatePost(post.id, { title, body })
       toast(tx('Saved and sent for review again.', 'تم الحفظ وإعادة الإرسال للمراجعة.'))
       onSaved()
     } catch (caught) {
@@ -173,7 +182,7 @@ function EditPostDrawer({ post, onClose, onSaved }: { post: ApiPost; onClose: ()
           <button type="button" className="panel-button" disabled={busy} onClick={onClose}>
             {tx('Cancel', 'إلغاء')}
           </button>
-          <button type="button" className="panel-button primary" disabled={busy || !titleEn.trim()} onClick={save}>
+          <button type="button" className="panel-button primary" disabled={busy} onClick={save}>
             {busy ? tx('Saving…', 'جارٍ الحفظ…') : tx('Save and resend', 'احفظ وأعد الإرسال')}
           </button>
         </div>

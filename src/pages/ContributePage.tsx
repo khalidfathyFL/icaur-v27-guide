@@ -12,6 +12,7 @@ import {
   type ApiSuggestion,
   type SuggestionTarget,
 } from '../lib/api'
+import { postDraftProblem, postTitle } from '../lib/postLanguage'
 import { RichTextEditor } from '../components/editor/RichTextEditor'
 import { ServiceUnavailable } from './AccountPage'
 import { StatusPill } from '../components/StatusPill'
@@ -75,15 +76,21 @@ function PostComposer() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    setError(null)
     setMessage(null)
+    const title = { en: titleEn, ar: titleAr }
+    const body = { en: bodyEn, ar: bodyAr }
+
+    const problem = postDraftProblem(title, body)
+    if (problem) {
+      setError(tx(problem.en, problem.ar))
+      return
+    }
+
+    setError(null)
     setBusy(true)
 
     try {
-      await api.createPost({
-        title: { en: titleEn, ar: titleAr },
-        body: { en: bodyEn, ar: bodyAr },
-      })
+      await api.createPost({ title, body })
       setMessage(tx('Sent for review. Thank you.', 'تم الإرسال للمراجعة. شكرا لك.'))
       setTitleEn('')
       setTitleAr('')
@@ -106,7 +113,7 @@ function PostComposer() {
       <form className="auth-form wide" onSubmit={onSubmit}>
         <label>
           <span>{tx('Title (English)', 'العنوان (إنجليزي)')}</span>
-          <input value={titleEn} onChange={(event) => setTitleEn(event.target.value)} required maxLength={200} />
+          <input value={titleEn} onChange={(event) => setTitleEn(event.target.value)} maxLength={200} />
         </label>
 
         <label>
@@ -124,8 +131,8 @@ function PostComposer() {
           <RichTextEditor value={bodyAr} onChange={setBodyAr} dir="rtl" />
           <small className="editor-hint">
             {tx(
-              'Write whichever language you are comfortable in. An admin can fill in the other side.',
-              'اكتب باللغة التي تريحك، ويمكن للمشرف إكمال اللغة الأخرى.',
+              'Write in English, Arabic or both. Leave the other language empty if you only write one.',
+              'اكتب بالإنجليزية أو العربية أو كلتيهما. اترك اللغة الأخرى فارغة إن كتبت بلغة واحدة.',
             )}
           </small>
         </div>
@@ -280,7 +287,7 @@ function SuggestionComposer() {
 }
 
 function MyContributions() {
-  const { t, tx } = useLanguage()
+  const { tx, language } = useLanguage()
   const [posts, setPosts] = useState<ApiPost[]>([])
   const [suggestions, setSuggestions] = useState<ApiSuggestion[]>([])
 
@@ -316,7 +323,7 @@ function MyContributions() {
         {posts.map((post) => (
           <div className="review-item" key={post.id}>
             <div>
-              <strong>{t(post.title)}</strong>
+              <strong>{postTitle(post, language)}</strong>
               <small>{tx('Post', 'مقال')} · {new Date(post.createdAt).toLocaleDateString()}</small>
               {post.reviewNote && <p className="review-note">{post.reviewNote}</p>}
             </div>

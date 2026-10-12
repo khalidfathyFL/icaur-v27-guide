@@ -9,6 +9,7 @@ import { usePanelGate } from '../components/panel/usePanelGate'
 import type { PaletteItem } from '../components/panel/CommandPalette'
 import { useLanguage, useShortText } from '../i18n/languageContext'
 import { api, apiConfigured } from '../lib/api'
+import { postTitle } from '../lib/postLanguage'
 import { Activity } from './admin/Activity'
 import { Comments } from './admin/Comments'
 import { Dashboard } from './admin/Dashboard'
@@ -53,7 +54,7 @@ export function AdminPage({ section, params, routeKey }: { section: string; para
 }
 
 function AdminPanel({ section, params, routeKey }: { section: string; params: URLSearchParams; routeKey: string }) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const tx = useShortText()
   const { can } = useAuth()
   const { counts, refresh } = usePendingCounts(can)
@@ -98,11 +99,11 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
     }
     if (posts.status === 'fulfilled' && posts.value) {
       for (const post of posts.value.posts) {
-        items.push({ id: `post-${post.id}`, label: t(post.title) || post.title.en, hint: post.authorName, href: `#/admin/posts?id=${post.id}`, icon: FileText })
+        items.push({ id: `post-${post.id}`, label: postTitle(post, language), hint: post.authorName, href: `#/admin/posts?id=${post.id}`, icon: FileText })
       }
     }
     return items
-  }, [can, t])
+  }, [can, language])
 
   const content = useMemo(() => {
     if (!allowed) return null

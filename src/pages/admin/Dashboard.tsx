@@ -7,6 +7,7 @@ import { useLanguage, useShortText } from '../../i18n/languageContext'
 import { api, type ApiAuditEntry, type ApiStats } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
 import { formatDate } from '../../lib/format'
+import { postTitle } from '../../lib/postLanguage'
 import { ACTION_LABELS } from './auditLabels'
 import type { PendingCounts } from './usePendingCounts'
 
@@ -81,7 +82,7 @@ export function Dashboard({ counts, onChanged }: { counts: PendingCounts | null;
       const items: WaitingItem[] = []
       if (posts.status === 'fulfilled' && posts.value) {
         for (const post of posts.value.posts) {
-          items.push({ kind: 'posts', id: post.id, title: t(post.title) || post.title.en, author: post.authorName, createdAt: post.createdAt })
+          items.push({ kind: 'posts', id: post.id, title: postTitle(post, language), author: post.authorName, createdAt: post.createdAt })
         }
       }
       if (suggestions.status === 'fulfilled' && suggestions.value) {
@@ -97,7 +98,7 @@ export function Dashboard({ counts, onChanged }: { counts: PendingCounts | null;
       // Oldest first: whoever has waited longest is answered first.
       setWaiting(items.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).slice(0, 6))
     })
-  }, [can, t])
+  }, [can, language])
 
   useEffect(loadWaiting, [loadWaiting])
 

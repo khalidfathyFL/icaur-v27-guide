@@ -11,11 +11,12 @@ import { useLanguage, useShortText } from '../../i18n/languageContext'
 import { api, type ApiPost } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
 import { formatDate } from '../../lib/format'
+import { postDraftProblem, postTitle } from '../../lib/postLanguage'
 import { QueueEmpty, ReviewFooter, StatusFilter, type QueueStatus } from './moderation'
 import { useOpenRecord } from './useOpenRecord'
 
 export function Posts({ params, onChanged }: { params: URLSearchParams; onChanged: () => void }) {
-  const { t, language } = useLanguage()
+  const { language } = useLanguage()
   const tx = useShortText()
   const toast = useToast()
   const record = useOpenRecord('/admin/posts', params)
@@ -64,7 +65,7 @@ export function Posts({ params, onChanged }: { params: URLSearchParams; onChange
             width: 'minmax(0, 3fr)',
             render: (post) => (
               <span className="panel-cell-main">
-                <strong>{t(post.title) || post.title.en || post.title.ar}</strong>
+                <strong>{postTitle(post, language)}</strong>
                 <small>{post.authorName}</small>
               </span>
             ),
@@ -123,7 +124,7 @@ function PostDrawer({
   onChanged: () => void
   onDeleted: () => void
 }) {
-  const { t, language } = useLanguage()
+  const { language } = useLanguage()
   const tx = useShortText()
   const toast = useToast()
   const confirm = useConfirm()
@@ -150,9 +151,17 @@ function PostDrawer({
   }
 
   async function save() {
+    const title = { en: titleEn, ar: titleAr }
+    const body = { en: bodyEn, ar: bodyAr }
+    const problem = postDraftProblem(title, body)
+    if (problem) {
+      toast(tx(problem.en, problem.ar), 'error')
+      return
+    }
+
     setBusy(true)
     try {
-      await api.updatePost(post.id, { title: { en: titleEn, ar: titleAr }, body: { en: bodyEn, ar: bodyAr } })
+      await api.updatePost(post.id, { title, body })
       toast(tx('Changes saved.', 'تم حفظ التغييرات.'))
       setEditing(false)
       onChanged()
@@ -190,7 +199,7 @@ function PostDrawer({
       <button type="button" className="panel-button" disabled={busy} onClick={() => setEditing(false)}>
         {tx('Cancel', 'إلغاء')}
       </button>
-      <button type="button" className="panel-button primary" disabled={busy || !titleEn.trim()} onClick={save}>
+      <button type="button" className="panel-button primary" disabled={busy} onClick={save}>
         {busy ? tx('Saving…', 'جارٍ الحفظ…') : tx('Save changes', 'احفظ التغييرات')}
       </button>
     </div>
@@ -220,7 +229,7 @@ function PostDrawer({
       open
       size="lg"
       busy={busy}
-      title={editing ? tx('Edit post', 'تعديل المقال') : t(post.title) || post.title.en}
+      title={editing ? tx('Edit post', 'تعديل المقال') : postTitle(post, language)}
       subtitle={`${post.authorName} · ${formatDate(post.createdAt, language)}`}
       onClose={onClose}
       footer={footer}

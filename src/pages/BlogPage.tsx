@@ -4,6 +4,7 @@ import { PageFrame } from '../components/layout'
 import { useAuth } from '../auth/authContext'
 import { useLanguage } from '../i18n/languageContext'
 import { api, apiConfigured, type ApiPost } from '../lib/api'
+import { postSide, sideDir } from '../lib/postLanguage'
 import { Comments } from '../components/Comments'
 import { ServiceUnavailable } from './AccountPage'
 
@@ -13,12 +14,12 @@ import { ServiceUnavailable } from './AccountPage'
  * toolbar, so what reaches here has already been stripped of scripts, event
  * handlers and javascript: URLs.
  */
-function RichText({ html }: { html: string }) {
-  return <div className="rich-text" dangerouslySetInnerHTML={{ __html: html }} />
+function RichText({ html, side }: { html: string; side: 'en' | 'ar' }) {
+  return <div className="rich-text" dir={sideDir(side)} lang={side} dangerouslySetInnerHTML={{ __html: html }} />
 }
 
 export function BlogPage() {
-  const { t, tx } = useLanguage()
+  const { tx, language } = useLanguage()
   const { user } = useAuth()
   const [posts, setPosts] = useState<ApiPost[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -70,22 +71,25 @@ export function BlogPage() {
       )}
 
       <div className="post-list">
-        {posts?.map((post) => (
-          <a className="post-card" key={post.id} href={`#/blog/${post.slug}`}>
-            <h2>{t(post.title)}</h2>
-            <p>{t(post.excerpt)}</p>
-            <small>
-              {post.authorName} · {new Date(post.createdAt).toLocaleDateString()}
-            </small>
-          </a>
-        ))}
+        {posts?.map((post) => {
+          const side = postSide(post, language)
+          return (
+            <a className="post-card" key={post.id} href={`#/blog/${post.slug}`}>
+              <h2 dir={sideDir(side)} lang={side}>{post.title[side]}</h2>
+              <p dir={sideDir(side)} lang={side}>{post.excerpt[side]}</p>
+              <small>
+                {post.authorName} · {new Date(post.createdAt).toLocaleDateString()}
+              </small>
+            </a>
+          )
+        })}
       </div>
     </PageFrame>
   )
 }
 
 export function PostPage({ slug }: { slug: string }) {
-  const { t, tx, alt } = useLanguage()
+  const { tx, alt, language } = useLanguage()
   const [post, setPost] = useState<ApiPost | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -127,13 +131,16 @@ export function PostPage({ slug }: { slug: string }) {
     )
   }
 
-  const bodyAlt = alt(post.body)
+  const side = postSide(post, language)
+  // Bilingual mode adds the Arabic underneath, when the post has an Arabic side
+  // and it is not already the one shown.
+  const bodyAlt = side === 'en' ? alt(post.body) : null
 
   return (
     <PageFrame
       eyebrow={`${post.authorName} · ${new Date(post.createdAt).toLocaleDateString()}`}
-      title={t(post.title)}
-      intro={t(post.excerpt)}
+      title={post.title[side]}
+      intro={post.excerpt[side]}
     >
       {post.status !== 'approved' && (
         <p className="review-banner">
@@ -145,10 +152,10 @@ export function PostPage({ slug }: { slug: string }) {
       )}
 
       <article className="post-body">
-        <RichText html={t(post.body)} />
+        <RichText html={post.body[side]} side={side} />
         {bodyAlt && (
           <div className="alt-lang" dir="rtl" lang="ar">
-            <RichText html={bodyAlt} />
+            <RichText html={bodyAlt} side="ar" />
           </div>
         )}
       </article>
