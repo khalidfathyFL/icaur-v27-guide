@@ -18,7 +18,7 @@ import {
 const PAGE_SIZE = 20
 
 /** True when the editor left something a reader would see, not just `<p></p>`. */
-const hasContent = (html: string) => toPlainText(html) !== '' || html.includes('<iframe')
+const hasContent = (html: string) => toPlainText(html) !== '' || /<(iframe|img)\b/.test(html)
 
 /**
  * The editor produces HTML, so it is cleaned before it is stored, never on

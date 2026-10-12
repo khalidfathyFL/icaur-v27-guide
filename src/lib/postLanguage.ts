@@ -25,7 +25,7 @@ export function postTitle(post: { title: Localized; body: Localized }, language:
 export const sideDir = (side: Side) => (side === 'ar' ? 'rtl' : 'ltr')
 
 /** The editor leaves `<p></p>` behind when cleared, which is not a written post. */
-const hasContent = (html: string) => html.replace(/<[^>]*>/g, '').trim() !== '' || html.includes('<iframe')
+const hasContent = (html: string) => html.replace(/<[^>]*>/g, '').trim() !== '' || /<(iframe|img)\b/.test(html)
 
 /**
  * Mirrors the API's rule for an instant message: English, Arabic or both, but

@@ -406,8 +406,11 @@ export type OrderUpdate = {
   staffNote?: string
 }
 
-/** Where uploaded photos go; each folder is open only to that listing's editors. */
-export type UploadFolder = 'parts' | 'centers'
+/**
+ * Where uploaded photos go. Listing folders are open only to that listing's
+ * editors; `posts` to any signed-in account.
+ */
+export type UploadFolder = 'parts' | 'centers' | 'posts'
 
 export type PartFilters = {
   category?: PartCategory

@@ -533,6 +533,16 @@ export function optionalUrl(value: unknown, field: string): string | undefined {
  */
 const BLOB_HOST = /^[a-z0-9]+\.public\.blob\.vercel-storage\.com$/
 
+/** True for an https address in this project's Blob store. Post images use it too. */
+export function isBlobUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value)
+    return parsed.protocol === 'https:' && BLOB_HOST.test(parsed.hostname)
+  } catch {
+    return false
+  }
+}
+
 export function requireBlobImages(value: unknown): PartImage[] {
   if (value === undefined || value === null) return []
   if (!Array.isArray(value)) return bad('Photos must be a list.')

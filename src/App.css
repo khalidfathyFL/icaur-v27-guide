@@ -3618,6 +3618,21 @@ ol.path-pills li:last-child {
   color: var(--accent);
 }
 
+/* Post photos fill the column at most, never push the page wider. */
+.tiptap-surface img,
+.rich-text img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
+  border-radius: 8px;
+}
+
+.tiptap-surface img.ProseMirror-selectednode {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .rich-text {
   line-height: 1.85;
 }

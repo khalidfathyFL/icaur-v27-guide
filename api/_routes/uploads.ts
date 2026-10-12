@@ -4,7 +4,7 @@ import { hasPermission, type Permission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody } from '../_lib/http.js'
 
 /**
- * Issues short-lived tokens for the browser to upload listing photos straight
+ * Issues short-lived tokens for the browser to upload listing and post photos straight
  * to Vercel Blob. The file never passes through this function, which keeps it
  * clear of the 4.5 MB request limit; this route only decides who may upload
  * and what.
@@ -17,10 +17,15 @@ import { HttpError, json, readJsonBody } from '../_lib/http.js'
 const MAX_BYTES = 5 * 1024 * 1024
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
-/** Each folder belongs to one kind of listing, and only its editors may fill it. */
-const FOLDERS: Record<string, Permission> = {
+/**
+ * Each folder belongs to one kind of content. Listing folders are open only to
+ * that listing's editors; `posts` is open to any signed-in account, because
+ * anyone may write a post, and the post itself is still reviewed.
+ */
+const FOLDERS: Record<string, Permission | 'signedIn'> = {
   parts: 'parts.manage',
   centers: 'centers.manage',
+  posts: 'signedIn',
 }
 
 export async function handleUploads(request: Request, segments: string[]): Promise<Response> {
@@ -44,8 +49,11 @@ export async function handleUploads(request: Request, segments: string[]): Promi
     onBeforeGenerateToken: async (pathname) => {
       const match = /^([a-z]+)\/[A-Za-z0-9._-]{1,120}$/.exec(pathname)
       const permission = match ? FOLDERS[match[1] ?? ''] : undefined
-      if (!permission) throw new HttpError(400, 'Photos are stored under parts/ or centers/ with a plain file name.')
-      if (!hasPermission(editor, permission)) {
+      if (!permission) {
+        throw new HttpError(400, 'Photos are stored under parts/, centers/ or posts/ with a plain file name.')
+      }
+      // requireUser above has already established the account is signed in.
+      if (permission !== 'signedIn' && !hasPermission(editor, permission)) {
         throw new HttpError(403, 'Your account does not have permission to do that.')
       }
 

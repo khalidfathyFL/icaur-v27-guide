@@ -1,14 +1,19 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
+import Image from '@tiptap/extension-image'
 import { EmbedNode } from './EmbedNode'
 import { embedTitle, toEmbedUrl } from './embeds'
+import { api } from '../../lib/api'
+import { compressImage } from '../../lib/compressImage'
+import { errorMessage } from '../../lib/errors'
 import {
   Bold,
   Code,
   Heading2,
   Heading3,
+  ImagePlus,
   Italic,
   Link2,
   Link2Off,
@@ -38,6 +43,27 @@ type ToolbarButton = {
   run: (editor: Editor) => void
 }
 
+const imagesIn = (files: FileList | null | undefined) =>
+  Array.from(files ?? []).filter((file) => file.type.startsWith('image/'))
+
+/**
+ * Shrinks each photo, sends it to Vercel Blob, then places it at the cursor.
+ * The post only points at the Blob address; the sanitizer drops any image
+ * that does not live there, so this is the only way an image gets in.
+ */
+async function uploadInto(view: Editor['view'], files: File[], onError: (file: File, caught: unknown) => void) {
+  for (const file of files) {
+    try {
+      const { blob, fileName } = await compressImage(file)
+      const image = await api.uploadImage('posts', blob, fileName)
+      const node = view.state.schema.nodes.image?.create({ src: image.url, alt: '' })
+      if (node) view.dispatch(view.state.tr.replaceSelectionWith(node))
+    } catch (caught) {
+      onError(file, caught)
+    }
+  }
+}
+
 export function RichTextEditor({
   value,
   onChange,
@@ -50,6 +76,17 @@ export function RichTextEditor({
   placeholder?: string
 }) {
   const { tx } = useLanguage()
+  const fileInput = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(0)
+
+  async function upload(view: Editor['view'], files: File[]) {
+    if (files.length === 0) return
+    setUploading((count) => count + files.length)
+    await uploadInto(view, files, (file, caught) => {
+      window.alert(errorMessage(caught, tx(`Could not upload ${file.name}.`, `تعذر رفع ${file.name}.`)))
+    })
+    setUploading((count) => count - files.length)
+  }
 
   const editor = useEditor({
     extensions: [
@@ -64,6 +101,8 @@ export function RichTextEditor({
         protocols: ['http', 'https', 'mailto', 'tel'],
       }),
       EmbedNode,
+      // Block images only, and never inline base64: every image is a Blob address.
+      Image.configure({ inline: false, allowBase64: false }),
     ],
     content: value,
     onUpdate: ({ editor: instance }) => onChange(instance.getHTML()),
@@ -72,6 +111,20 @@ export function RichTextEditor({
         class: 'tiptap-surface',
         dir,
         ...(placeholder ? { 'data-placeholder': placeholder } : {}),
+      },
+      // A pasted screenshot or a dropped photo goes through the same upload as
+      // the toolbar button, instead of being lost or embedded as base64.
+      handlePaste: (view, event) => {
+        const files = imagesIn(event.clipboardData?.files)
+        if (files.length === 0) return false
+        void upload(view, files)
+        return true
+      },
+      handleDrop: (view, event) => {
+        const files = imagesIn(event.dataTransfer?.files)
+        if (files.length === 0) return false
+        void upload(view, files)
+        return true
       },
     },
   })
@@ -134,6 +187,13 @@ export function RichTextEditor({
     editor.chain().focus().setEmbed({ src, title: embedTitle(src) }).run()
   }
 
+  function onFilesChosen(event: ChangeEvent<HTMLInputElement>) {
+    const files = imagesIn(event.target.files)
+    // Cleared so picking the same photo again still fires a change.
+    event.target.value = ''
+    if (editor) void upload(editor.view, files)
+  }
+
   return (
     <div className="tiptap">
       <div className="tiptap-toolbar" role="toolbar" aria-label={tx('Formatting', 'التنسيق')}>
@@ -183,6 +243,18 @@ export function RichTextEditor({
         >
           <MonitorPlay size={16} />
         </button>
+
+        <button
+          type="button"
+          title={uploading > 0 ? tx('Uploading…', 'جارٍ الرفع…') : tx('Add a photo', 'أضف صورة')}
+          aria-label={tx('Add a photo', 'أضف صورة')}
+          aria-busy={uploading > 0}
+          disabled={uploading > 0}
+          onClick={() => fileInput.current?.click()}
+        >
+          <ImagePlus size={16} />
+        </button>
+        <input ref={fileInput} type="file" accept="image/*" multiple hidden onChange={onFilesChosen} />
 
         <span className="tiptap-divider" />
 
