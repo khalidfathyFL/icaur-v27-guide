@@ -22,6 +22,7 @@ export const PERMISSION_KEYS = [
   'comments.publishDirectly',
   'dealers.manage',
   'pricing.manage',
+  'parts.manage',
   'users.manage',
   'audit.read',
   'stats.read',
@@ -80,6 +81,12 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     key: 'pricing.manage',
     label: 'Manage prices',
     description: 'Change the prices shown on the Egypt page, overriding the launch figures.',
+    group: 'Market data',
+  },
+  {
+    key: 'parts.manage',
+    label: 'Manage accessories',
+    description: 'Add, edit and remove accessories and protection parts, with their prices, suppliers and photos.',
     group: 'Market data',
   },
   {

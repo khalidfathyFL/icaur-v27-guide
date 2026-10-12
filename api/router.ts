@@ -1,10 +1,13 @@
 import { handleAuth } from './_routes/auth.js'
 import { handleComments } from './_routes/comments.js'
 import { handleDealers } from './_routes/dealers.js'
+import { handlePartReviews } from './_routes/partReviews.js'
+import { handleParts } from './_routes/parts.js'
 import { handlePosts } from './_routes/posts.js'
 import { handlePricing } from './_routes/pricing.js'
 import { handleRoles } from './_routes/roles.js'
 import { handleSuggestions } from './_routes/suggestions.js'
+import { handleUploads } from './_routes/uploads.js'
 import { HttpError, corsHeaders, errorResponse, json, pathSegments } from './_lib/http.js'
 
 type RouteHandler = (request: Request, segments: string[]) => Promise<Response>
@@ -17,6 +20,9 @@ const ROUTES: Record<string, RouteHandler> = {
   dealers: handleDealers,
   pricing: handlePricing,
   roles: handleRoles,
+  parts: handleParts,
+  'part-reviews': handlePartReviews,
+  uploads: handleUploads,
 }
 
 /**
@@ -48,6 +54,7 @@ export default {
             MONGODB_DB: Boolean(process.env.MONGODB_DB),
             JWT_SECRET: Boolean(process.env.JWT_SECRET),
             ALLOWED_ORIGINS: Boolean(process.env.ALLOWED_ORIGINS),
+            BLOB_READ_WRITE_TOKEN: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
           },
         })
       }

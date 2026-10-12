@@ -47,6 +47,21 @@ anyone. The function is the only thing that holds the credentials.
 5. Check it is alive: `https://<your-vercel-url>/api/pricing` should return
    `{"pricing":[]}`.
 
+### Photo storage for the accessories catalog
+
+Accessory photos are stored in Vercel Blob. Without it the catalog still works,
+but the photo button in the admin form reports that uploads are not set up.
+
+1. In the Vercel project, open **Storage → Create → Blob** and connect the new
+   store to this project. Vercel adds `BLOB_READ_WRITE_TOKEN` to the project's
+   environment variables on its own.
+2. Redeploy, then check `https://<your-vercel-url>/api/health`: it should list
+   `BLOB_READ_WRITE_TOKEN: true`.
+
+The browser asks the API for a short-lived upload token and sends the file
+straight to Blob, so photos never pass through the function. Only accounts with
+the **Manage accessories** permission get a token.
+
 ## 3. Point the site at the API
 
 In the GitHub repository → **Settings → Secrets and variables → Actions →
@@ -79,6 +94,9 @@ promote them.
   human decides what counts as confirmed.
 - If a contributor edits a post that was already approved, it returns to the
   queue. An admin's edit does not.
+- Accessory reviews can only be written by accounts that say they own a V27,
+  one per accessory, and go through the same queue rules as comments: the
+  **Approve comments** permission works both queues.
 
 ## Collections
 
@@ -89,6 +107,8 @@ promote them.
 | `suggestions` | proposed corrections and their review state |
 | `dealers` | who sells at official list price, admin-maintained |
 | `pricing` | current price per trim, overrides the figures in git |
+| `parts` | accessories and protection parts: price, suppliers, specs, photo addresses |
+| `partReviews` | owner reviews of accessories and their review state |
 
 Indexes are created automatically on the first request after a cold start.
 
@@ -99,6 +119,14 @@ Atlas M0 gives 512 MB of storage and a shared cluster; Vercel Hobby gives
 far more than needed. The function pools connections and caches the client
 across invocations, because an M0 cluster's connection limit is the first thing
 a serverless app tends to exhaust.
+
+Vercel Blob on Hobby includes 1 GB of storage, 2,000 uploads and 10 GB of
+transfer a month, shared with the rest of the project. Going over does not
+bill; it **blocks Blob for up to 30 days**, which would break every accessory
+photo. Two things keep the catalog well inside it: the admin form resizes each
+photo to 1600 px and re-encodes it as WebP (about 200 KB) before uploading, and
+removing a photo from an accessory deletes the file. The upload route still caps
+each file at 5 MB as a backstop.
 
 ## Local development
 

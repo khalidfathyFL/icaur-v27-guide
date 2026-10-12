@@ -1863,3 +1863,151 @@ html[dir='rtl'] .panel-drawer {
     padding-inline: 16px;
   }
 }
+
+/* ---------- accessories ---------- */
+
+.part-row-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.part-row-main > img,
+.part-row-thumb {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--panel-inset);
+}
+
+.part-row-thumb {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.part-form-section {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.part-form-section:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.part-form-section > h3 {
+  margin: 0;
+  color: var(--heading);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.part-trims {
+  display: flex;
+  gap: 18px;
+  min-height: 42px;
+  align-items: center;
+}
+
+.part-money {
+  display: flex;
+  gap: 6px;
+}
+
+.part-money select {
+  flex: 0 0 96px;
+}
+
+.part-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--panel-inset);
+}
+
+.part-total strong {
+  color: var(--heading);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.part-supplier {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.part-supplier > .panel-button,
+.part-form-section > .panel-button.small {
+  justify-self: start;
+}
+
+.part-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.part-photos figure {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.part-photos img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--panel-inset);
+}
+
+.part-photos figure input {
+  min-height: 34px;
+  font-size: 13px;
+}
+
+.part-photos figcaption {
+  justify-content: center;
+}
+
+.part-photo-add {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  min-height: 150px;
+  border: 2px dashed var(--line);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.part-photo-add:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.part-photo-add:disabled {
+  cursor: progress;
+}

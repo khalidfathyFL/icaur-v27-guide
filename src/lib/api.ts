@@ -152,6 +152,101 @@ export type ApiPricing = {
   updatedAt: string
 }
 
+export type PartCategory =
+  | 'protection'
+  | 'exterior'
+  | 'interior'
+  | 'electronics'
+  | 'lighting'
+  | 'cargo-roof'
+  | 'offroad'
+  | 'maintenance'
+export type PartSource = 'local' | 'china'
+export type PartAvailability = 'in_stock' | 'on_order' | 'unavailable'
+export type ImportCurrency = 'CNY' | 'USD'
+
+export type PartPrice = {
+  amountEgp: number
+  installEgp?: number
+  originalAmount?: number
+  originalCurrency?: ImportCurrency
+  shippingEgp?: number
+  customsEgp?: number
+}
+
+export type PartSupplier = {
+  name: string
+  kind: 'shop' | 'online'
+  city?: string
+  phone?: string
+  whatsapp?: string
+  url?: string
+}
+
+export type PartSpecs = {
+  material?: string
+  color?: string
+  dimensions?: string
+  weightKg?: number
+  warrantyMonths?: number
+  /** Empty means it fits both trims. */
+  fitsTrims: Trim[]
+  importNotes?: Localized
+}
+
+export type PartImage = { url: string; pathname: string; alt?: string }
+
+export type ApiPart = {
+  id: string
+  slug: string
+  name: Localized
+  description: Localized
+  category: PartCategory
+  subcategory?: string
+  source: PartSource
+  price: PartPrice
+  /** Item, shipping, customs and fitting added up, worked out by the server. */
+  landedEgp: number
+  availability: PartAvailability
+  leadTimeDays?: { min: number; max: number }
+  suppliers: PartSupplier[]
+  specs: PartSpecs
+  images: PartImage[]
+  ratingAvg: number
+  ratingCount: number
+  active: boolean
+  priceCheckedAt: string
+  updatedAt: string
+}
+
+/** Everything the admin form sends; the server derives the rest. */
+export type PartInput = Omit<
+  ApiPart,
+  'id' | 'slug' | 'landedEgp' | 'ratingAvg' | 'ratingCount' | 'active' | 'priceCheckedAt' | 'updatedAt'
+>
+
+export type ApiPartReview = {
+  id: string
+  partId: string
+  partName: string
+  partSlug: string
+  rating: number
+  body: string
+  authorName: string
+  status: ReviewStatus
+  reviewNote?: string
+  createdAt: string
+}
+
+export type PartFilters = {
+  category?: PartCategory
+  source?: PartSource
+  trim?: Trim
+  q?: string
+  /** Include removed parts; admin only. */
+  all?: boolean
+}
+
 export class ApiError extends Error {
   readonly status: number
 
@@ -341,4 +436,76 @@ export const api = {
 
   savePricing: (input: { trim: Trim; priceEgp: number; note?: string }) =>
     request<{ ok: true }>('pricing', { method: 'PUT', body: input, auth: true }),
+
+  /* ---------- accessories ---------- */
+
+  listParts: (filters: PartFilters = {}) => {
+    const query = new URLSearchParams()
+    if (filters.category) query.set('category', filters.category)
+    if (filters.source) query.set('source', filters.source)
+    if (filters.trim) query.set('trim', filters.trim)
+    if (filters.q) query.set('q', filters.q)
+    if (filters.all) query.set('all', '1')
+    const suffix = query.toString() ? `?${query}` : ''
+    return request<{ parts: ApiPart[] }>(`parts${suffix}`, { auth: Boolean(filters.all) })
+  },
+
+  // Not encoded here: `request` encodes the whole route, and slugs never hold / or ?.
+  readPart: (idOrSlug: string) => request<{ part: ApiPart }>(`parts/${idOrSlug}`),
+
+  createPart: (input: PartInput) =>
+    request<{ part: ApiPart }>('parts', { method: 'POST', body: input, auth: true }),
+
+  updatePart: (id: string, input: Partial<PartInput> & { active?: boolean; priceChecked?: boolean }) =>
+    request<{ part: ApiPart }>(`parts/${id}`, { method: 'PATCH', body: input, auth: true }),
+
+  removePart: (id: string) => request<{ ok: true }>(`parts/${id}`, { method: 'DELETE', auth: true }),
+
+  /**
+   * Sends one photo straight to Vercel Blob. The API only hands out a token,
+   * after checking the caller may edit accessories; the file itself never
+   * passes through the function.
+   */
+  uploadPartImage: async (file: Blob, fileName: string): Promise<PartImage> => {
+    if (!apiConfigured) throw new ApiError(503, 'The contributions service is not configured for this build.')
+    const token = getToken()
+    if (!token) throw new ApiError(401, 'Sign in to continue.')
+
+    try {
+      // Loaded on first upload: only editors need it, and every page loads this file.
+      const { upload } = await import('@vercel/blob/client')
+      const blob = await upload(`parts/${fileName}`, file, {
+        access: 'public',
+        handleUploadUrl: `${BASE_URL}/api/router?p=uploads`,
+        headers: { Authorization: `Bearer ${token}` },
+        contentType: file.type,
+      })
+      return { url: blob.url, pathname: blob.pathname }
+    } catch (caught) {
+      // The SDK surfaces the route's error text in its message.
+      const message = caught instanceof Error ? caught.message : ''
+      throw new ApiError(0, message || 'Could not upload the photo.')
+    }
+  },
+
+  /* ---------- accessory reviews ---------- */
+
+  listPartReviews: (partId: string) =>
+    request<{ reviews: ApiPartReview[] }>(`part-reviews?partId=${encodeURIComponent(partId)}`),
+
+  /** The signed-in person's own review of a part, whatever its status. */
+  myPartReview: (partId: string) =>
+    request<{ reviews: ApiPartReview[] }>(`part-reviews?partId=${encodeURIComponent(partId)}&mine=1`, { auth: true }),
+
+  partReviewQueue: (status: ReviewStatus | 'all' = 'pending') =>
+    request<{ reviews: ApiPartReview[] }>(`part-reviews?queue=1&status=${status}`, { auth: true }),
+
+  createPartReview: (input: { partId: string; rating: number; body: string }) =>
+    request<{ review: ApiPartReview }>('part-reviews', { method: 'POST', body: input, auth: true }),
+
+  reviewPartReview: (id: string, input: { status: 'approved' | 'rejected'; note?: string }) =>
+    request<{ ok: true }>(`part-reviews/${id}/review`, { method: 'POST', body: input, auth: true }),
+
+  deletePartReview: (id: string) =>
+    request<{ ok: true }>(`part-reviews/${id}`, { method: 'DELETE', auth: true }),
 }

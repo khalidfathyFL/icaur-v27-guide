@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { FileText, RefreshCw, ShieldAlert, UserRound } from 'lucide-react'
+import { FileText, Package, RefreshCw, ShieldAlert, UserRound } from 'lucide-react'
 import { ADMIN_GROUPS, visibleAdminSections } from '../app/panelNav'
 import { useAuth } from '../auth/authContext'
 import { EmptyState } from '../components/panel/blocks'
@@ -10,10 +10,13 @@ import type { PaletteItem } from '../components/panel/CommandPalette'
 import { useLanguage, useShortText } from '../i18n/languageContext'
 import { api, apiConfigured } from '../lib/api'
 import { postTitle } from '../lib/postLanguage'
+import { partName } from '../features/parts/labels'
 import { Activity } from './admin/Activity'
 import { Comments } from './admin/Comments'
 import { Dashboard } from './admin/Dashboard'
 import { Dealers } from './admin/Dealers'
+import { PartReviews } from './admin/PartReviews'
+import { Parts } from './admin/Parts'
 import { Permissions } from './admin/Permissions'
 import { Posts } from './admin/Posts'
 import { Pricing } from './admin/Pricing'
@@ -69,6 +72,7 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
     posts: counts?.posts,
     suggestions: counts?.suggestions,
     comments: counts?.comments,
+    'part-reviews': counts?.partReviews,
   }
 
   const groups: ShellGroup[] = ADMIN_GROUPS.map((group) => ({
@@ -86,11 +90,12 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
       })),
   })).filter((group) => group.items.length > 0)
 
-  // Accounts and posts become searchable from Ctrl+K, for whoever may open them.
+  // Accounts, posts and accessories become searchable from Ctrl+K, for whoever may open them.
   const loadSearch = useCallback(async (): Promise<PaletteItem[]> => {
-    const [users, posts] = await Promise.allSettled([
+    const [users, posts, parts] = await Promise.allSettled([
       can('users.manage') ? api.listUsers() : Promise.resolve(null),
       can('posts.review') ? api.listPosts({ status: 'all' }) : Promise.resolve(null),
+      can('parts.manage') ? api.listParts({ all: true }) : Promise.resolve(null),
     ])
     const items: PaletteItem[] = []
     if (users.status === 'fulfilled' && users.value) {
@@ -101,6 +106,11 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
     if (posts.status === 'fulfilled' && posts.value) {
       for (const post of posts.value.posts) {
         items.push({ id: `post-${post.id}`, label: postTitle(post, language), hint: post.authorName, href: `#/admin/posts?id=${post.id}`, icon: FileText })
+      }
+    }
+    if (parts.status === 'fulfilled' && parts.value) {
+      for (const part of parts.value.parts) {
+        items.push({ id: `part-${part.id}`, label: partName(part, language), hint: part.subcategory, href: '#/admin/accessories', icon: Package })
       }
     }
     return items
@@ -119,10 +129,14 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
         return <Suggestions params={params} onChanged={refresh} />
       case 'comments':
         return <Comments params={params} onChanged={refresh} />
+      case 'part-reviews':
+        return <PartReviews params={params} onChanged={refresh} />
       case 'dealers':
         return <Dealers />
       case 'pricing':
         return <Pricing />
+      case 'accessories':
+        return <Parts />
       case 'users':
         return <Users params={params} />
       case 'roles':

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../../lib/api'
 
-export type PendingCounts = { posts: number; suggestions: number; comments: number }
+export type PendingCounts = { posts: number; suggestions: number; comments: number; partReviews: number }
 
 /**
  * Counts of work waiting, shown as sidebar badges and dashboard cards. Only
@@ -17,11 +17,13 @@ export function usePendingCounts(can: (permission: string) => boolean) {
       can('posts.review') ? api.listPosts({ status: 'pending' }) : none,
       can('suggestions.review') ? api.listSuggestions({ queue: true, status: 'pending' }) : none,
       can('comments.review') ? api.commentQueue('pending') : none,
-    ]).then(([posts, suggestions, comments]) => {
+      can('comments.review') ? api.partReviewQueue('pending') : none,
+    ]).then(([posts, suggestions, comments, partReviews]) => {
       setCounts({
         posts: posts.status === 'fulfilled' && posts.value ? posts.value.posts.length : 0,
         suggestions: suggestions.status === 'fulfilled' && suggestions.value ? suggestions.value.suggestions.length : 0,
         comments: comments.status === 'fulfilled' && comments.value ? comments.value.comments.length : 0,
+        partReviews: partReviews.status === 'fulfilled' && partReviews.value ? partReviews.value.reviews.length : 0,
       })
     })
   }, [can])
