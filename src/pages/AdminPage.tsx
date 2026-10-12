@@ -1,178 +1,167 @@
-import { useCallback, useEffect, useState } from 'react'
-import {
-  BadgeDollarSign,
-  FileEdit,
-  LayoutDashboard,
-  Newspaper,
-  History,
-  KeyRound,
-  MessageSquare,
-  PieChart,
-  ShieldCheck,
-  Store,
-  Users,
-  Wrench,
-} from 'lucide-react'
-import { AdminShell, type AdminNavGroup } from '../components/admin/AdminShell'
-import { PageFrame } from '../components/layout'
+import { useCallback, useMemo, useState } from 'react'
+import { FileText, RefreshCw, ShieldAlert, UserRound } from 'lucide-react'
+import { ADMIN_GROUPS, visibleAdminSections } from '../app/panelNav'
 import { useAuth } from '../auth/authContext'
-import { useLanguage } from '../i18n/languageContext'
+import { EmptyState } from '../components/panel/blocks'
+import { PanelGate } from '../components/panel/PanelGate'
+import { PanelShell, type ShellGroup } from '../components/panel/PanelShell'
+import { usePanelGate } from '../components/panel/usePanelGate'
+import type { PaletteItem } from '../components/panel/CommandPalette'
+import { useLanguage, useShortText } from '../i18n/languageContext'
 import { api, apiConfigured } from '../lib/api'
 import { Activity } from './admin/Activity'
+import { Comments } from './admin/Comments'
+import { Dashboard } from './admin/Dashboard'
+import { Dealers } from './admin/Dealers'
 import { Permissions } from './admin/Permissions'
-import { Overview } from './admin/Overview'
-import {
-  CommentQueue,
-  DealerAdmin,
-  PostQueue,
-  PricingAdmin,
-  SuggestionQueue,
-  UserAdmin,
-} from './admin/sections'
-import { ServiceUnavailable } from './AccountPage'
+import { Posts } from './admin/Posts'
+import { Pricing } from './admin/Pricing'
+import { Suggestions } from './admin/Suggestions'
+import { Users } from './admin/Users'
+import { usePendingCounts } from './admin/usePendingCounts'
 
-/** Counts of work waiting, shown as badges on the sidebar. */
-function usePendingCounts() {
-  const [counts, setCounts] = useState({ posts: 0, suggestions: 0, comments: 0 })
+/**
+ * The admin panel. Each section appears only for someone holding the
+ * permission the server checks for it, so a moderator trusted with comments
+ * gets a panel with just the comment queue rather than an "Admins only" wall.
+ */
+export function AdminPage({ section, params, routeKey }: { section: string; params: URLSearchParams; routeKey: string }) {
+  const { user, loading, can } = useAuth()
+  const tx = useShortText()
+  const gate = usePanelGate({ apiConfigured, loading, signedIn: Boolean(user), returnTo: `/admin/${section}` })
 
-  const refresh = useCallback(() => {
-    Promise.allSettled([
-      api.listPosts({ status: 'pending' }),
-      api.listSuggestions({ queue: true, status: 'pending' }),
-      api.commentQueue('pending'),
-    ]).then(([posts, suggestions, comments]) => {
-      setCounts({
-        posts: posts.status === 'fulfilled' ? posts.value.posts.length : 0,
-        suggestions: suggestions.status === 'fulfilled' ? suggestions.value.suggestions.length : 0,
-        comments: comments.status === 'fulfilled' ? comments.value.comments.length : 0,
-      })
-    })
-  }, [])
+  if (gate) return gate
 
-  useEffect(refresh, [refresh])
+  if (visibleAdminSections(can).length === 0) {
+    return (
+      <PanelGate
+        title={tx('Admins only', 'للمشرفين فقط')}
+        text={tx(
+          'This panel is for reviewing contributions and maintaining the market data. Your account has not been given any of that work.',
+          'هذه اللوحة لمراجعة المساهمات وإدارة بيانات السوق. لم يُمنح حسابك أيا من هذه المهام.',
+        )}
+        actions={
+          <a className="panel-button primary" href="#/account">
+            {tx('Go to my account', 'اذهب إلى حسابي')}
+          </a>
+        }
+      />
+    )
+  }
 
-  return { counts, refresh }
+  return <AdminPanel section={section} params={params} routeKey={routeKey} />
 }
 
-export function AdminPage() {
-  const { tx } = useLanguage()
-  const { user, loading, isAdmin } = useAuth()
-  const [active, setActive] = useState('overview')
-  const { counts, refresh } = usePendingCounts()
+function AdminPanel({ section, params, routeKey }: { section: string; params: URLSearchParams; routeKey: string }) {
+  const { t } = useLanguage()
+  const tx = useShortText()
+  const { can } = useAuth()
+  const { counts, refresh } = usePendingCounts(can)
+  const [reloads, setReloads] = useState(0)
 
-  if (!apiConfigured) return <ServiceUnavailable />
+  const visible = visibleAdminSections(can)
+  const active = section || visible[0].key
+  const allowed = visible.some((item) => item.key === active)
 
-  if (loading) {
-    return (
-      <PageFrame eyebrow="Admin" title={tx('Loading…', 'جارٍ التحميل…')} intro="">
-        <span />
-      </PageFrame>
-    )
+  const badges: Record<string, number | undefined> = {
+    posts: counts?.posts,
+    suggestions: counts?.suggestions,
+    comments: counts?.comments,
   }
 
-  // The server checks this on every privileged call; this only keeps the page
-  // tidy for someone who is not an admin.
-  if (!user || !isAdmin) {
-    return (
-      <PageFrame
-        eyebrow="Admin"
-        title={tx('Admins Only', 'للمشرفين فقط')}
-        intro={tx(
-          'This workspace is for reviewing contributions and maintaining the market data. Sign in with an admin account to use it.',
-          'هذه المساحة لمراجعة المساهمات وإدارة بيانات السوق. سجل الدخول بحساب مشرف لاستخدامها.',
-        )}
-      >
-        <a className="primary-action" href="#/signin">
-          {tx('Sign in', 'تسجيل الدخول')}
-        </a>
-      </PageFrame>
-    )
-  }
+  const groups: ShellGroup[] = ADMIN_GROUPS.map((group) => ({
+    key: group.key,
+    label: t(group.label),
+    icon: group.icon,
+    items: visible
+      .filter((item) => item.group === group.key)
+      .map((item) => ({
+        key: item.key,
+        label: t(item.label),
+        description: t(item.description),
+        icon: item.icon,
+        badge: badges[item.key],
+      })),
+  })).filter((group) => group.items.length > 0)
 
-  const groups: AdminNavGroup[] = [
-    {
-      key: 'overview',
-      label: tx('Overview', 'نظرة عامة'),
-      icon: LayoutDashboard,
-      items: [
-        { key: 'overview', label: tx('Who owns what', 'من يملك ماذا'), icon: PieChart },
-        { key: 'activity', label: tx('Activity log', 'سجل النشاط'), icon: History },
-      ],
-    },
-    {
-      key: 'moderation',
-      label: tx('Moderation', 'المراجعة'),
-      icon: ShieldCheck,
-      items: [
-        {
-          key: 'posts',
-          label: tx('Posts', 'المقالات'),
-          icon: Newspaper,
-          badge: counts.posts,
-          subgroup: tx('Awaiting review', 'في انتظار المراجعة'),
-        },
-        {
-          key: 'suggestions',
-          label: tx('Corrections', 'التصحيحات'),
-          icon: FileEdit,
-          badge: counts.suggestions,
-          subgroup: tx('Awaiting review', 'في انتظار المراجعة'),
-        },
-        {
-          key: 'comments',
-          label: tx('Comments', 'التعليقات'),
-          icon: MessageSquare,
-          badge: counts.comments,
-          subgroup: tx('Awaiting review', 'في انتظار المراجعة'),
-        },
-      ],
-    },
-    {
-      key: 'catalogue',
-      label: tx('Market data', 'بيانات السوق'),
-      icon: Wrench,
-      items: [
-        { key: 'dealers', label: tx('Dealers', 'الوكلاء'), icon: Store },
-        { key: 'pricing', label: tx('Prices', 'الأسعار'), icon: BadgeDollarSign },
-      ],
-    },
-    {
-      key: 'people',
-      label: tx('People', 'الأشخاص'),
-      icon: Users,
-      items: [
-        { key: 'users', label: tx('Accounts', 'الحسابات'), icon: Users },
-        { key: 'permissions', label: tx('Permissions', 'الصلاحيات'), icon: KeyRound },
-      ],
-    },
-  ]
+  // Accounts and posts become searchable from Ctrl+K, for whoever may open them.
+  const loadSearch = useCallback(async (): Promise<PaletteItem[]> => {
+    const [users, posts] = await Promise.allSettled([
+      can('users.manage') ? api.listUsers() : Promise.resolve(null),
+      can('posts.review') ? api.listPosts({ status: 'all' }) : Promise.resolve(null),
+    ])
+    const items: PaletteItem[] = []
+    if (users.status === 'fulfilled' && users.value) {
+      for (const person of users.value.users) {
+        items.push({ id: `user-${person.id}`, label: person.name, hint: person.email, href: `#/admin/users?id=${person.id}`, icon: UserRound })
+      }
+    }
+    if (posts.status === 'fulfilled' && posts.value) {
+      for (const post of posts.value.posts) {
+        items.push({ id: `post-${post.id}`, label: t(post.title) || post.title.en, hint: post.authorName, href: `#/admin/posts?id=${post.id}`, icon: FileText })
+      }
+    }
+    return items
+  }, [can, t])
+
+  const content = useMemo(() => {
+    if (!allowed) return null
+    switch (active) {
+      case 'dashboard':
+        return <Dashboard counts={counts} onChanged={refresh} />
+      case 'activity':
+        return <Activity />
+      case 'posts':
+        return <Posts params={params} onChanged={refresh} />
+      case 'suggestions':
+        return <Suggestions params={params} onChanged={refresh} />
+      case 'comments':
+        return <Comments params={params} onChanged={refresh} />
+      case 'dealers':
+        return <Dealers />
+      case 'pricing':
+        return <Pricing />
+      case 'users':
+        return <Users params={params} />
+      case 'permissions':
+        return <Permissions />
+      default:
+        return null
+    }
+  }, [active, allowed, counts, params, refresh])
 
   return (
-    <PageFrame
-      eyebrow="Admin"
-      title={tx('Admin Workspace', 'مساحة الإدارة')}
-      intro={tx(
-        'Approve or reject what contributors send, and keep the dealer list and prices current.',
-        'وافق أو ارفض ما يرسله المساهمون، وحافظ على تحديث قائمة الوكلاء والأسعار.',
-      )}
+    <PanelShell
+      kind="admin"
+      groups={groups}
+      active={allowed ? active : ''}
+      accordion
+      loadSearch={loadSearch}
+      actions={
+        <button
+          type="button"
+          className="panel-icon-button"
+          onClick={() => {
+            refresh()
+            setReloads((count) => count + 1)
+          }}
+          aria-label={tx('Refresh', 'تحديث')}
+          title={tx('Refresh', 'تحديث')}
+        >
+          <RefreshCw size={17} />
+        </button>
+      }
     >
-      <AdminShell
-        groups={groups}
-        active={active}
-        onChange={setActive}
-        title={tx('Workspace', 'المساحة')}
-        subtitle={user.name}
-      >
-        {active === 'overview' && <Overview />}
-        {active === 'activity' && <Activity />}
-        {active === 'posts' && <PostQueue onChanged={refresh} />}
-        {active === 'suggestions' && <SuggestionQueue onChanged={refresh} />}
-        {active === 'comments' && <CommentQueue onChanged={refresh} />}
-        {active === 'dealers' && <DealerAdmin />}
-        {active === 'pricing' && <PricingAdmin />}
-        {active === 'users' && <UserAdmin currentUserId={user.id} />}
-        {active === 'permissions' && <Permissions />}
-      </AdminShell>
-    </PageFrame>
+      {/* Keyed by route and refresh count, so each section and each refresh starts clean. */}
+      <div className="panel-section" key={`${routeKey}-${reloads}`}>
+        {content ?? (
+          <EmptyState
+            icon={ShieldAlert}
+            title={tx('This section is not available to you', 'هذا القسم غير متاح لك')}
+            text={tx('Pick one of the sections in the menu.', 'اختر أحد الأقسام من القائمة.')}
+          />
+        )}
+      </div>
+    </PanelShell>
   )
 }

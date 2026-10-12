@@ -1407,6 +1407,24 @@ body,
   line-height: 1.6;
 }
 
+.auth-form label.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.auth-form label.checkbox-row > input {
+  width: auto;
+  min-height: auto;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.auth-form label.checkbox-row > span {
+  font-weight: 500;
+}
+
 .auth-form input:focus,
 .auth-form textarea:focus,
 .auth-form select:focus {
@@ -1539,8 +1557,85 @@ body,
 }
 
 .queue-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   margin-bottom: 1rem;
-  max-width: 260px;
+}
+
+.queue-filter > span:first-child {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.queue-filter-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.queue-filter-select select {
+  appearance: none;
+  min-width: 200px;
+  min-height: 40px;
+  padding-block: 0.45rem;
+  padding-inline: 0.8rem 2.2rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.queue-filter-select select:hover {
+  border-color: var(--accent);
+}
+
+.queue-filter-select select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.queue-filter-select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.queue-filter-select svg {
+  position: absolute;
+  inset-inline-end: 0.7rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.queue-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 2.5rem 1rem;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--muted);
+  text-align: center;
+}
+
+.queue-empty svg {
+  margin-bottom: 0.35rem;
+  color: var(--accent);
+  opacity: 0.8;
+}
+
+.queue-empty strong {
+  color: var(--heading);
+  font-size: 1rem;
+}
+
+.queue-empty span {
+  font-size: 0.88rem;
 }
 
 .review-list {

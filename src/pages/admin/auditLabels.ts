@@ -1,0 +1,28 @@
+/** Plain-language wording for each audit action the API records (api/_lib/audit.ts). */
+export const ACTION_LABELS: Record<string, { en: string; ar: string }> = {
+  'post.created': { en: 'wrote a post', ar: 'كتب مقالا' },
+  'post.updated': { en: 'edited a post', ar: 'عدّل مقالا' },
+  'post.approved': { en: 'approved a post', ar: 'وافق على مقال' },
+  'post.rejected': { en: 'rejected a post', ar: 'رفض مقالا' },
+  'post.deleted': { en: 'deleted a post', ar: 'حذف مقالا' },
+  'comment.created': { en: 'commented on a post', ar: 'علّق على مقال' },
+  'comment.approved': { en: 'approved a comment', ar: 'وافق على تعليق' },
+  'comment.rejected': { en: 'rejected a comment', ar: 'رفض تعليقا' },
+  'comment.deleted': { en: 'deleted a comment', ar: 'حذف تعليقا' },
+  'suggestion.created': { en: 'suggested a correction', ar: 'اقترح تصحيحا' },
+  'suggestion.approved': { en: 'approved a correction', ar: 'وافق على تصحيح' },
+  'suggestion.rejected': { en: 'rejected a correction', ar: 'رفض تصحيحا' },
+  'dealer.created': { en: 'added a dealer', ar: 'أضاف وكيلا' },
+  'dealer.updated': { en: 'edited a dealer', ar: 'عدّل وكيلا' },
+  'dealer.removed': { en: 'removed a dealer', ar: 'أزال وكيلا' },
+  'pricing.updated': { en: 'changed a price', ar: 'غيّر سعرا' },
+  'user.registered': { en: 'created an account', ar: 'أنشأ حسابا' },
+  'user.role_changed': { en: 'changed a role', ar: 'غيّر دورا' },
+  'user.permissions_changed': { en: 'changed someone’s permissions', ar: 'غيّر صلاحيات شخص' },
+  'user.status_changed': { en: 'blocked or unblocked an account', ar: 'حظر أو رفع حظر حساب' },
+  'user.password_changed': { en: 'changed their password', ar: 'غيّر كلمة المرور' },
+  'user.profile_updated': { en: 'updated their profile', ar: 'حدّث ملفه الشخصي' },
+}
+
+/** Actions that change who can do what deserve to stand out. */
+export const SENSITIVE_ACTIONS = new Set(['user.role_changed', 'user.permissions_changed', 'user.status_changed', 'pricing.updated'])

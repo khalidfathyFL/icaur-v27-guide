@@ -119,7 +119,11 @@ async function login(request: Request): Promise<Response> {
     role: found.role,
   }
 
-  return json(request, { user, token: await issueToken(user) })
+  // Anything other than an explicit false keeps the long-lived token, so older
+  // clients that never send the flag behave as they always have.
+  const remember = body.remember !== false
+
+  return json(request, { user, token: await issueToken(user, remember) })
 }
 
 async function me(request: Request): Promise<Response> {

@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react'
+import { createContext, useCallback, useContext } from 'react'
 import type { Language, Translator } from './translator'
 
 export type LanguageContextValue = Translator & {
@@ -19,5 +19,6 @@ export function useLanguage(): LanguageContextValue {
  */
 export function useShortText(): (en: string, ar: string) => string {
   const { t } = useLanguage()
-  return (en, ar) => t({ en, ar })
+  // Stable per language, so effects and callbacks can list it as a dependency.
+  return useCallback((en: string, ar: string) => t({ en, ar }), [t])
 }

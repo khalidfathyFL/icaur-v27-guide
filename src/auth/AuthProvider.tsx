@@ -33,9 +33,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const { user: signedIn, token } = await api.login({ email, password })
-    setToken(token)
+  const signIn = useCallback(async (email: string, password: string, remember: boolean) => {
+    const { user: signedIn, token } = await api.login({ email, password, remember })
+    setToken(token, remember)
     setUser(signedIn)
   }, [])
 
@@ -60,10 +60,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
-  const value = useMemo<AuthContextValue>(
-    () => ({ user, loading, isAdmin: user?.role === 'admin', signIn, register, signOut, refresh }),
-    [user, loading, signIn, register, signOut, refresh],
-  )
+  const value = useMemo<AuthContextValue>(() => {
+    const isAdmin = user?.role === 'admin'
+    const granted = new Set(user?.permissions ?? [])
+    const can = (permission: string) => isAdmin || granted.has(permission)
+    return { user, loading, isAdmin, can, signIn, register, signOut, refresh }
+  }, [user, loading, signIn, register, signOut, refresh])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

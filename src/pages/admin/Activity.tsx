@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useLanguage } from '../../i18n/languageContext'
-import { ApiError, api, type ApiAuditEntry } from '../../lib/api'
+import { History } from 'lucide-react'
+import { DataTable } from '../../components/panel/DataTable'
+import { Avatar, EmptyState, FilterSelect, PageHeader } from '../../components/panel/blocks'
+import { useLanguage, useShortText } from '../../i18n/languageContext'
+import { api, type ApiAuditEntry } from '../../lib/api'
+import { errorMessage } from '../../lib/errors'
+import { formatDate } from '../../lib/format'
+import { ACTION_LABELS, SENSITIVE_ACTIONS } from './auditLabels'
 
 /**
  * The activity log.
@@ -9,33 +15,14 @@ import { ApiError, api, type ApiAuditEntry } from '../../lib/api'
  * API has no endpoint for it. A log an admin can rewrite proves nothing.
  */
 
-const ACTION_LABELS: Record<string, { en: string; ar: string }> = {
-  'post.created': { en: 'wrote a post', ar: 'كتب مقالا' },
-  'post.updated': { en: 'edited a post', ar: 'عدّل مقالا' },
-  'post.approved': { en: 'approved a post', ar: 'وافق على مقال' },
-  'post.rejected': { en: 'rejected a post', ar: 'رفض مقالا' },
-  'post.deleted': { en: 'deleted a post', ar: 'حذف مقالا' },
-  'suggestion.created': { en: 'suggested a correction', ar: 'اقترح تصحيحا' },
-  'suggestion.approved': { en: 'approved a correction', ar: 'وافق على تصحيح' },
-  'suggestion.rejected': { en: 'rejected a correction', ar: 'رفض تصحيحا' },
-  'dealer.created': { en: 'added a dealer', ar: 'أضاف وكيلا' },
-  'dealer.updated': { en: 'edited a dealer', ar: 'عدّل وكيلا' },
-  'dealer.removed': { en: 'removed a dealer', ar: 'أزال وكيلا' },
-  'pricing.updated': { en: 'changed a price', ar: 'غيّر سعرا' },
-  'user.registered': { en: 'created an account', ar: 'أنشأ حسابا' },
-  'user.role_changed': { en: 'changed a role', ar: 'غيّر صلاحية' },
-  'user.status_changed': { en: 'blocked or unblocked an account', ar: 'حظر أو رفع حظر حساب' },
-  'user.password_changed': { en: 'changed their password', ar: 'غيّر كلمة المرور' },
-  'user.profile_updated': { en: 'updated their profile', ar: 'حدّث ملفه الشخصي' },
-}
-
-/** Actions that change who can do what deserve to stand out. */
-const SENSITIVE = new Set(['user.role_changed', 'user.status_changed', 'pricing.updated'])
+type KindFilter = 'all' | 'sensitive' | 'post' | 'comment' | 'suggestion' | 'dealer' | 'pricing' | 'user'
 
 export function Activity() {
-  const { t, tx } = useLanguage()
+  const { t, language } = useLanguage()
+  const tx = useShortText()
   const [entries, setEntries] = useState<ApiAuditEntry[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [kind, setKind] = useState<KindFilter>('all')
 
   useEffect(() => {
     let cancelled = false
@@ -45,55 +32,112 @@ export function Activity() {
         if (!cancelled) setEntries(list)
       })
       .catch((caught) => {
-        if (!cancelled) setError(caught instanceof ApiError ? caught.message : 'Could not load.')
+        if (!cancelled) setError(errorMessage(caught, tx('Could not load.', 'تعذر التحميل.')))
       })
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [tx])
 
-  if (error) return <p className="form-error">{error}</p>
-  if (!entries) return <p className="muted-note">{tx('Loading…', 'جارٍ التحميل…')}</p>
+  const filtered =
+    entries?.filter((entry) =>
+      kind === 'all' ? true : kind === 'sensitive' ? SENSITIVE_ACTIONS.has(entry.action) : entry.action.startsWith(`${kind}.`),
+    ) ?? null
 
-  if (entries.length === 0) {
-    return <p className="muted-note">{tx('Nothing has happened yet.', 'لم يحدث شيء بعد.')}</p>
+  const describe = (entry: ApiAuditEntry) => {
+    const label = ACTION_LABELS[entry.action]
+    return label ? t(label) : entry.action
   }
 
   return (
     <>
-      <p className="muted-note">
-        {tx(
-          'Every change, newest first. Entries cannot be edited or deleted, including by an admin.',
-          'كل تغيير، الأحدث أولا. لا يمكن تعديل أو حذف السجلات، ولا حتى من المشرف.',
+      <PageHeader
+        description={tx(
+          'Entries cannot be edited or deleted, including by an admin.',
+          'لا يمكن تعديل أو حذف السجلات، ولا حتى من المشرف.',
         )}
-      </p>
-
-      <ol className="audit-list">
-        {entries.map((entry) => {
-          const label = ACTION_LABELS[entry.action]
-          return (
-            <li key={entry.id} className={SENSITIVE.has(entry.action) ? 'audit-entry sensitive' : 'audit-entry'}>
-              <div className="audit-main">
-                <strong>{entry.actorName}</strong>
-                <span>{label ? t(label) : entry.action}</span>
-                {entry.target?.label && <em>{entry.target.label}</em>}
-              </div>
-
-              {entry.changes && Object.keys(entry.changes).length > 0 && (
-                <p className="audit-changes">
-                  {Object.entries(entry.changes)
-                    .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : String(value)}`)
-                    .join(' · ')}
-                </p>
-              )}
-
-              {entry.note && <p className="audit-note">“{entry.note}”</p>}
-
-              <time dateTime={entry.at}>{new Date(entry.at).toLocaleString()}</time>
-            </li>
-          )
-        })}
-      </ol>
+      />
+      <DataTable
+        rows={filtered}
+        rowKey={(entry) => entry.id}
+        error={error}
+        searchText={(entry) => `${entry.actorName} ${describe(entry)} ${entry.target?.label ?? ''} ${entry.note ?? ''}`}
+        searchPlaceholder={tx('Search person or item…', 'ابحث بالشخص أو العنصر…')}
+        filters={
+          <FilterSelect<KindFilter>
+            label={tx('Kind', 'النوع')}
+            value={kind}
+            onChange={setKind}
+            options={[
+              { value: 'all', label: tx('Everything', 'الكل') },
+              { value: 'sensitive', label: tx('Access & prices only', 'الصلاحيات والأسعار فقط') },
+              { value: 'post', label: tx('Posts', 'المقالات') },
+              { value: 'comment', label: tx('Comments', 'التعليقات') },
+              { value: 'suggestion', label: tx('Corrections', 'التصحيحات') },
+              { value: 'dealer', label: tx('Dealers', 'الوكلاء') },
+              { value: 'pricing', label: tx('Prices', 'الأسعار') },
+              { value: 'user', label: tx('Accounts', 'الحسابات') },
+            ]}
+          />
+        }
+        empty={<EmptyState icon={History} title={tx('Nothing has happened yet', 'لم يحدث شيء بعد')} />}
+        pageSize={20}
+        columns={[
+          {
+            key: 'who',
+            header: tx('Who', 'من'),
+            width: 'minmax(0, 1.3fr)',
+            render: (entry) => (
+              <span className="panel-cell-person">
+                <Avatar name={entry.actorName} size="sm" />
+                <span className="panel-cell-main">
+                  <strong>{entry.actorName}</strong>
+                  <small>{entry.actorRole === 'admin' ? tx('Admin', 'مشرف') : tx('Contributor', 'مساهم')}</small>
+                </span>
+              </span>
+            ),
+          },
+          {
+            key: 'what',
+            header: tx('What', 'ماذا'),
+            width: 'minmax(0, 2.2fr)',
+            render: (entry) => (
+              <span className="panel-cell-main">
+                <span className={SENSITIVE_ACTIONS.has(entry.action) ? 'panel-audit sensitive' : 'panel-audit'}>{describe(entry)}</span>
+                {entry.target?.label && <small>{entry.target.label}</small>}
+              </span>
+            ),
+          },
+          {
+            key: 'details',
+            header: tx('Details', 'التفاصيل'),
+            width: 'minmax(0, 2fr)',
+            render: (entry) => (
+              <span className="panel-cell-main">
+                {entry.changes && Object.keys(entry.changes).length > 0 && (
+                  <small className="panel-clamp">
+                    {Object.entries(entry.changes)
+                      .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : String(value)}`)
+                      .join(' · ')}
+                  </small>
+                )}
+                {entry.note && <small className="panel-clamp">“{entry.note}”</small>}
+                {!entry.note && !(entry.changes && Object.keys(entry.changes).length > 0) && <small>—</small>}
+              </span>
+            ),
+          },
+          {
+            key: 'when',
+            header: tx('When', 'متى'),
+            width: '170px',
+            render: (entry) => (
+              <time className="panel-muted" dateTime={entry.at}>
+                {formatDate(entry.at, language, true)}
+              </time>
+            ),
+          },
+        ]}
+      />
     </>
   )
 }

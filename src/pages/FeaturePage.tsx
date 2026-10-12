@@ -141,7 +141,7 @@ export function FeaturePage({ feature }: { feature: Feature }) {
                 )}
               </span>
             </div>
-            <a className="secondary-button" href={apiConfigured ? '#/contribute' : '#/sources'}>
+            <a className="secondary-button" href={apiConfigured ? '#/account/suggest' : '#/sources'}>
               {apiConfigured ? tx('Suggest a correction', 'اقترح تصحيحا') : tx('See sources', 'المصادر')}
             </a>
           </aside>

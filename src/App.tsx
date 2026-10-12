@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { resolveRoute } from './app/routes'
+import { resolvePanelRoute, resolveRoute } from './app/routes'
 import { AuthProvider } from './auth/AuthProvider'
 import { useAuth } from './auth/authContext'
 import { SiteFooter } from './components/SiteFooter'
@@ -12,6 +12,7 @@ import { ThemeProvider } from './theme/ThemeProvider'
 import { TrimProvider } from './vehicle/TrimProvider'
 import { useTrim } from './vehicle/trimContext'
 import './App.css'
+import './components/panel/panel.css'
 
 export default function App() {
   return (
@@ -46,6 +47,9 @@ function Shell() {
   const closeMobileNav = useCallback(() => setMobileNavOpen(false), [])
   const route = useHashRoute(closeMobileNav)
   const { path, params } = splitRoute(route)
+
+  const panel = resolvePanelRoute(path, params, route)
+  if (panel) return <div className={`app-shell language-${language}`}>{panel}</div>
 
   return (
     <div className={`app-shell language-${language}`}>

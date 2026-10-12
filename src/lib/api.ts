@@ -1,4 +1,4 @@
-import { readStored, writeStored } from './storage'
+import { readSessionStored, readStored, writeSessionStored, writeStored } from './storage'
 import type { Localized, Trim } from '../content/types'
 
 /**
@@ -140,9 +140,20 @@ export class ApiError extends Error {
   }
 }
 
-export const getToken = () => readStored(TOKEN_KEY)
-export const setToken = (token: string) => writeStored(TOKEN_KEY, token)
-export const clearToken = () => writeStored(TOKEN_KEY, '')
+/**
+ * A remembered token lives in localStorage and survives closing the browser;
+ * otherwise it lives in sessionStorage and goes when the browser does.
+ */
+export const getToken = () => readSessionStored(TOKEN_KEY) || readStored(TOKEN_KEY)
+export const setToken = (token: string, remember = true) => {
+  clearToken()
+  if (remember) writeStored(TOKEN_KEY, token)
+  else writeSessionStored(TOKEN_KEY, token)
+}
+export const clearToken = () => {
+  writeStored(TOKEN_KEY, '')
+  writeSessionStored(TOKEN_KEY, '')
+}
 
 async function request<T>(
   path: string,
@@ -193,7 +204,7 @@ export const api = {
   register: (input: { name: string; email: string; password: string } & ProfileInput) =>
     request<{ user: ApiUser; token: string }>('auth/register', { method: 'POST', body: input }),
 
-  login: (input: { email: string; password: string }) =>
+  login: (input: { email: string; password: string; remember: boolean }) =>
     request<{ user: ApiUser; token: string }>('auth/login', { method: 'POST', body: input }),
 
   me: () => request<{ user: ApiUser }>('auth/me', { auth: true }),

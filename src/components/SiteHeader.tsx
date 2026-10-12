@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ChevronDown, Globe, Menu, Moon, Search, Sun, UserRound, X } from 'lucide-react'
 import { PRIMARY_NAV, SECONDARY_NAV, isActive, type NavItem } from '../app/navigation'
+import { visibleAdminSections } from '../app/panelNav'
 import { useAuth } from '../auth/authContext'
 import { useSearch } from '../features/search/searchContext'
 import { useLanguage, useShortText } from '../i18n/languageContext'
@@ -222,7 +223,7 @@ function PreferencesMenu() {
 
 function AccountMenu() {
   const tx = useShortText()
-  const { user, isAdmin, signOut } = useAuth()
+  const { user, can, signOut } = useAuth()
   const [open, setOpen] = useState(false)
   const close = useCallback(() => setOpen(false), [])
   const ref = useDismiss<HTMLDivElement>(open, close)
@@ -251,9 +252,11 @@ function AccountMenu() {
       {open && (
         <div className="popover menu-popover">
           <p className="popover-label">{user.name}</p>
-          <a href="#/profile" onClick={close}>{tx('Profile', 'ملفي')}</a>
-          <a href="#/contribute" onClick={close}>{tx('Contribute', 'ساهم')}</a>
-          {isAdmin && <a href="#/admin" onClick={close}>{tx('Review queue', 'قائمة المراجعة')}</a>}
+          <a href="#/account" onClick={close}>{tx('My panel', 'لوحتي')}</a>
+          <a href="#/account/new-post" onClick={close}>{tx('Write a post', 'اكتب مقالا')}</a>
+          {visibleAdminSections(can).length > 0 && (
+            <a href="#/admin" onClick={close}>{tx('Admin panel', 'لوحة الإدارة')}</a>
+          )}
           <button type="button" onClick={() => { close(); signOut() }}>
             {tx('Sign out', 'خروج')}
           </button>
@@ -265,7 +268,7 @@ function AccountMenu() {
 
 function MobileDrawer({ path, onClose }: { path: string; onClose: () => void }) {
   const tx = useShortText()
-  const { user, isAdmin, signOut } = useAuth()
+  const { user, can, signOut } = useAuth()
 
   return (
     <div
@@ -305,11 +308,11 @@ function MobileDrawer({ path, onClose }: { path: string; onClose: () => void }) 
           <p className="popover-label">{user ? user.name : tx('Account', 'الحساب')}</p>
           {user ? (
             <>
-              <a href="#/profile">{tx('Profile', 'ملفي')}</a>
-              <a href="#/contribute">{tx('Contribute', 'ساهم')}</a>
-              {isAdmin && (
+              <a href="#/account">{tx('My panel', 'لوحتي')}</a>
+              <a href="#/account/new-post">{tx('Write a post', 'اكتب مقالا')}</a>
+              {visibleAdminSections(can).length > 0 && (
                 <a href="#/admin" className="account-admin">
-                  {tx('Admin workspace', 'مساحة الإدارة')}
+                  {tx('Admin panel', 'لوحة الإدارة')}
                 </a>
               )}
               <button type="button" onClick={signOut}>{tx('Sign out', 'خروج')}</button>

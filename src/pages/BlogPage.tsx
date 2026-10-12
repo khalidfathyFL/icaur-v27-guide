@@ -53,7 +53,7 @@ export function BlogPage() {
       )}
     >
       <div className="hero-actions blog-actions">
-        <a className="primary-action" href={user ? '#/contribute' : '#/signin'}>
+        <a className="primary-action" href={user ? '#/account/new-post' : '#/signin'}>
           <PenLine size={18} />
           {tx('Write a post', 'اكتب مقالا')}
         </a>

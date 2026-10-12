@@ -1,9 +1,9 @@
 import { getFeature } from '../content'
+import { Redirect } from '../components/Redirect'
 import { AdminPage } from '../pages/AdminPage'
 import { SignInPage } from '../pages/AccountPage'
+import { AccountPanel } from '../pages/account/AccountPanel'
 import { BlogPage, PostPage } from '../pages/BlogPage'
-import { ContributePage } from '../pages/ContributePage'
-import { ProfilePage } from '../pages/ProfilePage'
 import { EgyptPage } from '../pages/EgyptPage'
 import { GuidesPage } from '../pages/GuidesPage'
 import { HomePage } from '../pages/HomePage'
@@ -31,10 +31,33 @@ const STATIC_ROUTES: Record<string, (params: URLSearchParams) => React.ReactElem
   '/sources': () => <SourcesPage />,
   '/glossary': () => <GlossaryPage />,
   '/blog': () => <BlogPage />,
-  '/contribute': () => <ContributePage />,
-  '/signin': () => <SignInPage />,
-  '/profile': () => <ProfilePage />,
-  '/admin': () => <AdminPage />,
+  '/signin': (params) => <SignInPage next={params.get('next')} />,
+  // Both moved into the account panel; old links and bookmarks still land.
+  '/contribute': () => <Redirect to="/account/new-post" />,
+  '/profile': () => <Redirect to="/account/profile" />,
+}
+
+const PANELS = ['/admin', '/account'] as const
+
+/** The panel a path belongs to and the section within it, e.g. `/admin/posts`. */
+export function panelOf(path: string): { panel: (typeof PANELS)[number]; section: string } | null {
+  for (const panel of PANELS) {
+    if (path === panel || path.startsWith(`${panel}/`)) {
+      return { panel, section: path.slice(panel.length + 1).split('/')[0] ?? '' }
+    }
+  }
+  return null
+}
+
+/** The admin and account panels render full-screen, outside the site header and footer. */
+export function resolvePanelRoute(path: string, params: URLSearchParams, route: string): React.ReactElement | null {
+  const match = panelOf(path)
+  if (!match) return null
+  return match.panel === '/admin' ? (
+    <AdminPage section={match.section} params={params} routeKey={route} />
+  ) : (
+    <AccountPanel section={match.section} routeKey={route} />
+  )
 }
 
 export function resolveRoute(path: string, params: URLSearchParams): React.ReactElement {

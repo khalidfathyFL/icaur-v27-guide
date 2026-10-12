@@ -13,7 +13,9 @@ const scrypt = promisify(scryptCallback) as (
 ) => Promise<Buffer>
 
 const KEY_LENGTH = 64
-const TOKEN_TTL = '7d'
+/** "Remember me" keeps a browser signed in for a month; otherwise half a day. */
+const REMEMBERED_TOKEN_TTL = '30d'
+const SESSION_TOKEN_TTL = '12h'
 
 export type Role = 'user' | 'admin'
 
@@ -78,12 +80,12 @@ export async function verifyPassword(password: string, stored: string): Promise<
   return timingSafeEqual(derived, expected)
 }
 
-export async function issueToken(user: SessionUser): Promise<string> {
+export async function issueToken(user: SessionUser, remember = true): Promise<string> {
   return new SignJWT({ email: user.email, name: user.name, role: user.role })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(user.id)
     .setIssuedAt()
-    .setExpirationTime(TOKEN_TTL)
+    .setExpirationTime(remember ? REMEMBERED_TOKEN_TTL : SESSION_TOKEN_TTL)
     .sign(secretKey())
 }
 

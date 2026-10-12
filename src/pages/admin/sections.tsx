@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Check, Plus, Trash2, X } from 'lucide-react'
+import { Check, ChevronDown, Inbox, Plus, Trash2, X } from 'lucide-react'
 import { StatusPill } from '../../components/StatusPill'
 import { useLanguage } from '../../i18n/languageContext'
 import {
@@ -50,18 +50,41 @@ function useQueueFilter() {
   const [status, setStatus] = useState<ReviewStatus | 'all'>('pending')
 
   const control = (
-    <label className="select-control queue-filter">
+    <label className="queue-filter">
       <span>{tx('Show', 'عرض')}</span>
-      <select value={status} onChange={(event) => setStatus(event.target.value as ReviewStatus | 'all')}>
-        <option value="pending">{tx('Awaiting review', 'في انتظار المراجعة')}</option>
-        <option value="approved">{tx('Published', 'منشور')}</option>
-        <option value="rejected">{tx('Not accepted', 'غير مقبول')}</option>
-        <option value="all">{tx('Everything', 'الكل')}</option>
-      </select>
+      <span className="queue-filter-select">
+        <select value={status} onChange={(event) => setStatus(event.target.value as ReviewStatus | 'all')}>
+          <option value="pending">{tx('Awaiting review', 'في انتظار المراجعة')}</option>
+          <option value="approved">{tx('Published', 'منشور')}</option>
+          <option value="rejected">{tx('Not accepted', 'غير مقبول')}</option>
+          <option value="all">{tx('Everything', 'الكل')}</option>
+        </select>
+        <ChevronDown size={16} aria-hidden="true" />
+      </span>
     </label>
   )
 
   return { status, control }
+}
+
+/** Empty queue message, worded for the status the admin is filtering on. */
+function QueueEmpty({ status }: { status: ReviewStatus | 'all' }) {
+  const { tx } = useLanguage()
+
+  const [title, detail] = {
+    pending: [tx('All caught up', 'لا يوجد ما يحتاج مراجعة'), tx('Nothing is waiting for review.', 'لا توجد عناصر في انتظار المراجعة.')],
+    approved: [tx('Nothing published yet', 'لا يوجد منشور بعد'), tx('Approved items will show up here.', 'ستظهر العناصر المقبولة هنا.')],
+    rejected: [tx('Nothing turned down', 'لا يوجد مرفوض'), tx('Rejected items will show up here.', 'ستظهر العناصر المرفوضة هنا.')],
+    all: [tx('Nothing here yet', 'لا يوجد شيء بعد'), tx('Submissions will show up here.', 'ستظهر المشاركات هنا.')],
+  }[status]
+
+  return (
+    <div className="queue-empty">
+      <Inbox size={28} aria-hidden="true" />
+      <strong>{title}</strong>
+      <span>{detail}</span>
+    </div>
+  )
 }
 
 /* ---------- moderation ---------- */
@@ -102,7 +125,7 @@ export function PostQueue({ onChanged }: { onChanged: () => void }) {
     <>
       {control}
       {error && <p className="form-error">{error}</p>}
-      {posts.length === 0 && <p className="muted-note">{tx('Nothing here.', 'لا يوجد شيء هنا.')}</p>}
+      {posts.length === 0 && !error && <QueueEmpty status={status} />}
 
       <div className="review-list">
         {posts.map((post) => (
@@ -168,7 +191,7 @@ export function SuggestionQueue({ onChanged }: { onChanged: () => void }) {
     <>
       {control}
       {error && <p className="form-error">{error}</p>}
-      {suggestions.length === 0 && <p className="muted-note">{tx('Nothing here.', 'لا يوجد شيء هنا.')}</p>}
+      {suggestions.length === 0 && !error && <QueueEmpty status={status} />}
 
       <div className="review-list">
         {suggestions.map((suggestion) => (
@@ -250,7 +273,7 @@ export function CommentQueue({ onChanged }: { onChanged: () => void }) {
     <>
       {control}
       {error && <p className="form-error">{error}</p>}
-      {comments.length === 0 && <p className="muted-note">{tx('Nothing here.', 'لا يوجد شيء هنا.')}</p>}
+      {comments.length === 0 && !error && <QueueEmpty status={status} />}
 
       <div className="review-list">
         {comments.map((comment) => (

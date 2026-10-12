@@ -8,7 +8,14 @@ export type AuthContextValue = {
   /** True until the stored token has been checked against the server. */
   loading: boolean
   isAdmin: boolean
-  signIn: (email: string, password: string) => Promise<void>
+  /**
+   * Mirrors the server's `hasPermission`: an admin holds every permission,
+   * anyone else only what was granted to them. The server still checks every
+   * call; this only decides what the panel offers.
+   */
+  can: (permission: string) => boolean
+  /** `remember` keeps the browser signed in after it is closed. */
+  signIn: (email: string, password: string, remember: boolean) => Promise<void>
   register: (input: RegisterInput) => Promise<void>
   signOut: () => void
   /** Re-reads the signed-in user, after a profile change for example. */

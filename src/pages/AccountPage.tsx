@@ -16,7 +16,11 @@ import { colours as CAR_COLOURS } from '../content/egypt'
 
 type Mode = 'signin' | 'register'
 
-export function SignInPage() {
+/** Only same-site panel paths, so `?next=` cannot send someone off the site. */
+const safeNext = (next: string | null | undefined) =>
+  next && next.startsWith('/') && !next.startsWith('//') ? next : '/account'
+
+export function SignInPage({ next }: { next?: string | null }) {
   const { t, tx } = useLanguage()
   const { user, signIn, register } = useAuth()
   const [mode, setMode] = useState<Mode>('signin')
@@ -24,6 +28,7 @@ export function SignInPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [remember, setRemember] = useState(true)
   const [phone, setPhone] = useState('')
   const [country, setCountry] = useState('')
   const [city, setCity] = useState('')
@@ -52,7 +57,7 @@ export function SignInPage() {
     setBusy(true)
 
     try {
-      if (mode === 'signin') await signIn(email, password)
+      if (mode === 'signin') await signIn(email, password, remember)
       else {
         await register({
           name,
@@ -65,7 +70,7 @@ export function SignInPage() {
           colour: colour || undefined,
         })
       }
-      window.location.hash = '#/contribute'
+      window.location.hash = `#${safeNext(next)}`
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : tx('Something went wrong.', 'حدث خطأ ما.'))
     } finally {
@@ -81,13 +86,13 @@ export function SignInPage() {
         eyebrow={tx('Account', 'الحساب')}
         title={tx(`Signed in as ${user.name}`, `مسجل الدخول باسم ${user.name}`)}
         intro={tx(
-          'You can write posts and suggest corrections. An admin reviews everything before it appears on the site.',
-          'يمكنك كتابة مقالات واقتراح تصحيحات. يراجع المشرف كل شيء قبل ظهوره على الموقع.',
+          'Your panel has your posts, corrections and profile in one place.',
+          'لوحتك تجمع مقالاتك وتصحيحاتك وملفك الشخصي في مكان واحد.',
         )}
       >
         <div className="hero-actions">
-          <a className="primary-action" href="#/contribute">
-            {tx('Go to contributions', 'اذهب إلى المساهمات')}
+          <a className="primary-action" href={`#${safeNext(next)}`}>
+            {tx('Open my panel', 'افتح لوحتي')}
           </a>
         </div>
       </PageFrame>
@@ -140,6 +145,17 @@ export function SignInPage() {
           />
           {mode === 'register' && <small>{t(PASSWORD_RULE)}</small>}
         </label>
+
+        {mode === 'signin' && (
+          <label className="checkbox-row">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(event) => setRemember(event.target.checked)}
+            />
+            <span>{tx('Remember me', 'تذكرني')}</span>
+          </label>
+        )}
 
         {mode === 'register' && (
           <label>
