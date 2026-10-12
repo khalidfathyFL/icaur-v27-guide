@@ -10,8 +10,10 @@ import {
   ListChecks,
   MessageSquare,
   Newspaper,
+  Package,
   PenLine,
   ShieldCheck,
+  Star,
   Store,
   UserCog,
   Users,
@@ -88,6 +90,15 @@ export const ADMIN_SECTIONS: PanelSection[] = [
     description: { en: 'Comments on owner posts', ar: 'التعليقات على مقالات الملاك' },
   },
   {
+    key: 'part-reviews',
+    group: 'moderation',
+    icon: Star,
+    // The same moderators as comments: one trust, two kinds of owner writing.
+    permission: 'comments.review',
+    label: { en: 'Accessory reviews', ar: 'مراجعات الإكسسوارات' },
+    description: { en: 'Owner ratings of accessories', ar: 'تقييمات الملاك للإكسسوارات' },
+  },
+  {
     key: 'dealers',
     group: 'market',
     icon: Store,
@@ -102,6 +113,17 @@ export const ADMIN_SECTIONS: PanelSection[] = [
     permission: 'pricing.manage',
     label: { en: 'Prices', ar: 'الأسعار' },
     description: { en: 'Current list price of each trim', ar: 'السعر الرسمي الحالي لكل فئة' },
+  },
+  {
+    key: 'accessories',
+    group: 'market',
+    icon: Package,
+    permission: 'parts.manage',
+    label: { en: 'Accessories', ar: 'الإكسسوارات' },
+    description: {
+      en: 'Accessories and protection parts, local and imported',
+      ar: 'الإكسسوارات وقطع الحماية، المحلية والمستوردة',
+    },
   },
   {
     key: 'users',

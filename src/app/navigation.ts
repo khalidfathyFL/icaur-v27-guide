@@ -1,3 +1,5 @@
+import { apiConfigured } from '../lib/api'
+
 export type NavItem = { href: string; en: string; ar: string }
 
 /** Always visible in the desktop header: the pages owners reach for most. */
@@ -16,6 +18,8 @@ export const SECONDARY_NAV: NavItem[] = [
   { href: '/compare/play-vs-wild', en: 'Play vs Wild', ar: 'Play vs Wild' },
   { href: '/reviews', en: 'Reviews', ar: 'المراجعات' },
   { href: '/videos', en: 'Videos', ar: 'الفيديوهات' },
+  // The catalog lives in the API, so a build without one does not offer it.
+  ...(apiConfigured ? [{ href: '/accessories', en: 'Accessories', ar: 'الإكسسوارات' }] : []),
   { href: '/sources', en: 'Sources', ar: 'المصادر' },
   { href: '/glossary', en: 'Glossary', ar: 'القاموس' },
 ]
