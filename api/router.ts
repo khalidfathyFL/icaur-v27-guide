@@ -3,6 +3,7 @@ import { handleComments } from './_routes/comments.js'
 import { handleDealers } from './_routes/dealers.js'
 import { handlePosts } from './_routes/posts.js'
 import { handlePricing } from './_routes/pricing.js'
+import { handleRoles } from './_routes/roles.js'
 import { handleSuggestions } from './_routes/suggestions.js'
 import { HttpError, corsHeaders, errorResponse, json, pathSegments } from './_lib/http.js'
 
@@ -15,6 +16,7 @@ const ROUTES: Record<string, RouteHandler> = {
   suggestions: handleSuggestions,
   dealers: handleDealers,
   pricing: handlePricing,
+  roles: handleRoles,
 }
 
 /**

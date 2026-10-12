@@ -17,6 +17,7 @@ import { Dealers } from './admin/Dealers'
 import { Permissions } from './admin/Permissions'
 import { Posts } from './admin/Posts'
 import { Pricing } from './admin/Pricing'
+import { Roles } from './admin/Roles'
 import { Suggestions } from './admin/Suggestions'
 import { Users } from './admin/Users'
 import { usePendingCounts } from './admin/usePendingCounts'
@@ -124,6 +125,8 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
         return <Pricing />
       case 'users':
         return <Users params={params} />
+      case 'roles':
+        return <Roles />
       case 'permissions':
         return <Permissions />
       default:

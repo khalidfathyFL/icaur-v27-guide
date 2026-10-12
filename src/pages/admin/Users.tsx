@@ -6,7 +6,7 @@ import { Avatar, DetailList, EmptyState, FilterSelect } from '../../components/p
 import { useConfirm, useToast } from '../../components/panel/feedback'
 import { useAuth } from '../../auth/authContext'
 import { useLanguage, useShortText } from '../../i18n/languageContext'
-import { api, type ApiPermissionDefinition, type ApiUser } from '../../lib/api'
+import { api, type ApiPermissionDefinition, type ApiRole, type ApiUser } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
 import { formatDate } from '../../lib/format'
 import { useOpenRecord } from './useOpenRecord'
@@ -25,7 +25,8 @@ export function RoleBadge({ user }: { user: ApiUser }) {
       </span>
     )
   }
-  const granted = user.permissions?.length ?? 0
+  // Roles and individual grants both widen what a contributor may do.
+  const granted = (user.permissions?.length ?? 0) + (user.roleIds?.length ?? 0)
   return (
     <span className="badge export">
       {granted > 0 ? tx(`Contributor +${granted}`, `مساهم +${granted}`) : tx('Contributor', 'مساهم')}
@@ -40,6 +41,7 @@ export function Users({ params }: { params: URLSearchParams }) {
   const record = useOpenRecord('/admin/users', params)
   const [users, setUsers] = useState<ApiUser[] | null>(null)
   const [definitions, setDefinitions] = useState<ApiPermissionDefinition[]>([])
+  const [roles, setRoles] = useState<ApiRole[]>([])
   const [error, setError] = useState<string | null>(null)
   const [role, setRole] = useState<RoleFilter>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
@@ -60,6 +62,10 @@ export function Users({ params }: { params: URLSearchParams }) {
     api
       .permissionDefinitions()
       .then(({ permissions }) => setDefinitions(permissions))
+      .catch(() => undefined)
+    api
+      .listRoles()
+      .then(({ roles: list }) => setRoles(list))
       .catch(() => undefined)
   }, [])
 
@@ -162,6 +168,7 @@ export function Users({ params }: { params: URLSearchParams }) {
           person={selected}
           isSelf={selected.id === me?.id}
           definitions={definitions}
+          roles={roles}
           onClose={record.close}
           onChanged={load}
         />
@@ -174,12 +181,14 @@ function UserDrawer({
   person,
   isSelf,
   definitions,
+  roles,
   onClose,
   onChanged,
 }: {
   person: ApiUser
   isSelf: boolean
   definitions: ApiPermissionDefinition[]
+  roles: ApiRole[]
   onClose: () => void
   onChanged: () => void
 }) {
@@ -244,7 +253,16 @@ function UserDrawer({
     update({ permissions: next }, tx('Permissions updated.', 'تم تحديث الصلاحيات.'))
   }
 
+  function toggleAssignedRole(roleId: string, assigned: boolean) {
+    const current = person.roleIds ?? []
+    const next = assigned ? [...current, roleId] : current.filter((id) => id !== roleId)
+    update({ roleIds: next }, tx('Roles updated.', 'تم تحديث الأدوار.'))
+  }
+
   const groups = [...new Set(definitions.map((definition) => definition.group))]
+  const held = roles.filter((item) => (person.roleIds ?? []).includes(item.id))
+  /** The roles that grant a permission, so a ticked-by-role box can say why. */
+  const grantedBy = (key: string) => held.filter((item) => item.permissions.includes(key)).map((item) => item.name)
 
   return (
     <Drawer
@@ -288,6 +306,32 @@ function UserDrawer({
         ]}
       />
 
+      {!isAdmin && (
+        <section className="panel-preview">
+          <p className="panel-preview-label">{tx('Roles', 'الأدوار')}</p>
+          {roles.length === 0 && (
+            <p className="panel-muted">
+              {tx('No roles exist yet. Create them under Roles.', 'لا توجد أدوار بعد. أنشئها من قسم الأدوار.')}{' '}
+              <a href="#/admin/roles">{tx('Go to Roles', 'اذهب إلى الأدوار')}</a>
+            </p>
+          )}
+          {roles.map((item) => (
+            <label className="permission-row" key={item.id}>
+              <input
+                type="checkbox"
+                checked={(person.roleIds ?? []).includes(item.id)}
+                disabled={isSelf || busy}
+                onChange={(event) => toggleAssignedRole(item.id, event.target.checked)}
+              />
+              <span>
+                <strong>{item.name}</strong>
+                {item.description && <small>{item.description}</small>}
+              </span>
+            </label>
+          ))}
+        </section>
+      )}
+
       <section className="panel-preview">
         <p className="panel-preview-label">{tx('Permissions', 'الصلاحيات')}</p>
         {isSelf ? (
@@ -301,20 +345,30 @@ function UserDrawer({
             <p className="permission-group-name">{group}</p>
             {definitions
               .filter((definition) => definition.group === group)
-              .map((definition) => (
-                <label className="permission-row" key={definition.key}>
-                  <input
-                    type="checkbox"
-                    checked={isAdmin || (person.permissions ?? []).includes(definition.key)}
-                    disabled={isAdmin || isSelf || busy}
-                    onChange={(event) => togglePermission(definition.key, event.target.checked)}
-                  />
-                  <span>
-                    <strong>{definition.label}</strong>
-                    <small>{definition.description}</small>
-                  </span>
-                </label>
-              ))}
+              .map((definition) => {
+                const via = isAdmin ? [] : grantedBy(definition.key)
+                const direct = (person.permissions ?? []).includes(definition.key)
+                return (
+                  <label className="permission-row" key={definition.key}>
+                    <input
+                      type="checkbox"
+                      checked={isAdmin || direct || via.length > 0}
+                      // A permission that comes from a role is changed on the role, not here.
+                      disabled={isAdmin || isSelf || busy || (via.length > 0 && !direct)}
+                      onChange={(event) => togglePermission(definition.key, event.target.checked)}
+                    />
+                    <span>
+                      <strong>{definition.label}</strong>
+                      <small>{definition.description}</small>
+                      {via.length > 0 && (
+                        <small className="permission-via">
+                          {tx(`From role: ${via.join(', ')}`, `من الدور: ${via.join('، ')}`)}
+                        </small>
+                      )}
+                    </span>
+                  </label>
+                )
+              })}
           </div>
         ))}
       </section>

@@ -1159,6 +1159,15 @@ a.panel-cell-main:hover strong {
   text-transform: uppercase;
 }
 
+/* Granted by a role: tinted so it reads as inherited rather than individually ticked. */
+.panel-matrix td.via-role {
+  background: var(--panel-inset);
+}
+
+.panel-matrix td.via-role input {
+  cursor: help;
+}
+
 .panel-matrix th.permission {
   min-width: 110px;
   max-width: 150px;

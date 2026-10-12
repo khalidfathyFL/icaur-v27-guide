@@ -3,7 +3,7 @@ import {
   hashPassword,
   issueToken,
   requireUser,
-  toSessionUser,
+  resolveSessionUser,
   verifyPassword,
   type Role,
   type UserDoc,
@@ -25,6 +25,7 @@ import {
   requirePassword,
   requireString,
 } from '../_lib/models.js'
+import { parseRoleIds } from '../_lib/roles.js'
 
 /**
  * The first account to register becomes the admin, which bootstraps the site
@@ -271,7 +272,7 @@ async function updateProfile(request: Request): Promise<Response> {
     changes: auditableChanges(update),
   })
 
-  return json(request, { user: toSessionUser(updated) })
+  return json(request, { user: await resolveSessionUser(updated) })
 }
 
 /**
@@ -326,7 +327,9 @@ async function users(request: Request, segments: string[]): Promise<Response> {
         email: user.email,
         name: user.name,
         role: user.role,
+        // Individual grants only; the screen adds what each role contributes.
         permissions: user.permissions ?? [],
+        roleIds: user.roleIds ?? [],
         status: user.status,
         createdAt: user.createdAt,
       })),
@@ -339,10 +342,11 @@ async function users(request: Request, segments: string[]): Promise<Response> {
     if (id === admin.id) throw new HttpError(400, 'You cannot change your own role or status.')
 
     const body = await readJsonBody<Record<string, unknown>>(request)
-    const update: Partial<Pick<UserDoc, 'role' | 'status' | 'permissions'>> = {}
+    const update: Partial<Pick<UserDoc, 'role' | 'status' | 'permissions' | 'roleIds'>> = {}
 
     if (body.role === 'admin' || body.role === 'user') update.role = body.role
     if (body.permissions !== undefined) update.permissions = parsePermissions(body.permissions)
+    if (body.roleIds !== undefined) update.roleIds = await parseRoleIds(body.roleIds)
     if (body.status === 'active' || body.status === 'blocked') update.status = body.status
     if (Object.keys(update).length === 0) throw new HttpError(400, 'Nothing to change.')
 
@@ -359,6 +363,12 @@ async function users(request: Request, segments: string[]): Promise<Response> {
       await recordAudit(admin, 'user.permissions_changed', {
         target: { kind: 'user', id },
         changes: { permissions: update.permissions },
+      })
+    }
+    if (update.roleIds) {
+      await recordAudit(admin, 'user.roles_changed', {
+        target: { kind: 'user', id },
+        changes: { roleIds: update.roleIds },
       })
     }
     if (update.status) {

@@ -5,6 +5,7 @@ import {
   FileText,
   History,
   KeyRound,
+  KeySquare,
   LayoutDashboard,
   ListChecks,
   MessageSquare,
@@ -109,6 +110,14 @@ export const ADMIN_SECTIONS: PanelSection[] = [
     permission: 'users.manage',
     label: { en: 'Accounts', ar: 'الحسابات' },
     description: { en: 'Roles, blocking and individual permissions', ar: 'الأدوار والحظر والصلاحيات الفردية' },
+  },
+  {
+    key: 'roles',
+    group: 'people',
+    icon: KeySquare,
+    permission: 'users.manage',
+    label: { en: 'Roles', ar: 'الأدوار' },
+    description: { en: 'Named sets of permissions to give to people', ar: 'مجموعات صلاحيات مسماة تُمنح للأشخاص' },
   },
   {
     key: 'permissions',

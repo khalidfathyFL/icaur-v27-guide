@@ -19,10 +19,23 @@ export const ACTION_LABELS: Record<string, { en: string; ar: string }> = {
   'user.registered': { en: 'created an account', ar: 'أنشأ حسابا' },
   'user.role_changed': { en: 'changed a role', ar: 'غيّر دورا' },
   'user.permissions_changed': { en: 'changed someone’s permissions', ar: 'غيّر صلاحيات شخص' },
+  'user.roles_changed': { en: 'changed someone’s roles', ar: 'غيّر أدوار شخص' },
+  'role.created': { en: 'created a role', ar: 'أنشأ دورا' },
+  'role.updated': { en: 'edited a role', ar: 'عدّل دورا' },
+  'role.deleted': { en: 'deleted a role', ar: 'حذف دورا' },
   'user.status_changed': { en: 'blocked or unblocked an account', ar: 'حظر أو رفع حظر حساب' },
   'user.password_changed': { en: 'changed their password', ar: 'غيّر كلمة المرور' },
   'user.profile_updated': { en: 'updated their profile', ar: 'حدّث ملفه الشخصي' },
 }
 
 /** Actions that change who can do what deserve to stand out. */
-export const SENSITIVE_ACTIONS = new Set(['user.role_changed', 'user.permissions_changed', 'user.status_changed', 'pricing.updated'])
+export const SENSITIVE_ACTIONS = new Set([
+  'user.role_changed',
+  'user.permissions_changed',
+  'user.roles_changed',
+  'role.created',
+  'role.updated',
+  'role.deleted',
+  'user.status_changed',
+  'pricing.updated',
+])

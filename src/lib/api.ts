@@ -29,8 +29,13 @@ export type ApiUser = {
   city?: string
   trim?: Trim
   colour?: string
-  /** Granted individually; an admin holds every permission regardless. */
+  /**
+   * For the signed-in person (`me`), everything they hold including their
+   * roles. In the admin account list, only what was granted individually.
+   */
   permissions?: string[]
+  /** Roles assigned to the account; each contributes its permissions. */
+  roleIds?: string[]
   status?: 'active' | 'blocked'
   createdAt?: string
 }
@@ -53,6 +58,18 @@ export type ApiPermissionDefinition = {
   description: string
   group: string
 }
+
+/** A named bundle of permissions that can be assigned to accounts. */
+export type ApiRole = {
+  id: string
+  name: string
+  description?: string
+  permissions: string[]
+  /** How many accounts hold it; present when listed. */
+  members?: number
+}
+
+export type RoleInput = { name: string; description?: string; permissions: string[] }
 
 export type ApiStats = {
   total: number
@@ -231,9 +248,21 @@ export const api = {
 
   updateUser: (
     id: string,
-    input: { role?: Role; status?: 'active' | 'blocked'; permissions?: string[] },
+    input: { role?: Role; status?: 'active' | 'blocked'; permissions?: string[]; roleIds?: string[] },
   ) =>
     request<{ ok: true }>(`auth/users/${id}`, { method: 'PATCH', body: input, auth: true }),
+
+  /* ---------- roles ---------- */
+
+  listRoles: () => request<{ roles: ApiRole[] }>('roles', { auth: true }),
+
+  createRole: (input: RoleInput) =>
+    request<{ role: ApiRole }>('roles', { method: 'POST', body: input, auth: true }),
+
+  updateRole: (id: string, input: Partial<RoleInput>) =>
+    request<{ role: ApiRole }>(`roles/${id}`, { method: 'PATCH', body: input, auth: true }),
+
+  deleteRole: (id: string) => request<{ ok: true }>(`roles/${id}`, { method: 'DELETE', auth: true }),
 
   /* ---------- posts ---------- */
 

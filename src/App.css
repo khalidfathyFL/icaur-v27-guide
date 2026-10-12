@@ -4017,6 +4017,12 @@ ol.path-pills li:last-child {
   line-height: 1.5;
 }
 
+/* Says which role a locked box comes from. */
+.permission-row small.permission-via {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 /* ---------- embedded players ---------- */
 
 .embed-frame {

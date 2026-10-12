@@ -4,7 +4,7 @@ import { Avatar, Card, PageHeader } from '../../components/panel/blocks'
 import { useToast } from '../../components/panel/feedback'
 import { useAuth } from '../../auth/authContext'
 import { useShortText } from '../../i18n/languageContext'
-import { api, type ApiPermissionDefinition, type ApiUser } from '../../lib/api'
+import { api, type ApiPermissionDefinition, type ApiRole, type ApiUser } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
 import { RoleBadge } from './Users'
 
@@ -14,6 +14,9 @@ import { RoleBadge } from './Users'
  * The columns come from the server rather than being listed here, so the
  * screen describing the rules and the gate enforcing them cannot drift apart:
  * adding a permission in the API makes it appear here with its own label.
+ *
+ * A box ticked because of a role is shown locked: it is changed on the role,
+ * and unticking it here would not take it away.
  */
 export function Permissions() {
   const tx = useShortText()
@@ -21,15 +24,17 @@ export function Permissions() {
   const { user: me } = useAuth()
   const [definitions, setDefinitions] = useState<ApiPermissionDefinition[]>([])
   const [users, setUsers] = useState<ApiUser[] | null>(null)
+  const [roles, setRoles] = useState<ApiRole[]>([])
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
 
   const load = useCallback(() => {
-    Promise.all([api.permissionDefinitions(), api.listUsers()])
-      .then(([defs, list]) => {
+    Promise.all([api.permissionDefinitions(), api.listUsers(), api.listRoles()])
+      .then(([defs, list, roleList]) => {
         setDefinitions(defs.permissions)
         setUsers(list.users)
+        setRoles(roleList.roles)
         setError(null)
       })
       .catch((caught) => setError(errorMessage(caught, tx('Could not load.', 'تعذر التحميل.'))))
@@ -54,6 +59,12 @@ export function Permissions() {
     }
   }
 
+  /** Names of the person's roles that grant a permission. */
+  const grantedBy = (person: ApiUser, key: string) =>
+    roles
+      .filter((role) => (person.roleIds ?? []).includes(role.id) && role.permissions.includes(key))
+      .map((role) => role.name)
+
   const groups = [...new Set(definitions.map((definition) => definition.group))]
   const ordered = groups.flatMap((group) => definitions.filter((definition) => definition.group === group))
   const needle = query.trim().toLowerCase()
@@ -66,8 +77,8 @@ export function Permissions() {
     <>
       <PageHeader
         description={tx(
-          'Tick what each person may do. Admins hold every permission and their boxes are fixed. Hover a column for what it allows.',
-          'حدد ما يمكن لكل شخص فعله. المشرفون يملكون كل الصلاحيات وخاناتهم ثابتة. مرر المؤشر على العمود لمعرفة ما يسمح به.',
+          'Tick what each person may do. Admins hold every permission, and boxes ticked by a role are changed on the role, so both are fixed here. Hover a column for what it allows.',
+          'حدد ما يمكن لكل شخص فعله. المشرفون يملكون كل الصلاحيات، والخانات التي يمنحها دور تُعدل من الدور، لذا كلاهما ثابت هنا. مرر المؤشر على العمود لمعرفة ما يسمح به.',
         )}
         actions={
           <label className="panel-search">
@@ -129,18 +140,24 @@ export function Permissions() {
                         </span>
                       </span>
                     </th>
-                    {ordered.map((definition) => (
-                      <td key={definition.key}>
-                        <input
-                          type="checkbox"
-                          aria-label={`${person.name}: ${definition.label}`}
-                          checked={isAdmin || (person.permissions ?? []).includes(definition.key)}
-                          // An admin already holds everything, and nobody edits their own permissions.
-                          disabled={isAdmin || isSelf || busyId === person.id}
-                          onChange={(event) => toggle(person, definition.key, event.target.checked)}
-                        />
-                      </td>
-                    ))}
+                    {ordered.map((definition) => {
+                      const via = isAdmin ? [] : grantedBy(person, definition.key)
+                      const direct = (person.permissions ?? []).includes(definition.key)
+                      return (
+                        <td key={definition.key} className={via.length > 0 ? 'via-role' : undefined}>
+                          <input
+                            type="checkbox"
+                            aria-label={`${person.name}: ${definition.label}`}
+                            title={via.length > 0 ? tx(`From role: ${via.join(', ')}`, `من الدور: ${via.join('، ')}`) : undefined}
+                            checked={isAdmin || direct || via.length > 0}
+                            // An admin already holds everything, a role's grants are edited on the role,
+                            // and nobody edits their own permissions.
+                            disabled={isAdmin || isSelf || busyId === person.id || (via.length > 0 && !direct)}
+                            onChange={(event) => toggle(person, definition.key, event.target.checked)}
+                          />
+                        </td>
+                      )
+                    })}
                   </tr>
                 )
               })}

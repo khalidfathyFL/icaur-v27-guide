@@ -40,6 +40,8 @@ export type UserProfile = {
 export type UserDoc = UserProfile & {
   /** Granted individually; an admin holds every permission regardless. */
   permissions?: Permission[]
+  /** Roles assigned to the account; each contributes its permissions. */
+  roleIds?: string[]
   _id: ObjectId
   email: string
   name: string
@@ -51,7 +53,9 @@ export type UserDoc = UserProfile & {
 }
 
 export type SessionUser = UserProfile & {
+  /** Effective: individual grants plus everything the account's roles hold. */
   permissions?: Permission[]
+  roleIds?: string[]
   id: string
   email: string
   name: string
@@ -130,10 +134,33 @@ export async function requireUser(request: Request): Promise<SessionUser> {
   if (!user) throw new HttpError(401, 'This account no longer exists.')
   if (user.status === 'blocked') throw new HttpError(403, 'This account has been blocked.')
 
-  return toSessionUser(user)
+  return resolveSessionUser(user)
 }
 
-/** The shape the browser sees: everything except the password hash. */
+/**
+ * The session with its roles folded in. Roles are read on every request, like
+ * the account itself, so editing a role changes what its members can do on
+ * their next request.
+ */
+export async function resolveSessionUser(user: UserDoc): Promise<SessionUser> {
+  const session = toSessionUser(user)
+  const roleIds = (user.roleIds ?? []).filter((id) => ObjectId.isValid(id))
+  if (roleIds.length === 0) return session
+
+  const db = await getDb()
+  const roles = await db
+    .collection<{ _id: ObjectId; permissions: Permission[] }>('roles')
+    .find({ _id: { $in: roleIds.map((id) => new ObjectId(id)) } }, { projection: { permissions: 1 } })
+    .toArray()
+
+  session.permissions = [...new Set([...(session.permissions ?? []), ...roles.flatMap((role) => role.permissions)])]
+  return session
+}
+
+/**
+ * The shape the browser sees: everything except the password hash. Its
+ * permissions are the individual grants only; `resolveSessionUser` adds roles.
+ */
 export function toSessionUser(user: UserDoc): SessionUser {
   return {
     id: user._id.toHexString(),
@@ -147,6 +174,7 @@ export function toSessionUser(user: UserDoc): SessionUser {
     trim: user.trim,
     colour: user.colour,
     permissions: user.permissions ?? [],
+    roleIds: user.roleIds ?? [],
   }
 }
 
