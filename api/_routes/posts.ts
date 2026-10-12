@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb'
-import { readSession, requireAdmin, requireUser } from '../_lib/auth.js'
+import { readSession, requireUser } from '../_lib/auth.js'
+import { hasPermission, requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
 import { sanitizeRichText, toPlainText } from '../_lib/sanitize.js'
@@ -63,7 +64,7 @@ async function listPosts(request: Request): Promise<Response> {
     if (!session) throw new HttpError(401, 'Sign in to see your posts.')
     filter = { authorId: session.id }
   } else if (params.get('status')) {
-    await requireAdmin(request)
+    await requirePermission(request, 'posts.review')
     const status = params.get('status')
     filter = status === 'all' ? {} : { status }
   }
@@ -125,8 +126,10 @@ async function createPost(request: Request): Promise<Response> {
     excerpt,
     authorId: user.id,
     authorName: user.name,
-    // Everything a contributor writes waits for an admin.
-    status: 'pending' as const,
+    // Everything waits for review, unless this author has been excused from
+    // waiting. The exemption only skips the queue for their own posts; it is
+    // never permission to approve anybody else's.
+    status: hasPermission(user, 'posts.publishDirectly') ? ('approved' as const) : ('pending' as const),
     createdAt: now,
     updatedAt: now,
   }
@@ -195,7 +198,7 @@ async function updatePost(request: Request, id: string): Promise<Response> {
 async function reviewPost(request: Request, id: string): Promise<Response> {
   if (!ObjectId.isValid(id)) throw new HttpError(404, 'Post not found.')
 
-  const admin = await requireAdmin(request)
+  const admin = await requirePermission(request, 'posts.review')
   const body = await readJsonBody<Record<string, unknown>>(request)
   const status = requireReviewStatus(body.status)
   const note = body.note === undefined ? undefined : requireString(body.note, 'Note', { max: 1000 })

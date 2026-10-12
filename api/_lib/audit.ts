@@ -27,6 +27,7 @@ export type AuditAction =
   | 'pricing.updated'
   | 'user.registered'
   | 'user.role_changed'
+  | 'user.permissions_changed'
   | 'user.status_changed'
   | 'user.password_changed'
   | 'user.profile_updated'

@@ -1,4 +1,4 @@
-import { requireAdmin } from '../_lib/auth.js'
+import { requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
 import { recordAudit } from '../_lib/audit.js'
@@ -32,7 +32,7 @@ async function listPricing(request: Request): Promise<Response> {
 }
 
 async function upsertPricing(request: Request): Promise<Response> {
-  const admin = await requireAdmin(request)
+  const admin = await requirePermission(request, 'pricing.manage')
   const body = await readJsonBody<Record<string, unknown>>(request)
 
   const trim = body.trim === 'play' || body.trim === 'wild' ? body.trim : null

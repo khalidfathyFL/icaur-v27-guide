@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb'
-import { requireAdmin, requireUser } from '../_lib/auth.js'
+import { requireUser } from '../_lib/auth.js'
+import { requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
 import { recordAudit } from '../_lib/audit.js'
@@ -53,7 +54,7 @@ async function listSuggestions(request: Request): Promise<Response> {
   let filter: Record<string, unknown> = { authorId: user.id }
 
   if (params.get('queue') === '1') {
-    await requireAdmin(request)
+    await requirePermission(request, 'suggestions.review')
     const status = params.get('status') ?? 'pending'
     filter = status === 'all' ? {} : { status }
   }
@@ -103,7 +104,7 @@ async function createSuggestion(request: Request): Promise<Response> {
 async function reviewSuggestion(request: Request, id: string): Promise<Response> {
   if (!ObjectId.isValid(id)) throw new HttpError(404, 'Suggestion not found.')
 
-  const admin = await requireAdmin(request)
+  const admin = await requirePermission(request, 'suggestions.review')
   const body = await readJsonBody<Record<string, unknown>>(request)
   const status = requireReviewStatus(body.status)
   const note = body.note === undefined ? undefined : requireString(body.note, 'Note', { max: 1000 })

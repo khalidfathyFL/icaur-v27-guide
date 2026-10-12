@@ -2,7 +2,6 @@ import { ObjectId } from 'mongodb'
 import {
   hashPassword,
   issueToken,
-  requireAdmin,
   requireUser,
   toSessionUser,
   verifyPassword,
@@ -12,6 +11,11 @@ import {
 import { HttpError, json, readJsonBody } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
 import { auditableChanges, recordAudit, type AuditEntry } from '../_lib/audit.js'
+import {
+  PERMISSION_DEFINITIONS,
+  parsePermissions,
+  requirePermission,
+} from '../_lib/permissions.js'
 import {
   optionalPhone,
   optionalString,
@@ -40,6 +44,7 @@ export async function handleAuth(request: Request, segments: string[]): Promise<
   if (action === 'me' && request.method === 'GET') return me(request)
   if (action === 'me' && request.method === 'PATCH') return updateProfile(request)
   if (action === 'password' && request.method === 'POST') return changePassword(request)
+  if (action === 'permissions' && request.method === 'GET') return permissionDefinitions(request)
   if (action === 'stats' && request.method === 'GET') return stats(request)
   if (action === 'audit' && request.method === 'GET') return audit(request)
   if (action === 'users') return users(request, segments.slice(1))
@@ -121,13 +126,19 @@ async function me(request: Request): Promise<Response> {
   return json(request, { user: await requireUser(request) })
 }
 
+/** The permission catalogue: one definition per key, in display order. */
+async function permissionDefinitions(request: Request): Promise<Response> {
+  await requirePermission(request, 'users.manage')
+  return json(request, { permissions: PERMISSION_DEFINITIONS })
+}
+
 /**
  * The activity log, newest first. Read-only by design: there is no endpoint
  * that edits or deletes an entry, because a log an admin can rewrite proves
  * nothing.
  */
 async function audit(request: Request): Promise<Response> {
-  await requireAdmin(request)
+  await requirePermission(request, 'audit.read')
 
   const base = `https://${request.headers.get('host') ?? 'localhost'}`
   const params = new URL(request.url, base).searchParams
@@ -165,7 +176,7 @@ async function audit(request: Request): Promise<Response> {
  * into a list of people and their phone numbers.
  */
 async function stats(request: Request): Promise<Response> {
-  await requireAdmin(request)
+  await requirePermission(request, 'stats.read')
   const db = await getDb()
   const users = db.collection<UserDoc>('users')
 
@@ -279,7 +290,7 @@ async function changePassword(request: Request): Promise<Response> {
 
 /** Admin-only: list contributors and change a role or block an account. */
 async function users(request: Request, segments: string[]): Promise<Response> {
-  const admin = await requireAdmin(request)
+  const admin = await requirePermission(request, 'users.manage')
   const db = await getDb()
   const collection = db.collection<UserDoc>('users')
 
@@ -296,6 +307,7 @@ async function users(request: Request, segments: string[]): Promise<Response> {
         email: user.email,
         name: user.name,
         role: user.role,
+        permissions: user.permissions ?? [],
         status: user.status,
         createdAt: user.createdAt,
       })),
@@ -308,9 +320,10 @@ async function users(request: Request, segments: string[]): Promise<Response> {
     if (id === admin.id) throw new HttpError(400, 'You cannot change your own role or status.')
 
     const body = await readJsonBody<Record<string, unknown>>(request)
-    const update: Partial<Pick<UserDoc, 'role' | 'status'>> = {}
+    const update: Partial<Pick<UserDoc, 'role' | 'status' | 'permissions'>> = {}
 
     if (body.role === 'admin' || body.role === 'user') update.role = body.role
+    if (body.permissions !== undefined) update.permissions = parsePermissions(body.permissions)
     if (body.status === 'active' || body.status === 'blocked') update.status = body.status
     if (Object.keys(update).length === 0) throw new HttpError(400, 'Nothing to change.')
 
@@ -321,6 +334,12 @@ async function users(request: Request, segments: string[]): Promise<Response> {
       await recordAudit(admin, 'user.role_changed', {
         target: { kind: 'user', id },
         changes: { role: update.role },
+      })
+    }
+    if (update.permissions) {
+      await recordAudit(admin, 'user.permissions_changed', {
+        target: { kind: 'user', id },
+        changes: { permissions: update.permissions },
       })
     }
     if (update.status) {

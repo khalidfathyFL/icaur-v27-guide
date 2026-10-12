@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { requireAdmin } from '../_lib/auth.js'
+import { requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
 import { auditableChanges, recordAudit } from '../_lib/audit.js'
@@ -57,7 +57,7 @@ function readDealerBody(body: Record<string, unknown>) {
 }
 
 async function createDealer(request: Request): Promise<Response> {
-  const admin = await requireAdmin(request)
+  const admin = await requirePermission(request, 'dealers.manage')
   const body = await readJsonBody<Record<string, unknown>>(request)
 
   const now = new Date().toISOString()
@@ -80,7 +80,7 @@ async function createDealer(request: Request): Promise<Response> {
 }
 
 async function updateDealer(request: Request, id: string): Promise<Response> {
-  const admin = await requireAdmin(request)
+  const admin = await requirePermission(request, 'dealers.manage')
   if (!ObjectId.isValid(id)) throw new HttpError(404, 'Dealer not found.')
 
   const body = await readJsonBody<Record<string, unknown>>(request)
@@ -110,7 +110,7 @@ async function updateDealer(request: Request, id: string): Promise<Response> {
 }
 
 async function deleteDealer(request: Request, id: string): Promise<Response> {
-  const admin = await requireAdmin(request)
+  const admin = await requirePermission(request, 'dealers.manage')
   if (!ObjectId.isValid(id)) throw new HttpError(404, 'Dealer not found.')
 
   const db = await getDb()

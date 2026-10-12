@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Newspaper,
   History,
+  KeyRound,
   PieChart,
   ShieldCheck,
   Store,
@@ -17,6 +18,7 @@ import { useAuth } from '../auth/authContext'
 import { useLanguage } from '../i18n/languageContext'
 import { api, apiConfigured } from '../lib/api'
 import { Activity } from './admin/Activity'
+import { Permissions } from './admin/Permissions'
 import { Overview } from './admin/Overview'
 import { DealerAdmin, PostQueue, PricingAdmin, SuggestionQueue, UserAdmin } from './admin/sections'
 import { ServiceUnavailable } from './AccountPage'
@@ -121,7 +123,10 @@ export function AdminPage() {
       key: 'people',
       label: tx('People', 'الأشخاص'),
       icon: Users,
-      items: [{ key: 'users', label: tx('Accounts', 'الحسابات'), icon: Users }],
+      items: [
+        { key: 'users', label: tx('Accounts', 'الحسابات'), icon: Users },
+        { key: 'permissions', label: tx('Permissions', 'الصلاحيات'), icon: KeyRound },
+      ],
     },
   ]
 
@@ -148,6 +153,7 @@ export function AdminPage() {
         {active === 'dealers' && <DealerAdmin />}
         {active === 'pricing' && <PricingAdmin />}
         {active === 'users' && <UserAdmin currentUserId={user.id} />}
+        {active === 'permissions' && <Permissions />}
       </AdminShell>
     </PageFrame>
   )

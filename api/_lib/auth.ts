@@ -4,6 +4,7 @@ import { SignJWT, jwtVerify } from 'jose'
 import { ObjectId } from 'mongodb'
 import { getDb } from './mongo.js'
 import { HttpError } from './http.js'
+import type { Permission } from './permissions.js'
 
 const scrypt = promisify(scryptCallback) as (
   password: string,
@@ -30,6 +31,8 @@ export type UserProfile = {
 }
 
 export type UserDoc = UserProfile & {
+  /** Granted individually; an admin holds every permission regardless. */
+  permissions?: Permission[]
   _id: ObjectId
   email: string
   name: string
@@ -41,6 +44,7 @@ export type UserDoc = UserProfile & {
 }
 
 export type SessionUser = UserProfile & {
+  permissions?: Permission[]
   id: string
   email: string
   name: string
@@ -134,6 +138,7 @@ export function toSessionUser(user: UserDoc): SessionUser {
     city: user.city,
     trim: user.trim,
     colour: user.colour,
+    permissions: user.permissions ?? [],
   }
 }
 

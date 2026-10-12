@@ -26,8 +26,18 @@ export type ApiUser = {
   city?: string
   trim?: Trim
   colour?: string
+  /** Granted individually; an admin holds every permission regardless. */
+  permissions?: string[]
   status?: 'active' | 'blocked'
   createdAt?: string
+}
+
+/** One permission as the server describes it; the matrix renders from these. */
+export type ApiPermissionDefinition = {
+  key: string
+  label: string
+  description: string
+  group: string
 }
 
 export type ApiStats = {
@@ -189,7 +199,13 @@ export const api = {
 
   audit: () => request<{ entries: ApiAuditEntry[] }>('auth/audit', { auth: true }),
 
-  updateUser: (id: string, input: { role?: Role; status?: 'active' | 'blocked' }) =>
+  permissionDefinitions: () =>
+    request<{ permissions: ApiPermissionDefinition[] }>('auth/permissions', { auth: true }),
+
+  updateUser: (
+    id: string,
+    input: { role?: Role; status?: 'active' | 'blocked'; permissions?: string[] },
+  ) =>
     request<{ ok: true }>(`auth/users/${id}`, { method: 'PATCH', body: input, auth: true }),
 
   /* ---------- posts ---------- */
