@@ -49,6 +49,21 @@ export type SuggestionDoc = {
   createdAt: string
 }
 
+export type CommentDoc = {
+  _id: ObjectId
+  postId: string
+  /** Denormalised so the moderation queue reads without joining to posts. */
+  postTitle: string
+  body: string
+  authorId: string
+  authorName: string
+  status: ReviewStatus
+  reviewedBy?: string
+  reviewedAt?: string
+  reviewNote?: string
+  createdAt: string
+}
+
 export type DealerDoc = {
   _id: ObjectId
   name: string

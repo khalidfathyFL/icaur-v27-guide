@@ -33,6 +33,17 @@ export type ApiUser = {
 }
 
 /** One permission as the server describes it; the matrix renders from these. */
+export type ApiComment = {
+  id: string
+  postId: string
+  postTitle?: string
+  body: string
+  authorName: string
+  status: ReviewStatus
+  reviewNote?: string
+  createdAt: string
+}
+
 export type ApiPermissionDefinition = {
   key: string
   label: string
@@ -231,6 +242,23 @@ export const api = {
     request<{ ok: true }>(`posts/${id}/review`, { method: 'POST', body: input, auth: true }),
 
   deletePost: (id: string) => request<{ ok: true }>(`posts/${id}`, { method: 'DELETE', auth: true }),
+
+  /* ---------- comments ---------- */
+
+  listComments: (postId: string) =>
+    request<{ comments: ApiComment[] }>(`comments?postId=${encodeURIComponent(postId)}`),
+
+  commentQueue: (status: ReviewStatus | 'all' = 'pending') =>
+    request<{ comments: ApiComment[] }>(`comments?queue=1&status=${status}`, { auth: true }),
+
+  createComment: (input: { postId: string; body: string }) =>
+    request<{ comment: ApiComment }>('comments', { method: 'POST', body: input, auth: true }),
+
+  reviewComment: (id: string, input: { status: 'approved' | 'rejected'; note?: string }) =>
+    request<{ ok: true }>(`comments/${id}/review`, { method: 'POST', body: input, auth: true }),
+
+  deleteComment: (id: string) =>
+    request<{ ok: true }>(`comments/${id}`, { method: 'DELETE', auth: true }),
 
   /* ---------- suggested edits ---------- */
 

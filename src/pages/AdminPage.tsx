@@ -6,6 +6,7 @@ import {
   Newspaper,
   History,
   KeyRound,
+  MessageSquare,
   PieChart,
   ShieldCheck,
   Store,
@@ -20,21 +21,30 @@ import { api, apiConfigured } from '../lib/api'
 import { Activity } from './admin/Activity'
 import { Permissions } from './admin/Permissions'
 import { Overview } from './admin/Overview'
-import { DealerAdmin, PostQueue, PricingAdmin, SuggestionQueue, UserAdmin } from './admin/sections'
+import {
+  CommentQueue,
+  DealerAdmin,
+  PostQueue,
+  PricingAdmin,
+  SuggestionQueue,
+  UserAdmin,
+} from './admin/sections'
 import { ServiceUnavailable } from './AccountPage'
 
 /** Counts of work waiting, shown as badges on the sidebar. */
 function usePendingCounts() {
-  const [counts, setCounts] = useState({ posts: 0, suggestions: 0 })
+  const [counts, setCounts] = useState({ posts: 0, suggestions: 0, comments: 0 })
 
   const refresh = useCallback(() => {
     Promise.allSettled([
       api.listPosts({ status: 'pending' }),
       api.listSuggestions({ queue: true, status: 'pending' }),
-    ]).then(([posts, suggestions]) => {
+      api.commentQueue('pending'),
+    ]).then(([posts, suggestions, comments]) => {
       setCounts({
         posts: posts.status === 'fulfilled' ? posts.value.posts.length : 0,
         suggestions: suggestions.status === 'fulfilled' ? suggestions.value.suggestions.length : 0,
+        comments: comments.status === 'fulfilled' ? comments.value.comments.length : 0,
       })
     })
   }, [])
@@ -108,6 +118,13 @@ export function AdminPage() {
           badge: counts.suggestions,
           subgroup: tx('Awaiting review', 'في انتظار المراجعة'),
         },
+        {
+          key: 'comments',
+          label: tx('Comments', 'التعليقات'),
+          icon: MessageSquare,
+          badge: counts.comments,
+          subgroup: tx('Awaiting review', 'في انتظار المراجعة'),
+        },
       ],
     },
     {
@@ -150,6 +167,7 @@ export function AdminPage() {
         {active === 'activity' && <Activity />}
         {active === 'posts' && <PostQueue onChanged={refresh} />}
         {active === 'suggestions' && <SuggestionQueue onChanged={refresh} />}
+        {active === 'comments' && <CommentQueue onChanged={refresh} />}
         {active === 'dealers' && <DealerAdmin />}
         {active === 'pricing' && <PricingAdmin />}
         {active === 'users' && <UserAdmin currentUserId={user.id} />}

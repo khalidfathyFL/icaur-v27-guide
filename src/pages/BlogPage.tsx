@@ -4,6 +4,7 @@ import { PageFrame } from '../components/layout'
 import { useAuth } from '../auth/authContext'
 import { useLanguage } from '../i18n/languageContext'
 import { api, apiConfigured, type ApiPost } from '../lib/api'
+import { Comments } from '../components/Comments'
 import { ServiceUnavailable } from './AccountPage'
 
 /**
@@ -151,6 +152,9 @@ export function PostPage({ slug }: { slug: string }) {
           </div>
         )}
       </article>
+
+      {/* Only a published post has a public thread. */}
+      {post.status === 'approved' && <Comments postId={post.id} />}
 
       <a className="inline-link" href="#/blog">
         {tx('Back to posts', 'ارجع إلى المقالات')}

@@ -8,6 +8,7 @@ import {
   type ApiDealer,
   type ApiPost,
   type ApiPricing,
+  type ApiComment,
   type ApiSuggestion,
   type ApiUser,
   type ReviewStatus,
@@ -205,6 +206,69 @@ export function SuggestionQueue({ onChanged }: { onChanged: () => void }) {
                 busy={busyId === suggestion.id}
                 onDecide={(d, note) => decide(suggestion.id, d, note)}
               />
+            )}
+          </article>
+        ))}
+      </div>
+    </>
+  )
+}
+
+export function CommentQueue({ onChanged }: { onChanged: () => void }) {
+  const { tx } = useLanguage()
+  const { status, control } = useQueueFilter()
+  const [comments, setComments] = useState<ApiComment[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [busyId, setBusyId] = useState<string | null>(null)
+
+  const load = useCallback(() => {
+    api
+      .commentQueue(status)
+      .then(({ comments: list }) => setComments(list))
+      .catch((caught) =>
+        setError(caught instanceof ApiError ? caught.message : tx('Could not load.', 'تعذر التحميل.')),
+      )
+  }, [status, tx])
+
+  useEffect(load, [load])
+
+  async function decide(id: string, decision: 'approved' | 'rejected', note: string) {
+    setBusyId(id)
+    setError(null)
+    try {
+      await api.reviewComment(id, { status: decision, note: note || undefined })
+      load()
+      onChanged()
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : tx('Could not save.', 'تعذر الحفظ.'))
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  return (
+    <>
+      {control}
+      {error && <p className="form-error">{error}</p>}
+      {comments.length === 0 && <p className="muted-note">{tx('Nothing here.', 'لا يوجد شيء هنا.')}</p>}
+
+      <div className="review-list">
+        {comments.map((comment) => (
+          <article className="review-card" key={comment.id}>
+            <header>
+              <div>
+                <h3>{comment.postTitle}</h3>
+                <small>
+                  {comment.authorName} · {new Date(comment.createdAt).toLocaleDateString()}
+                </small>
+              </div>
+              <StatusPill status={comment.status} />
+            </header>
+
+            <p className="review-excerpt">{comment.body}</p>
+
+            {comment.status === 'pending' && (
+              <ReviewActions busy={busyId === comment.id} onDecide={(d, note) => decide(comment.id, d, note)} />
             )}
           </article>
         ))}

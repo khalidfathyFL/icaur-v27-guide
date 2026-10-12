@@ -1,4 +1,5 @@
 import { handleAuth } from './_routes/auth.js'
+import { handleComments } from './_routes/comments.js'
 import { handleDealers } from './_routes/dealers.js'
 import { handlePosts } from './_routes/posts.js'
 import { handlePricing } from './_routes/pricing.js'
@@ -10,6 +11,7 @@ type RouteHandler = (request: Request, segments: string[]) => Promise<Response>
 const ROUTES: Record<string, RouteHandler> = {
   auth: handleAuth,
   posts: handlePosts,
+  comments: handleComments,
   suggestions: handleSuggestions,
   dealers: handleDealers,
   pricing: handlePricing,

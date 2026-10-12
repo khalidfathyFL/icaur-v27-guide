@@ -18,6 +18,8 @@ export const PERMISSION_KEYS = [
   'posts.review',
   'posts.publishDirectly',
   'suggestions.review',
+  'comments.review',
+  'comments.publishDirectly',
   'dealers.manage',
   'pricing.manage',
   'users.manage',
@@ -46,6 +48,19 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     key: 'suggestions.review',
     label: 'Approve corrections',
     description: 'Decide which suggested corrections to the guides are accepted.',
+    group: 'Moderation',
+  },
+  {
+    key: 'comments.review',
+    label: 'Approve comments',
+    description: 'Decide which comments appear under a post.',
+    group: 'Moderation',
+  },
+  {
+    key: 'comments.publishDirectly',
+    label: 'Comment without review',
+    description:
+      'Their own comments appear immediately instead of waiting in the queue. Not permission to approve anybody else.',
     group: 'Moderation',
   },
   {

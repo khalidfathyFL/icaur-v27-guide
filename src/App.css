@@ -4013,3 +4013,138 @@ ol.path-pills li:last-child {
     font-size: 1.6rem;
   }
 }
+
+/* ---------- comments ---------- */
+
+.comments {
+  margin: 2.5rem 0 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.comments h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  color: var(--heading);
+}
+
+.comment-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.comment-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.comment-list li {
+  padding: 0.8rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.comment-list header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.3rem;
+}
+
+.comment-list strong {
+  color: var(--heading);
+  font-size: 0.92rem;
+}
+
+.comment-list time {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.comment-list p {
+  margin: 0;
+  line-height: 1.65;
+  /* Comments are stored as plain text, so newlines are the only structure. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.comment-remove {
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.comment-remove:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.comment-form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 640px;
+}
+
+.comment-form label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.comment-form label > span {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--heading);
+}
+
+.comment-form textarea {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.comment-form textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.comment-form button {
+  justify-self: start;
+  border: 0;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .comment-form button {
+    justify-self: stretch;
+  }
+}
