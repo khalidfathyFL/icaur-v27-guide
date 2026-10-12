@@ -176,8 +176,9 @@ async function createPost(request: Request): Promise<Response> {
 }
 
 /**
- * An author may keep editing while the post is pending or was rejected, and
- * an edit sends it back to the queue. Once approved, only an admin may change it.
+ * An author may edit their own post at any time, and an edit sends it back to
+ * the queue. A published post therefore leaves the site until it is approved
+ * again, so nothing reaches readers unreviewed. An admin's edit stays as it is.
  */
 async function updatePost(request: Request, id: string): Promise<Response> {
   if (!ObjectId.isValid(id)) throw new HttpError(404, 'Post not found.')
@@ -193,9 +194,6 @@ async function updatePost(request: Request, id: string): Promise<Response> {
   const isAuthor = post.authorId === user.id
 
   if (!isAdmin && !isAuthor) throw new HttpError(403, 'This is not your post.')
-  if (!isAdmin && post.status === 'approved') {
-    throw new HttpError(403, 'Approved posts can only be changed by an admin.')
-  }
 
   const body = await readJsonBody<Record<string, unknown>>(request)
   const update: Partial<PostDoc> = { updatedAt: new Date().toISOString() }

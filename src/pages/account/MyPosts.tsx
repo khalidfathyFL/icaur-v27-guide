@@ -107,12 +107,9 @@ export function MyPosts() {
                 <a className="panel-icon-button" href={`#/blog/${post.slug}`} aria-label={tx('View', 'عرض')} title={tx('View', 'عرض')}>
                   <ExternalLink size={15} />
                 </a>
-                {/* The server only lets an author change a post that is not yet published. */}
-                {post.status !== 'approved' && (
-                  <button type="button" className="panel-icon-button" onClick={() => setEditing(post)} aria-label={tx('Edit', 'تعديل')} title={tx('Edit', 'تعديل')}>
-                    <Pencil size={15} />
-                  </button>
-                )}
+                <button type="button" className="panel-icon-button" onClick={() => setEditing(post)} aria-label={tx('Edit', 'تعديل')} title={tx('Edit', 'تعديل')}>
+                  <Pencil size={15} />
+                </button>
                 <button type="button" className="panel-icon-button danger" onClick={() => remove(post)} aria-label={tx('Delete', 'حذف')} title={tx('Delete', 'حذف')}>
                   <Trash2 size={15} />
                 </button>
@@ -175,7 +172,14 @@ function EditPostDrawer({ post, onClose, onSaved }: { post: ApiPost; onClose: ()
       size="lg"
       busy={busy}
       title={tx('Edit post', 'تعديل المقال')}
-      subtitle={tx('Saving sends it back to the review queue.', 'الحفظ يعيده إلى قائمة المراجعة.')}
+      subtitle={
+        post.status === 'approved'
+          ? tx(
+              'This post is published. Saving takes it off the site until an admin approves it again.',
+              'هذا المقال منشور. الحفظ يخفيه من الموقع حتى يوافق عليه المشرف مرة أخرى.',
+            )
+          : tx('Saving sends it back to the review queue.', 'الحفظ يعيده إلى قائمة المراجعة.')
+      }
       onClose={onClose}
       footer={
         <div className="panel-drawer-actions">
