@@ -1,4 +1,6 @@
 import { handleAuth } from './_routes/auth.js'
+import { handleCenterReviews } from './_routes/centerReviews.js'
+import { handleCenters } from './_routes/centers.js'
 import { handleComments } from './_routes/comments.js'
 import { handleDealers } from './_routes/dealers.js'
 import { handlePartReviews } from './_routes/partReviews.js'
@@ -22,6 +24,8 @@ const ROUTES: Record<string, RouteHandler> = {
   roles: handleRoles,
   parts: handleParts,
   'part-reviews': handlePartReviews,
+  centers: handleCenters,
+  'center-reviews': handleCenterReviews,
   uploads: handleUploads,
 }
 

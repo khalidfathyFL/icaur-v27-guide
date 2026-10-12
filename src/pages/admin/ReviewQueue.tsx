@@ -6,40 +6,55 @@ import { DetailList } from '../../components/panel/blocks'
 import { useConfirm, useToast } from '../../components/panel/feedback'
 import { StatusPill } from '../../components/StatusPill'
 import { useLanguage, useShortText } from '../../i18n/languageContext'
-import { api, type ApiPartReview } from '../../lib/api'
+import { api, type ApiOwnerReview, type ReviewTarget } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
 import { formatDate } from '../../lib/format'
 import { QueueEmpty, ReviewFooter, StatusFilter, type QueueStatus } from './moderation'
 import { useOpenRecord } from './useOpenRecord'
 
-/** Owner reviews of accessories, worked by the same moderators as comments. */
-export function PartReviews({ params, onChanged }: { params: URLSearchParams; onChanged: () => void }) {
+/** Where each kind of review points, and what its listing is called. */
+const KINDS: Record<ReviewTarget, { section: string; page: string; noun: { en: string; ar: string } }> = {
+  part: { section: '/admin/part-reviews', page: '#/accessories/', noun: { en: 'accessory', ar: 'الإكسسوار' } },
+  center: { section: '/admin/center-reviews', page: '#/protection/', noun: { en: 'center', ar: 'المركز' } },
+}
+
+/** Owner reviews of one kind of listing, worked by the same moderators as comments. */
+export function ReviewQueue({
+  kind,
+  params,
+  onChanged,
+}: {
+  kind: ReviewTarget
+  params: URLSearchParams
+  onChanged: () => void
+}) {
+  const config = KINDS[kind]
   const { language } = useLanguage()
   const tx = useShortText()
   const toast = useToast()
   const confirm = useConfirm()
-  const record = useOpenRecord('/admin/part-reviews', params)
+  const record = useOpenRecord(config.section, params)
   const [status, setStatus] = useState<QueueStatus>(record.openId ? 'all' : 'pending')
-  const [reviews, setReviews] = useState<ApiPartReview[] | null>(null)
+  const [reviews, setReviews] = useState<ApiOwnerReview[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
 
   const load = useCallback(() => {
     api
-      .partReviewQueue(status)
-      .then(({ reviews: list }) => {
+      .reviewQueue(kind, status)
+      .then((list) => {
         setReviews(list)
         setError(null)
       })
       .catch((caught) => setError(errorMessage(caught, tx('Could not load.', 'تعذر التحميل.'))))
-  }, [status, tx])
+  }, [kind, status, tx])
 
   useEffect(load, [load])
 
-  async function decide(review: ApiPartReview, decision: 'approved' | 'rejected', note = '') {
+  async function decide(review: ApiOwnerReview, decision: 'approved' | 'rejected', note = '') {
     setBusyId(review.id)
     try {
-      await api.reviewPartReview(review.id, { status: decision, note: note || undefined })
+      await api.decideReview(kind, review.id, { status: decision, note: note || undefined })
       toast(decision === 'approved' ? tx('Review published.', 'تم نشر المراجعة.') : tx('Review rejected.', 'تم رفض المراجعة.'))
       load()
       onChanged()
@@ -50,7 +65,7 @@ export function PartReviews({ params, onChanged }: { params: URLSearchParams; on
     }
   }
 
-  async function remove(review: ApiPartReview) {
+  async function remove(review: ApiOwnerReview) {
     const ok = await confirm({
       title: tx('Delete this review?', 'حذف هذه المراجعة؟'),
       message: tx('It is removed for good, not just hidden.', 'سيُحذف نهائيا وليس مجرد إخفاء.'),
@@ -61,7 +76,7 @@ export function PartReviews({ params, onChanged }: { params: URLSearchParams; on
 
     setBusyId(review.id)
     try {
-      await api.deletePartReview(review.id)
+      await api.deleteReview(kind, review.id)
       toast(tx('Review deleted.', 'تم حذف المراجعة.'))
       if (record.openId === review.id) record.close()
       load()
@@ -81,8 +96,8 @@ export function PartReviews({ params, onChanged }: { params: URLSearchParams; on
         rows={reviews}
         rowKey={(review) => review.id}
         error={error}
-        searchText={(review) => `${review.body} ${review.authorName} ${review.partName}`}
-        searchPlaceholder={tx('Search review, author or accessory…', 'ابحث في المراجعة أو الكاتب أو الإكسسوار…')}
+        searchText={(review) => `${review.body} ${review.authorName} ${review.targetName}`}
+        searchPlaceholder={tx(`Search review, author or ${config.noun.en}…`, `ابحث في المراجعة أو الكاتب أو ${config.noun.ar}…`)}
         filters={
           <StatusFilter
             value={status}
@@ -105,7 +120,7 @@ export function PartReviews({ params, onChanged }: { params: URLSearchParams; on
                   <Stars rating={review.rating} /> {review.body}
                 </span>
                 <small>
-                  {review.authorName} · {tx('on', 'على')} {review.partName}
+                  {review.authorName} · {tx('on', 'على')} {review.targetName}
                 </small>
               </span>
             ),
@@ -169,7 +184,7 @@ export function PartReviews({ params, onChanged }: { params: URLSearchParams; on
           key={selected.id}
           open
           busy={busyId === selected.id}
-          title={tx('Accessory review', 'مراجعة إكسسوار')}
+          title={tx('Owner review', 'مراجعة مالك')}
           subtitle={`${selected.authorName} · ${formatDate(selected.createdAt, language, true)}`}
           onClose={record.close}
           footer={
@@ -178,8 +193,8 @@ export function PartReviews({ params, onChanged }: { params: URLSearchParams; on
                 <ReviewFooter busy={busyId === selected.id} onDecide={(decision, note) => decide(selected, decision, note)} />
               )}
               <div className="panel-drawer-actions spread">
-                <a className="panel-button ghost" href={`#/accessories/${selected.partSlug}`}>
-                  <ExternalLink size={15} aria-hidden="true" /> {tx('Open the accessory', 'افتح الإكسسوار')}
+                <a className="panel-button ghost" href={`${config.page}${selected.targetSlug}`}>
+                  <ExternalLink size={15} aria-hidden="true" /> {tx(`Open the ${config.noun.en}`, `افتح ${config.noun.ar}`)}
                 </a>
                 <button type="button" className="panel-button danger-soft" onClick={() => remove(selected)}>
                   <Trash2 size={15} aria-hidden="true" /> {tx('Delete', 'حذف')}
@@ -191,7 +206,7 @@ export function PartReviews({ params, onChanged }: { params: URLSearchParams; on
           <DetailList
             rows={[
               { label: tx('Status', 'الحالة'), value: <StatusPill status={selected.status} /> },
-              { label: tx('On', 'على'), value: selected.partName },
+              { label: tx('On', 'على'), value: selected.targetName },
               { label: tx('Rating', 'التقييم'), value: <Stars rating={selected.rating} /> },
               { label: tx('Review note', 'ملاحظة المراجعة'), value: selected.reviewNote },
             ]}

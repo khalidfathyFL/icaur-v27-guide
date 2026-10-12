@@ -2011,3 +2011,104 @@ html[dir='rtl'] .panel-drawer {
 .part-photo-add:disabled {
   cursor: progress;
 }
+
+/* ---------- protection centers ---------- */
+
+.center-package {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.center-package.open {
+  border-color: var(--accent);
+}
+
+.center-package-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 4px;
+}
+
+.center-package-toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.center-package-toggle:hover {
+  background: var(--panel-inset);
+}
+
+.center-package-toggle > svg {
+  flex: none;
+  transition: transform 0.15s ease;
+}
+
+.center-package.open .center-package-toggle > svg {
+  transform: rotate(180deg);
+}
+
+.center-package-body {
+  display: grid;
+  gap: 12px;
+  padding: 4px 12px 14px;
+}
+
+.center-package-body[hidden] {
+  display: none;
+}
+
+.center-package-body h4 {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.center-coverage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.panel .auth-form .center-coverage label,
+.panel-drawer .auth-form .center-coverage label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.panel-drawer .auth-form .center-coverage label.selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.panel-drawer .auth-form .center-coverage input {
+  width: auto;
+  min-height: auto;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.panel-drawer .auth-form .center-coverage label > span {
+  font-weight: 600;
+  font-size: 13px;
+}

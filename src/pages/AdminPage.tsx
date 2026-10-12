@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { FileText, Package, RefreshCw, ShieldAlert, UserRound } from 'lucide-react'
+import { FileText, Package, RefreshCw, ShieldAlert, ShieldPlus, UserRound } from 'lucide-react'
 import { ADMIN_GROUPS, visibleAdminSections } from '../app/panelNav'
 import { useAuth } from '../auth/authContext'
 import { EmptyState } from '../components/panel/blocks'
@@ -11,15 +11,17 @@ import { useLanguage, useShortText } from '../i18n/languageContext'
 import { api, apiConfigured } from '../lib/api'
 import { postTitle } from '../lib/postLanguage'
 import { partName } from '../features/parts/labels'
+import { centerName } from '../features/centers/labels'
 import { Activity } from './admin/Activity'
+import { Centers } from './admin/Centers'
 import { Comments } from './admin/Comments'
 import { Dashboard } from './admin/Dashboard'
 import { Dealers } from './admin/Dealers'
-import { PartReviews } from './admin/PartReviews'
 import { Parts } from './admin/Parts'
 import { Permissions } from './admin/Permissions'
 import { Posts } from './admin/Posts'
 import { Pricing } from './admin/Pricing'
+import { ReviewQueue } from './admin/ReviewQueue'
 import { Roles } from './admin/Roles'
 import { Suggestions } from './admin/Suggestions'
 import { Users } from './admin/Users'
@@ -73,6 +75,7 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
     suggestions: counts?.suggestions,
     comments: counts?.comments,
     'part-reviews': counts?.partReviews,
+    'center-reviews': counts?.centerReviews,
   }
 
   const groups: ShellGroup[] = ADMIN_GROUPS.map((group) => ({
@@ -90,12 +93,13 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
       })),
   })).filter((group) => group.items.length > 0)
 
-  // Accounts, posts and accessories become searchable from Ctrl+K, for whoever may open them.
+  // Accounts, posts, accessories and centers become searchable from Ctrl+K, for whoever may open them.
   const loadSearch = useCallback(async (): Promise<PaletteItem[]> => {
-    const [users, posts, parts] = await Promise.allSettled([
+    const [users, posts, parts, centers] = await Promise.allSettled([
       can('users.manage') ? api.listUsers() : Promise.resolve(null),
       can('posts.review') ? api.listPosts({ status: 'all' }) : Promise.resolve(null),
       can('parts.manage') ? api.listParts({ all: true }) : Promise.resolve(null),
+      can('centers.manage') ? api.listCenters({ all: true }) : Promise.resolve(null),
     ])
     const items: PaletteItem[] = []
     if (users.status === 'fulfilled' && users.value) {
@@ -111,6 +115,11 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
     if (parts.status === 'fulfilled' && parts.value) {
       for (const part of parts.value.parts) {
         items.push({ id: `part-${part.id}`, label: partName(part, language), hint: part.subcategory, href: '#/admin/accessories', icon: Package })
+      }
+    }
+    if (centers.status === 'fulfilled' && centers.value) {
+      for (const center of centers.value.centers) {
+        items.push({ id: `center-${center.id}`, label: centerName(center, language), hint: center.city, href: '#/admin/protection', icon: ShieldPlus })
       }
     }
     return items
@@ -130,13 +139,17 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
       case 'comments':
         return <Comments params={params} onChanged={refresh} />
       case 'part-reviews':
-        return <PartReviews params={params} onChanged={refresh} />
+        return <ReviewQueue kind="part" params={params} onChanged={refresh} />
+      case 'center-reviews':
+        return <ReviewQueue kind="center" params={params} onChanged={refresh} />
       case 'dealers':
         return <Dealers />
       case 'pricing':
         return <Pricing />
       case 'accessories':
         return <Parts />
+      case 'protection':
+        return <Centers />
       case 'users':
         return <Users params={params} />
       case 'roles':

@@ -2,6 +2,7 @@ import { getFeature } from '../content'
 import { Redirect } from '../components/Redirect'
 import { AccessoriesPage, AccessoryPage } from '../pages/AccessoriesPage'
 import { AdminPage } from '../pages/AdminPage'
+import { ProtectionCenterPage, ProtectionPage } from '../pages/ProtectionPage'
 import { SignInPage } from '../pages/AccountPage'
 import { AccountPanel } from '../pages/account/AccountPanel'
 import { BlogPage, PostPage } from '../pages/BlogPage'
@@ -21,6 +22,7 @@ import {
 const GUIDE_PREFIX = '/guides/'
 const BLOG_PREFIX = '/blog/'
 const ACCESSORY_PREFIX = '/accessories/'
+const PROTECTION_PREFIX = '/protection/'
 
 const STATIC_ROUTES: Record<string, (params: URLSearchParams) => React.ReactElement> = {
   '/': () => <HomePage />,
@@ -34,6 +36,7 @@ const STATIC_ROUTES: Record<string, (params: URLSearchParams) => React.ReactElem
   '/glossary': () => <GlossaryPage />,
   '/blog': () => <BlogPage />,
   '/accessories': (params) => <AccessoriesPage params={params} />,
+  '/protection': (params) => <ProtectionPage params={params} />,
   '/signin': (params) => <SignInPage next={params.get('next')} />,
   // Both moved into the account panel; old links and bookmarks still land.
   '/contribute': () => <Redirect to="/account/new-post" />,
@@ -92,6 +95,10 @@ export function resolveRoute(path: string, params: URLSearchParams): React.React
 
   if (path.startsWith(ACCESSORY_PREFIX)) {
     return <AccessoryPage slug={decodeSlug(path.slice(ACCESSORY_PREFIX.length))} />
+  }
+
+  if (path.startsWith(PROTECTION_PREFIX)) {
+    return <ProtectionCenterPage slug={decodeSlug(path.slice(PROTECTION_PREFIX.length))} />
   }
 
   return <NotFoundPage />

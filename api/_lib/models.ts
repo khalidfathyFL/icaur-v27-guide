@@ -170,21 +170,97 @@ export type PartDoc = {
   updatedAt: string
 }
 
-export type PartReviewDoc = {
+/** What a protection center does. A package is one of these. */
+export const PROTECTION_SERVICES = [
+  'ppf',
+  'ceramic',
+  'tint',
+  'windshield',
+  'interior',
+  'underbody',
+  'paint-correction',
+  'wrap',
+] as const
+export type ProtectionService = (typeof PROTECTION_SERVICES)[number]
+
+/** The parts of the car a package can cover. */
+export const COVERAGE_AREAS = [
+  'full-body',
+  'full-front',
+  'front-bumper',
+  'hood',
+  'fenders',
+  'mirrors',
+  'headlights',
+  'a-pillars',
+  'roof',
+  'doors',
+  'door-edges',
+  'door-cups',
+  'rocker-panels',
+  'rear-bumper',
+  'trunk-ledge',
+  'windows',
+  'windshield',
+  'sunroof',
+  'interior-screens',
+  'interior-trim',
+  'wheels',
+  'underbody',
+] as const
+export type CoverageArea = (typeof COVERAGE_AREAS)[number]
+
+export type CenterPackage = {
+  /** Stable within the center, so the page can link to one package. */
+  id: string
+  name: Localized
+  service: ProtectionService
+  coverage: CoverageArea[]
+  priceEgp: number
+  /** Only when the Wild is charged differently from the Play. */
+  wildPriceEgp?: number
+  durationDays?: { min: number; max: number }
+  /** Film or coating maker, e.g. XPEL, 3M, Gyeon. */
+  brand?: string
+  /** The maker's product line, e.g. Ultimate Plus. */
+  product?: string
+  /** TPU, TPH, ceramic, graphene… */
+  materialType?: string
+  thicknessMil?: number
+  selfHealing?: boolean
+  warrantyYears?: number
+  /** Short lines: "Paint correction", "Two follow-up washes". */
+  inclusions: string[]
+  notes?: Localized
+}
+
+export type CenterDoc = {
   _id: ObjectId
-  partId: string
-  /** Denormalised so the moderation queue reads without joining to parts. */
-  partName: string
-  partSlug: string
-  rating: number
-  body: string
-  authorId: string
-  authorName: string
-  status: ReviewStatus
-  reviewedBy?: string
-  reviewedAt?: string
-  reviewNote?: string
+  slug: string
+  name: Localized
+  description: Localized
+  city: string
+  area?: string
+  address?: string
+  /** A Google Maps (or similar) link to the workshop. */
+  mapUrl?: string
+  phone?: string
+  whatsapp?: string
+  website?: string
+  instagram?: string
+  hours?: string
+  /** Derived from the packages, so the list can filter without unwinding them. */
+  services: ProtectionService[]
+  packages: CenterPackage[]
+  images: PartImage[]
+  ratingAvg: number
+  ratingCount: number
+  active: boolean
+  /** When someone last confirmed the packages and prices. */
+  checkedAt: string
+  createdBy: string
   createdAt: string
+  updatedAt: string
 }
 
 /* ---------- validation ---------- */

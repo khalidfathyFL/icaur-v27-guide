@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../../lib/api'
 
-export type PendingCounts = { posts: number; suggestions: number; comments: number; partReviews: number }
+export type PendingCounts = {
+  posts: number
+  suggestions: number
+  comments: number
+  partReviews: number
+  centerReviews: number
+}
 
 /**
  * Counts of work waiting, shown as sidebar badges and dashboard cards. Only
@@ -17,13 +23,15 @@ export function usePendingCounts(can: (permission: string) => boolean) {
       can('posts.review') ? api.listPosts({ status: 'pending' }) : none,
       can('suggestions.review') ? api.listSuggestions({ queue: true, status: 'pending' }) : none,
       can('comments.review') ? api.commentQueue('pending') : none,
-      can('comments.review') ? api.partReviewQueue('pending') : none,
-    ]).then(([posts, suggestions, comments, partReviews]) => {
+      can('comments.review') ? api.reviewQueue('part', 'pending') : none,
+      can('comments.review') ? api.reviewQueue('center', 'pending') : none,
+    ]).then(([posts, suggestions, comments, partReviews, centerReviews]) => {
       setCounts({
         posts: posts.status === 'fulfilled' && posts.value ? posts.value.posts.length : 0,
         suggestions: suggestions.status === 'fulfilled' && suggestions.value ? suggestions.value.suggestions.length : 0,
         comments: comments.status === 'fulfilled' && comments.value ? comments.value.comments.length : 0,
-        partReviews: partReviews.status === 'fulfilled' && partReviews.value ? partReviews.value.reviews.length : 0,
+        partReviews: partReviews.status === 'fulfilled' && partReviews.value ? partReviews.value.length : 0,
+        centerReviews: centerReviews.status === 'fulfilled' && centerReviews.value ? centerReviews.value.length : 0,
       })
     })
   }, [can])

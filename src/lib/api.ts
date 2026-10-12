@@ -225,11 +225,14 @@ export type PartInput = Omit<
   'id' | 'slug' | 'landedEgp' | 'ratingAvg' | 'ratingCount' | 'active' | 'priceCheckedAt' | 'updatedAt'
 >
 
-export type ApiPartReview = {
+/** Owner reviews: accessories and protection centers share one shape and one set of rules. */
+export type ReviewTarget = 'part' | 'center'
+
+export type ApiOwnerReview = {
   id: string
-  partId: string
-  partName: string
-  partSlug: string
+  targetId: string
+  targetName: string
+  targetSlug: string
   rating: number
   body: string
   authorName: string
@@ -237,6 +240,110 @@ export type ApiPartReview = {
   reviewNote?: string
   createdAt: string
 }
+
+/** Each kind stores its target under its own field names; the client reads them as one. */
+const REVIEW_ROUTES: Record<ReviewTarget, { route: string; id: string; name: string; slug: string }> = {
+  part: { route: 'part-reviews', id: 'partId', name: 'partName', slug: 'partSlug' },
+  center: { route: 'center-reviews', id: 'centerId', name: 'centerName', slug: 'centerSlug' },
+}
+
+function toOwnerReview(kind: ReviewTarget, raw: Record<string, unknown>): ApiOwnerReview {
+  const fields = REVIEW_ROUTES[kind]
+  return {
+    ...(raw as Omit<ApiOwnerReview, 'targetId' | 'targetName' | 'targetSlug'>),
+    targetId: String(raw[fields.id] ?? ''),
+    targetName: String(raw[fields.name] ?? ''),
+    targetSlug: String(raw[fields.slug] ?? ''),
+  }
+}
+
+export type ProtectionService =
+  | 'ppf'
+  | 'ceramic'
+  | 'tint'
+  | 'windshield'
+  | 'interior'
+  | 'underbody'
+  | 'paint-correction'
+  | 'wrap'
+
+export type CoverageArea =
+  | 'full-body'
+  | 'full-front'
+  | 'front-bumper'
+  | 'hood'
+  | 'fenders'
+  | 'mirrors'
+  | 'headlights'
+  | 'a-pillars'
+  | 'roof'
+  | 'doors'
+  | 'door-edges'
+  | 'door-cups'
+  | 'rocker-panels'
+  | 'rear-bumper'
+  | 'trunk-ledge'
+  | 'windows'
+  | 'windshield'
+  | 'sunroof'
+  | 'interior-screens'
+  | 'interior-trim'
+  | 'wheels'
+  | 'underbody'
+
+export type CenterPackage = {
+  /** Assigned by the server; send it back on edit to keep the package's link. */
+  id?: string
+  name: Localized
+  service: ProtectionService
+  coverage: CoverageArea[]
+  priceEgp: number
+  /** Only when the Wild is charged differently. */
+  wildPriceEgp?: number
+  durationDays?: { min: number; max: number }
+  brand?: string
+  product?: string
+  materialType?: string
+  thicknessMil?: number
+  selfHealing?: boolean
+  warrantyYears?: number
+  inclusions: string[]
+  notes?: Localized
+}
+
+export type ApiCenter = {
+  id: string
+  slug: string
+  name: Localized
+  description: Localized
+  city: string
+  area?: string
+  address?: string
+  mapUrl?: string
+  phone?: string
+  whatsapp?: string
+  website?: string
+  instagram?: string
+  hours?: string
+  services: ProtectionService[]
+  packages: (CenterPackage & { id: string })[]
+  /** The cheapest package, for "from X EGP"; null with no packages. */
+  fromPriceEgp: number | null
+  images: PartImage[]
+  ratingAvg: number
+  ratingCount: number
+  active: boolean
+  checkedAt: string
+  updatedAt: string
+}
+
+export type CenterInput = Omit<
+  ApiCenter,
+  'id' | 'slug' | 'services' | 'packages' | 'fromPriceEgp' | 'ratingAvg' | 'ratingCount' | 'active' | 'checkedAt' | 'updatedAt'
+> & { packages: CenterPackage[] }
+
+/** Where uploaded photos go; each folder is open only to that listing's editors. */
+export type UploadFolder = 'parts' | 'centers'
 
 export type PartFilters = {
   category?: PartCategory
@@ -463,10 +570,10 @@ export const api = {
 
   /**
    * Sends one photo straight to Vercel Blob. The API only hands out a token,
-   * after checking the caller may edit accessories; the file itself never
-   * passes through the function.
+   * after checking the caller may edit that kind of listing; the file itself
+   * never passes through the function.
    */
-  uploadPartImage: async (file: Blob, fileName: string): Promise<PartImage> => {
+  uploadImage: async (folder: UploadFolder, file: Blob, fileName: string): Promise<PartImage> => {
     if (!apiConfigured) throw new ApiError(503, 'The contributions service is not configured for this build.')
     const token = getToken()
     if (!token) throw new ApiError(401, 'Sign in to continue.')
@@ -474,7 +581,7 @@ export const api = {
     try {
       // Loaded on first upload: only editors need it, and every page loads this file.
       const { upload } = await import('@vercel/blob/client')
-      const blob = await upload(`parts/${fileName}`, file, {
+      const blob = await upload(`${folder}/${fileName}`, file, {
         access: 'public',
         handleUploadUrl: `${BASE_URL}/api/router?p=uploads`,
         headers: { Authorization: `Bearer ${token}` },
@@ -488,24 +595,60 @@ export const api = {
     }
   },
 
-  /* ---------- accessory reviews ---------- */
+  /* ---------- protection centers ---------- */
 
-  listPartReviews: (partId: string) =>
-    request<{ reviews: ApiPartReview[] }>(`part-reviews?partId=${encodeURIComponent(partId)}`),
+  listCenters: (params: { all?: boolean } = {}) =>
+    request<{ centers: ApiCenter[] }>(`centers${params.all ? '?all=1' : ''}`, { auth: Boolean(params.all) }),
 
-  /** The signed-in person's own review of a part, whatever its status. */
-  myPartReview: (partId: string) =>
-    request<{ reviews: ApiPartReview[] }>(`part-reviews?partId=${encodeURIComponent(partId)}&mine=1`, { auth: true }),
+  readCenter: (idOrSlug: string) => request<{ center: ApiCenter }>(`centers/${idOrSlug}`),
 
-  partReviewQueue: (status: ReviewStatus | 'all' = 'pending') =>
-    request<{ reviews: ApiPartReview[] }>(`part-reviews?queue=1&status=${status}`, { auth: true }),
+  createCenter: (input: CenterInput) =>
+    request<{ center: ApiCenter }>('centers', { method: 'POST', body: input, auth: true }),
 
-  createPartReview: (input: { partId: string; rating: number; body: string }) =>
-    request<{ review: ApiPartReview }>('part-reviews', { method: 'POST', body: input, auth: true }),
+  updateCenter: (id: string, input: Partial<CenterInput> & { active?: boolean; checked?: boolean }) =>
+    request<{ center: ApiCenter }>(`centers/${id}`, { method: 'PATCH', body: input, auth: true }),
 
-  reviewPartReview: (id: string, input: { status: 'approved' | 'rejected'; note?: string }) =>
-    request<{ ok: true }>(`part-reviews/${id}/review`, { method: 'POST', body: input, auth: true }),
+  removeCenter: (id: string) => request<{ ok: true }>(`centers/${id}`, { method: 'DELETE', auth: true }),
 
-  deletePartReview: (id: string) =>
-    request<{ ok: true }>(`part-reviews/${id}`, { method: 'DELETE', auth: true }),
+  /* ---------- owner reviews ---------- */
+
+  listReviews: async (kind: ReviewTarget, targetId: string) => {
+    const { route, id } = REVIEW_ROUTES[kind]
+    const { reviews } = await request<{ reviews: Record<string, unknown>[] }>(`${route}?${id}=${encodeURIComponent(targetId)}`)
+    return reviews.map((raw) => toOwnerReview(kind, raw))
+  },
+
+  /** The signed-in person's own review, whatever its status, or null. */
+  myReview: async (kind: ReviewTarget, targetId: string) => {
+    const { route, id } = REVIEW_ROUTES[kind]
+    const { reviews } = await request<{ reviews: Record<string, unknown>[] }>(
+      `${route}?${id}=${encodeURIComponent(targetId)}&mine=1`,
+      { auth: true },
+    )
+    return reviews[0] ? toOwnerReview(kind, reviews[0]) : null
+  },
+
+  reviewQueue: async (kind: ReviewTarget, status: ReviewStatus | 'all' = 'pending') => {
+    const { reviews } = await request<{ reviews: Record<string, unknown>[] }>(
+      `${REVIEW_ROUTES[kind].route}?queue=1&status=${status}`,
+      { auth: true },
+    )
+    return reviews.map((raw) => toOwnerReview(kind, raw))
+  },
+
+  createReview: async (kind: ReviewTarget, input: { targetId: string; rating: number; body: string }) => {
+    const { route, id } = REVIEW_ROUTES[kind]
+    const { review } = await request<{ review: Record<string, unknown> }>(route, {
+      method: 'POST',
+      body: { [id]: input.targetId, rating: input.rating, body: input.body },
+      auth: true,
+    })
+    return toOwnerReview(kind, review)
+  },
+
+  decideReview: (kind: ReviewTarget, reviewId: string, input: { status: 'approved' | 'rejected'; note?: string }) =>
+    request<{ ok: true }>(`${REVIEW_ROUTES[kind].route}/${reviewId}/review`, { method: 'POST', body: input, auth: true }),
+
+  deleteReview: (kind: ReviewTarget, reviewId: string) =>
+    request<{ ok: true }>(`${REVIEW_ROUTES[kind].route}/${reviewId}`, { method: 'DELETE', auth: true }),
 }

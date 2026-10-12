@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
-import { ArrowLeft, ArrowRight, BadgeCheck, ImagePlus, Package, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { BadgeCheck, Package, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import { DataTable } from '../../components/panel/DataTable'
 import { Drawer } from '../../components/panel/Drawer'
 import { EmptyState, FilterSelect } from '../../components/panel/blocks'
@@ -26,14 +26,13 @@ import {
   type PartInput,
   type PartSource,
 } from '../../lib/api'
-import { compressImage } from '../../lib/compressImage'
 import { errorMessage } from '../../lib/errors'
 import { formatDate } from '../../lib/format'
+import { PhotoEditor } from './PhotoEditor'
 
 /** `null` while closed; `'new'` for the add form, or the part being edited. */
 type Editing = null | 'new' | ApiPart
 
-const MAX_PHOTOS = 8
 const MAX_SUPPLIERS = 5
 
 export function Parts() {
@@ -414,7 +413,6 @@ function PartForm({ part, onClose, onSaved }: { part: ApiPart | null; onClose: (
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState(0)
-  const fileInput = useRef<HTMLInputElement>(null)
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => ({ ...current, [key]: value }))
   const isImport = draft.source === 'china'
@@ -425,38 +423,6 @@ function PartForm({ part, onClose, onSaved }: { part: ApiPart | null; onClose: (
       ...current,
       suppliers: current.suppliers.map((supplier, at) => (at === index ? { ...supplier, ...patch } : supplier)),
     }))
-  }
-
-  function moveImage(index: number, by: -1 | 1) {
-    setDraft((current) => {
-      const images = [...current.images]
-      const target = index + by
-      if (target < 0 || target >= images.length) return current
-      ;[images[index], images[target]] = [images[target], images[index]]
-      return { ...current, images }
-    })
-  }
-
-  async function onFiles(event: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? [])
-    event.target.value = ''
-    const room = MAX_PHOTOS - draft.images.length - uploading
-    if (files.length > room) {
-      toast(tx(`Only ${room} more photo(s) fit; the rest were skipped.`, `يتسع لـ ${room} صورة فقط؛ تم تجاهل الباقي.`), 'error')
-    }
-
-    for (const file of files.slice(0, Math.max(0, room))) {
-      setUploading((count) => count + 1)
-      try {
-        const { blob, fileName } = await compressImage(file)
-        const image = await api.uploadPartImage(blob, fileName)
-        setDraft((current) => ({ ...current, images: [...current.images, image] }))
-      } catch (caught) {
-        toast(errorMessage(caught, tx(`Could not upload ${file.name}.`, `تعذر رفع ${file.name}.`)), 'error')
-      } finally {
-        setUploading((count) => count - 1)
-      }
-    }
   }
 
   async function markPriceChecked() {
@@ -799,60 +765,12 @@ function PartForm({ part, onClose, onSaved }: { part: ApiPart | null; onClose: (
           )}
         </section>
 
-        <section className="part-form-section">
-          <h3>
-            {tx('Photos', 'الصور')} <small className="panel-muted">{`${draft.images.length}/${MAX_PHOTOS}`}</small>
-          </h3>
-          <div className="part-photos">
-            {draft.images.map((image, index) => (
-              <figure key={image.url}>
-                <img src={image.url} alt={image.alt ?? ''} />
-                <input
-                  value={image.alt ?? ''}
-                  onChange={(e) =>
-                    set(
-                      'images',
-                      draft.images.map((item, at) => (at === index ? { ...item, alt: e.target.value || undefined } : item)),
-                    )
-                  }
-                  maxLength={200}
-                  placeholder={tx('Describe the photo', 'صف الصورة')}
-                  aria-label={tx('Photo description', 'وصف الصورة')}
-                />
-                <figcaption className="panel-row-actions">
-                  <button type="button" className="panel-icon-button" disabled={index === 0} onClick={() => moveImage(index, -1)} aria-label={tx('Move earlier', 'قدّمها')} title={tx('Move earlier', 'قدّمها')}>
-                    <ArrowLeft size={14} className="flip-rtl" />
-                  </button>
-                  <button type="button" className="panel-icon-button" disabled={index === draft.images.length - 1} onClick={() => moveImage(index, 1)} aria-label={tx('Move later', 'أخّرها')} title={tx('Move later', 'أخّرها')}>
-                    <ArrowRight size={14} className="flip-rtl" />
-                  </button>
-                  <button
-                    type="button"
-                    className="panel-icon-button danger"
-                    onClick={() => set('images', draft.images.filter((_, at) => at !== index))}
-                    aria-label={tx('Remove photo', 'احذف الصورة')}
-                    title={tx('Remove photo', 'احذف الصورة')}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </figcaption>
-              </figure>
-            ))}
-            {draft.images.length + uploading < MAX_PHOTOS && (
-              <button type="button" className="part-photo-add" onClick={() => fileInput.current?.click()} disabled={uploading > 0}>
-                <ImagePlus size={22} aria-hidden="true" />
-                <span>{uploading > 0 ? tx(`Uploading ${uploading}…`, `جارٍ رفع ${uploading}…`) : tx('Add photos', 'أضف صورا')}</span>
-              </button>
-            )}
-          </div>
-          <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={onFiles} />
-          <small className="panel-muted">
-            {tx(
-              'Photos are resized to 1600 px and compressed before upload. The first photo is the one shown in the catalog.',
-              'يتم تصغير الصور إلى 1600 بكسل وضغطها قبل الرفع. الصورة الأولى هي التي تظهر في الدليل.',
-            )}
-          </small>
-        </section>
+        <PhotoEditor
+          folder="parts"
+          images={draft.images}
+          onChange={(update) => setDraft((current) => ({ ...current, images: update(current.images) }))}
+          onUploadingChange={setUploading}
+        />
 
         {error && <p className="form-error">{error}</p>}
       </form>

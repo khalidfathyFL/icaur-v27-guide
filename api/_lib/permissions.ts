@@ -24,6 +24,7 @@ export const PERMISSION_KEYS = [
   'dealers.manage',
   'pricing.manage',
   'parts.manage',
+  'centers.manage',
   'users.manage',
   'audit.read',
   'stats.read',
@@ -95,6 +96,12 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     key: 'parts.manage',
     label: 'Manage accessories',
     description: 'Add, edit and remove accessories and protection parts, with their prices, suppliers and photos.',
+    group: 'Market data',
+  },
+  {
+    key: 'centers.manage',
+    label: 'Manage protection centers',
+    description: 'Add, edit and remove protection centers and their packages, prices and photos.',
     group: 'Market data',
   },
   {

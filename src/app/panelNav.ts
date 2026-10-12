@@ -13,6 +13,7 @@ import {
   Package,
   PenLine,
   ShieldCheck,
+  ShieldPlus,
   Star,
   Store,
   UserCog,
@@ -99,6 +100,14 @@ export const ADMIN_SECTIONS: PanelSection[] = [
     description: { en: 'Owner ratings of accessories', ar: 'تقييمات الملاك للإكسسوارات' },
   },
   {
+    key: 'center-reviews',
+    group: 'moderation',
+    icon: Star,
+    permission: 'comments.review',
+    label: { en: 'Center reviews', ar: 'مراجعات المراكز' },
+    description: { en: 'Owner ratings of protection centers', ar: 'تقييمات الملاك لمراكز الحماية' },
+  },
+  {
     key: 'dealers',
     group: 'market',
     icon: Store,
@@ -123,6 +132,17 @@ export const ADMIN_SECTIONS: PanelSection[] = [
     description: {
       en: 'Accessories and protection parts, local and imported',
       ar: 'الإكسسوارات وقطع الحماية، المحلية والمستوردة',
+    },
+  },
+  {
+    key: 'protection',
+    group: 'market',
+    icon: ShieldPlus,
+    permission: 'centers.manage',
+    label: { en: 'Protection centers', ar: 'مراكز الحماية' },
+    description: {
+      en: 'Where to fit PPF, ceramic and film, with each package',
+      ar: 'أماكن تركيب الحماية والنانو والأفلام، بكل باقة',
     },
   },
   {

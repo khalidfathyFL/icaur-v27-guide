@@ -19,7 +19,12 @@ export const SECONDARY_NAV: NavItem[] = [
   { href: '/reviews', en: 'Reviews', ar: 'المراجعات' },
   { href: '/videos', en: 'Videos', ar: 'الفيديوهات' },
   // The catalog lives in the API, so a build without one does not offer it.
-  ...(apiConfigured ? [{ href: '/accessories', en: 'Accessories', ar: 'الإكسسوارات' }] : []),
+  ...(apiConfigured
+    ? [
+        { href: '/accessories', en: 'Accessories', ar: 'الإكسسوارات' },
+        { href: '/protection', en: 'Protection centers', ar: 'مراكز الحماية' },
+      ]
+    : []),
   { href: '/sources', en: 'Sources', ar: 'المصادر' },
   { href: '/glossary', en: 'Glossary', ar: 'القاموس' },
 ]

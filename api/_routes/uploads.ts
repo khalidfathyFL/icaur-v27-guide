@@ -1,9 +1,10 @@
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
-import { requirePermission } from '../_lib/permissions.js'
+import { requireUser } from '../_lib/auth.js'
+import { hasPermission, type Permission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody } from '../_lib/http.js'
 
 /**
- * Issues short-lived tokens for the browser to upload accessory photos straight
+ * Issues short-lived tokens for the browser to upload listing photos straight
  * to Vercel Blob. The file never passes through this function, which keeps it
  * clear of the 4.5 MB request limit; this route only decides who may upload
  * and what.
@@ -16,6 +17,12 @@ import { HttpError, json, readJsonBody } from '../_lib/http.js'
 const MAX_BYTES = 5 * 1024 * 1024
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
+/** Each folder belongs to one kind of listing, and only its editors may fill it. */
+const FOLDERS: Record<string, Permission> = {
+  parts: 'parts.manage',
+  centers: 'centers.manage',
+}
+
 export async function handleUploads(request: Request, segments: string[]): Promise<Response> {
   if (segments.length > 0 || request.method !== 'POST') throw new HttpError(405, 'Method not allowed.')
 
@@ -26,17 +33,20 @@ export async function handleUploads(request: Request, segments: string[]): Promi
   const body = await readJsonBody<HandleUploadBody>(request)
 
   // Only token requests are expected. Completion callbacks are not requested,
-  // since the form saves the photo's address with the part itself.
+  // since the form saves the photo's address with the listing itself.
   if (body?.type !== 'blob.generate-client-token') throw new HttpError(400, 'Unexpected upload request.')
 
-  const editor = await requirePermission(request, 'parts.manage')
+  const editor = await requireUser(request)
 
   const result = await handleUpload({
     request,
     body,
     onBeforeGenerateToken: async (pathname) => {
-      if (!/^parts\/[A-Za-z0-9._-]{1,120}$/.test(pathname)) {
-        throw new HttpError(400, 'Photos are stored under parts/ with a plain file name.')
+      const match = /^([a-z]+)\/[A-Za-z0-9._-]{1,120}$/.exec(pathname)
+      const permission = match ? FOLDERS[match[1] ?? ''] : undefined
+      if (!permission) throw new HttpError(400, 'Photos are stored under parts/ or centers/ with a plain file name.')
+      if (!hasPermission(editor, permission)) {
+        throw new HttpError(403, 'Your account does not have permission to do that.')
       }
 
       return {

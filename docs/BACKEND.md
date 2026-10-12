@@ -49,18 +49,22 @@ anyone. The function is the only thing that holds the credentials.
 
 ### Photo storage for the accessories catalog
 
-Accessory photos are stored in Vercel Blob. Without it the catalog still works,
-but the photo button in the admin form reports that uploads are not set up.
+Photos of accessories and protection centers are stored in Vercel Blob.
+Without it both listings still work, but the photo button in the admin forms
+reports that uploads are not set up.
 
 1. In the Vercel project, open **Storage → Create → Blob** and connect the new
-   store to this project. Vercel adds `BLOB_READ_WRITE_TOKEN` to the project's
-   environment variables on its own.
+   store to this project. Choose **Public** access, keep the `BLOB` prefix, and
+   tick **Add a read-write token env var** so Vercel creates
+   `BLOB_READ_WRITE_TOKEN`; without that box only `BLOB_STORE_ID` is created and
+   uploads stay off.
 2. Redeploy, then check `https://<your-vercel-url>/api/health`: it should list
    `BLOB_READ_WRITE_TOKEN: true`.
 
 The browser asks the API for a short-lived upload token and sends the file
-straight to Blob, so photos never pass through the function. Only accounts with
-the **Manage accessories** permission get a token.
+straight to Blob, so photos never pass through the function. Accessory photos
+go under `parts/` and need **Manage accessories**; center photos go under
+`centers/` and need **Manage protection centers**.
 
 ## 3. Point the site at the API
 
@@ -94,9 +98,10 @@ promote them.
   human decides what counts as confirmed.
 - If a contributor edits a post that was already approved, it returns to the
   queue. An admin's edit does not.
-- Accessory reviews can only be written by accounts that say they own a V27,
-  one per accessory, and go through the same queue rules as comments: the
-  **Approve comments** permission works both queues.
+- Reviews of accessories and protection centers can only be written by
+  accounts that say they own a V27, one per listing, and go through the same
+  queue rules as comments: the **Approve comments** permission works all three
+  queues.
 
 ## Collections
 
@@ -109,6 +114,8 @@ promote them.
 | `pricing` | current price per trim, overrides the figures in git |
 | `parts` | accessories and protection parts: price, suppliers, specs, photo addresses |
 | `partReviews` | owner reviews of accessories and their review state |
+| `centers` | protection centers: contact details, photo addresses, and their packages |
+| `centerReviews` | owner reviews of protection centers and their review state |
 
 Indexes are created automatically on the first request after a cold start.
 

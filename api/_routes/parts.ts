@@ -1,9 +1,17 @@
-import { del } from '@vercel/blob'
 import { ObjectId } from 'mongodb'
 import { requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
 import { auditableChanges, recordAudit } from '../_lib/audit.js'
+import {
+  compact,
+  deleteBlobs,
+  optionalLocalized,
+  readDayRange,
+  requireLocalizedLoose,
+  requireName,
+  setAndUnset,
+} from '../_lib/catalog.js'
 import {
   IMPORT_CURRENCIES,
   PART_AVAILABILITY,
@@ -19,7 +27,6 @@ import {
   requireMoneyEgp,
   requireString,
   slugify,
-  type Localized,
   type PartDoc,
   type PartPrice,
   type PartSpecs,
@@ -132,20 +139,6 @@ async function readPart(request: Request, idOrSlug: string): Promise<Response> {
 
 /* ---------- validation ---------- */
 
-function optionalLocalized(value: unknown, field: string, max: number): Localized | undefined {
-  if (value === undefined || value === null) return undefined
-  const text = requireLocalizedLoose(value, field, max)
-  return text.en || text.ar ? text : undefined
-}
-
-/** Like `requireLocalized`, but either side may be the one written. */
-function requireLocalizedLoose(value: unknown, field: string, max: number): Localized {
-  if (typeof value !== 'object' || value === null) throw new HttpError(400, `${field} must have en and ar text.`)
-  const candidate = value as Record<string, unknown>
-  const side = (text: unknown) => (typeof text === 'string' ? text.trim().slice(0, max) : '')
-  return { en: side(candidate.en), ar: side(candidate.ar) }
-}
-
 function readPrice(value: unknown, isImport: boolean): PartPrice {
   if (typeof value !== 'object' || value === null) throw new HttpError(400, 'Enter the price.')
   const body = value as Record<string, unknown>
@@ -204,35 +197,12 @@ function readSpecs(value: unknown, isImport: boolean): PartSpecs {
   }
 }
 
-function readLeadTime(value: unknown): PartDoc['leadTimeDays'] {
-  if (value === undefined || value === null) return undefined
-  if (typeof value !== 'object') throw new HttpError(400, 'Lead time is not valid.')
-  const body = value as Record<string, unknown>
-
-  const min = optionalNumber(body.min, 'Shortest lead time', { min: 0, max: 365 })
-  const max = optionalNumber(body.max, 'Longest lead time', { min: 0, max: 365 })
-  if (min === undefined && max === undefined) return undefined
-
-  const low = Math.round(min ?? max ?? 0)
-  const high = Math.round(max ?? min ?? 0)
-  if (low > high) throw new HttpError(400, 'The shortest lead time cannot be longer than the longest.')
-  return { min: low, max: high }
-}
-
-/**
- * The driver stores `undefined` as `null`, which would turn every empty
- * optional field into a null the client then has to guard against. A JSON
- * round trip drops them; everything here is plain data, so nothing is lost.
- */
-const compact = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
-
 /** Every editable field. The admin form always sends the whole part. */
 function readPartBody(body: Record<string, unknown>) {
   const source = requireEnum(body.source, PART_SOURCES, 'Source')
   const isImport = source === 'china'
   // Like posts, a part may be written up in English, Arabic or both.
-  const name = requireLocalizedLoose(body.name, 'Name', 160)
-  if (name.en.length < 2 && name.ar.length < 2) throw new HttpError(400, 'Give the accessory a name.')
+  const name = requireName(body.name, 'accessory')
   const description = requireLocalizedLoose(body.description, 'Description', 5000)
 
   return {
@@ -243,24 +213,10 @@ function readPartBody(body: Record<string, unknown>) {
     source,
     price: compact(readPrice(body.price, isImport)),
     availability: requireEnum(body.availability, PART_AVAILABILITY, 'Availability'),
-    leadTimeDays: readLeadTime(body.leadTimeDays),
+    leadTimeDays: readDayRange(body.leadTimeDays, 'Lead time'),
     suppliers: compact(readSuppliers(body.suppliers)),
     specs: compact(readSpecs(body.specs, isImport)),
     images: compact(requireBlobImages(body.images)),
-  }
-}
-
-/**
- * Removing a photo from a part deletes the file, so the free Blob quota is
- * not spent on images nothing shows. A failure here is logged, not raised:
- * the part was saved, and an orphaned file costs less than a failed save.
- */
-async function deleteBlobs(urls: string[]): Promise<void> {
-  if (urls.length === 0 || !process.env.BLOB_READ_WRITE_TOKEN) return
-  try {
-    await del(urls)
-  } catch (error) {
-    console.error('Failed to delete removed part photos:', error)
   }
 }
 
@@ -323,17 +279,8 @@ async function updatePart(request: Request, id: string): Promise<Response> {
   if (body.priceChecked === true) update.priceCheckedAt = now
 
   // Unset what the form cleared, so an optional field can be emptied.
-  const unset = Object.fromEntries(
-    Object.entries(update)
-      .filter(([, value]) => value === undefined)
-      .map(([key]) => [key, ''] as const),
-  )
-  const set = Object.fromEntries(Object.entries(update).filter(([, value]) => value !== undefined))
-
-  await collection.updateOne(
-    { _id: existing._id },
-    Object.keys(unset).length > 0 ? { $set: set, $unset: unset } : { $set: set },
-  )
+  const { set, update: changes } = setAndUnset(update)
+  await collection.updateOne({ _id: existing._id }, changes)
 
   await deleteBlobs(removedImages)
 
