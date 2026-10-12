@@ -128,8 +128,9 @@ function PostDrawer({
   const tx = useShortText()
   const toast = useToast()
   const confirm = useConfirm()
-  // Editing and deleting are admin-only on the server, unlike reviewing.
-  const { isAdmin } = useAuth()
+  // Editing needs its own permission and deleting is admin-only, unlike reviewing.
+  const { isAdmin, can } = useAuth()
+  const canEdit = can('posts.edit')
   const [busy, setBusy] = useState(false)
   const [editing, setEditing] = useState(false)
   const [titleEn, setTitleEn] = useState(post.title.en)
@@ -210,14 +211,18 @@ function PostDrawer({
         <a className="panel-button ghost" href={`#/blog/${post.slug}`}>
           <ExternalLink size={15} aria-hidden="true" /> {tx('Open on site', 'افتح في الموقع')}
         </a>
-        {isAdmin && (
+        {(isAdmin || canEdit) && (
           <div>
-            <button type="button" className="panel-button danger-soft" disabled={busy} onClick={remove}>
-              <Trash2 size={15} aria-hidden="true" /> {tx('Delete', 'حذف')}
-            </button>
-            <button type="button" className="panel-button" disabled={busy} onClick={() => setEditing(true)}>
-              <Pencil size={15} aria-hidden="true" /> {tx('Edit', 'تعديل')}
-            </button>
+            {isAdmin && (
+              <button type="button" className="panel-button danger-soft" disabled={busy} onClick={remove}>
+                <Trash2 size={15} aria-hidden="true" /> {tx('Delete', 'حذف')}
+              </button>
+            )}
+            {canEdit && (
+              <button type="button" className="panel-button" disabled={busy} onClick={() => setEditing(true)}>
+                <Pencil size={15} aria-hidden="true" /> {tx('Edit', 'تعديل')}
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -16,6 +16,7 @@ import { HttpError } from './http.js'
 
 export const PERMISSION_KEYS = [
   'posts.review',
+  'posts.edit',
   'posts.publishDirectly',
   'suggestions.review',
   'comments.review',
@@ -42,6 +43,13 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     key: 'posts.review',
     label: 'Approve posts',
     description: 'Decide which contributor posts appear on the site, and reject the ones that do not.',
+    group: 'Moderation',
+  },
+  {
+    key: 'posts.edit',
+    label: 'Edit any post',
+    description:
+      "Change the title and text of anyone's post, published ones included. Their edits keep the post's status instead of sending it back to review.",
     group: 'Moderation',
   },
   {

@@ -132,9 +132,15 @@ async function readPost(request: Request, idOrSlug: string): Promise<Response> {
 
   if (post.status !== 'approved') {
     const session = await readSession(request)
-    const isAuthor = session?.id === post.authorId
-    const isAdmin = session?.role === 'admin'
-    if (!isAuthor && !isAdmin) throw new HttpError(404, 'Post not found.')
+    if (!session) throw new HttpError(404, 'Post not found.')
+
+    // The token does not carry permissions, so anyone other than the author
+    // is re-read with their roles before an unpublished post is shown.
+    if (session.id !== post.authorId) {
+      const user = await requireUser(request)
+      const mayModerate = hasPermission(user, 'posts.review') || hasPermission(user, 'posts.edit')
+      if (!mayModerate) throw new HttpError(404, 'Post not found.')
+    }
   }
 
   return json(request, { post: toPublic(post) })
@@ -178,7 +184,9 @@ async function createPost(request: Request): Promise<Response> {
 /**
  * An author may edit their own post at any time, and an edit sends it back to
  * the queue. A published post therefore leaves the site until it is approved
- * again, so nothing reaches readers unreviewed. An admin's edit stays as it is.
+ * again, so nothing reaches readers unreviewed. Anyone holding `posts.edit`
+ * (every admin, and any role it is added to) may edit any post, and their
+ * edit keeps the post's status.
  */
 async function updatePost(request: Request, id: string): Promise<Response> {
   if (!ObjectId.isValid(id)) throw new HttpError(404, 'Post not found.')
@@ -190,10 +198,10 @@ async function updatePost(request: Request, id: string): Promise<Response> {
 
   if (!post) throw new HttpError(404, 'Post not found.')
 
-  const isAdmin = user.role === 'admin'
+  const isEditor = hasPermission(user, 'posts.edit')
   const isAuthor = post.authorId === user.id
 
-  if (!isAdmin && !isAuthor) throw new HttpError(403, 'This is not your post.')
+  if (!isEditor && !isAuthor) throw new HttpError(403, 'This is not your post.')
 
   const body = await readJsonBody<Record<string, unknown>>(request)
   const update: Partial<PostDoc> = { updatedAt: new Date().toISOString() }
@@ -210,8 +218,8 @@ async function updatePost(request: Request, id: string): Promise<Response> {
   // `<p></p>` side, so the stored body goes through the same cleaning.
   requireWholeLanguages(update.title ?? post.title, update.body ?? cleanBody(post.body))
 
-  // A contributor's edit re-enters moderation; an admin's does not.
-  if (!isAdmin) update.status = 'pending'
+  // A contributor's edit re-enters moderation; an editor's does not.
+  if (!isEditor) update.status = 'pending'
 
   await collection.updateOne({ _id: post._id }, { $set: update })
 
