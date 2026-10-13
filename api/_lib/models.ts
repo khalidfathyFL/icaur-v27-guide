@@ -19,6 +19,8 @@ export type PostDoc = {
   reviewedBy?: string
   reviewedAt?: string
   reviewNote?: string
+  /** Pinned posts head the public list, the most recently pinned first. */
+  pinnedAt?: string
   createdAt: string
   updatedAt: string
 }

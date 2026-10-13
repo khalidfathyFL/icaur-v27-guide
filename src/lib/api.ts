@@ -113,6 +113,7 @@ export type ApiPost = {
   authorName: string
   status: ReviewStatus
   reviewNote?: string
+  pinned?: boolean
   createdAt: string
   updatedAt: string
 }
@@ -554,6 +555,10 @@ export const api = {
 
   reviewPost: (id: string, input: { status: 'approved' | 'rejected'; note?: string }) =>
     request<{ ok: true }>(`posts/${id}/review`, { method: 'POST', body: input, auth: true }),
+
+  /** Pinned posts head the public list. Needs the same permission as approving. */
+  pinPost: (id: string, pinned: boolean) =>
+    request<{ ok: true; pinned: boolean }>(`posts/${id}/pin`, { method: 'POST', body: { pinned }, auth: true }),
 
   deletePost: (id: string) => request<{ ok: true }>(`posts/${id}`, { method: 'DELETE', auth: true }),
 

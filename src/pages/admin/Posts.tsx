@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ChevronRight, ExternalLink, Pencil, Trash2 } from 'lucide-react'
+import { ChevronRight, ExternalLink, Pencil, Pin, PinOff, Trash2 } from 'lucide-react'
 import { DataTable } from '../../components/panel/DataTable'
 import { Drawer } from '../../components/panel/Drawer'
 import { DetailList } from '../../components/panel/blocks'
@@ -65,7 +65,10 @@ export function Posts({ params, onChanged }: { params: URLSearchParams; onChange
             width: 'minmax(0, 3fr)',
             render: (post) => (
               <span className="panel-cell-main">
-                <strong>{postTitle(post, language)}</strong>
+                <strong>
+                  {post.pinned && <Pin size={13} className="post-pin-icon" aria-label={tx('Pinned', 'مثبّت')} />}
+                  {postTitle(post, language)}
+                </strong>
                 <small>{post.authorName}</small>
               </span>
             ),
@@ -131,6 +134,9 @@ function PostDrawer({
   // Editing needs its own permission and deleting is admin-only, unlike reviewing.
   const { isAdmin, can } = useAuth()
   const canEdit = can('posts.edit')
+  // Only a published post shows on the site, so only it is offered for pinning;
+  // a pinned post that is later unpublished can still be unpinned.
+  const canPin = can('posts.review') && (post.status === 'approved' || Boolean(post.pinned))
   const [busy, setBusy] = useState(false)
   const [editing, setEditing] = useState(false)
   const [titleEn, setTitleEn] = useState(post.title.en)
@@ -143,6 +149,19 @@ function PostDrawer({
     try {
       await api.reviewPost(post.id, { status: decision, note: note || undefined })
       toast(decision === 'approved' ? tx('Post published.', 'تم نشر المقال.') : tx('Post rejected.', 'تم رفض المقال.'))
+      onChanged()
+    } catch (caught) {
+      toast(errorMessage(caught, tx('Could not save.', 'تعذر الحفظ.')), 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function togglePin() {
+    setBusy(true)
+    try {
+      await api.pinPost(post.id, !post.pinned)
+      toast(post.pinned ? tx('Post unpinned.', 'تم إلغاء تثبيت المقال.') : tx('Post pinned to the top.', 'تم تثبيت المقال في الأعلى.'))
       onChanged()
     } catch (caught) {
       toast(errorMessage(caught, tx('Could not save.', 'تعذر الحفظ.')), 'error')
@@ -211,8 +230,14 @@ function PostDrawer({
         <a className="panel-button ghost" href={`#/blog/${post.slug}`}>
           <ExternalLink size={15} aria-hidden="true" /> {tx('Open on site', 'افتح في الموقع')}
         </a>
-        {(isAdmin || canEdit) && (
+        {(isAdmin || canEdit || canPin) && (
           <div>
+            {canPin && (
+              <button type="button" className="panel-button" disabled={busy} onClick={togglePin}>
+                {post.pinned ? <PinOff size={15} aria-hidden="true" /> : <Pin size={15} aria-hidden="true" />}
+                {post.pinned ? tx('Unpin', 'إلغاء التثبيت') : tx('Pin to top', 'ثبّت في الأعلى')}
+              </button>
+            )}
             {isAdmin && (
               <button type="button" className="panel-button danger-soft" disabled={busy} onClick={remove}>
                 <Trash2 size={15} aria-hidden="true" /> {tx('Delete', 'حذف')}

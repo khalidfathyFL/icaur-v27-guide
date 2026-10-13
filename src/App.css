@@ -1556,6 +1556,28 @@ body,
   font-size: 0.8rem;
 }
 
+.post-card.pinned {
+  border-color: var(--accent);
+}
+
+.post-pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  justify-self: start;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.post-pin-icon {
+  margin-inline-end: 0.35rem;
+  color: var(--accent);
+  vertical-align: -1px;
+}
+
 .post-body {
   max-width: 72ch;
   margin-bottom: 1.5rem;

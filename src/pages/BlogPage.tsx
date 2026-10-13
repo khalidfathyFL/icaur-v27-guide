@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { PenLine } from 'lucide-react'
+import { PenLine, Pin } from 'lucide-react'
 import { PageFrame } from '../components/layout'
 import { useAuth } from '../auth/authContext'
 import { useLanguage } from '../i18n/languageContext'
@@ -74,7 +74,12 @@ export function BlogPage() {
         {posts?.map((post) => {
           const side = postSide(post, language)
           return (
-            <a className="post-card" key={post.id} href={`#/blog/${post.slug}`}>
+            <a className={post.pinned ? 'post-card pinned' : 'post-card'} key={post.id} href={`#/blog/${post.slug}`}>
+              {post.pinned && (
+                <span className="post-pin">
+                  <Pin size={13} aria-hidden="true" /> {tx('Pinned', 'مثبّت')}
+                </span>
+              )}
               <h2 dir={sideDir(side)} lang={side}>{post.title[side]}</h2>
               <p dir={sideDir(side)} lang={side}>{post.excerpt[side]}</p>
               <small>

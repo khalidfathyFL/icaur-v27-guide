@@ -64,6 +64,7 @@ function toPublic(post: PostDoc) {
     authorName: post.authorName,
     status: post.status,
     reviewNote: post.reviewNote,
+    pinned: Boolean(post.pinnedAt),
     createdAt: post.createdAt,
     updatedAt: post.updatedAt,
   }
@@ -79,6 +80,7 @@ export async function handlePosts(request: Request, segments: string[]): Promise
   }
 
   if (action === 'review' && request.method === 'POST') return reviewPost(request, id)
+  if (action === 'pin' && request.method === 'POST') return pinPost(request, id)
   if (request.method === 'GET') return readPost(request, id)
   if (request.method === 'PATCH') return updatePost(request, id)
   if (request.method === 'DELETE') return deletePost(request, id)
@@ -112,7 +114,8 @@ async function listPosts(request: Request): Promise<Response> {
   const posts = await db
     .collection<PostDoc>('posts')
     .find(filter)
-    .sort({ createdAt: -1 })
+    // Unpinned posts have no pinnedAt, which sorts below any date.
+    .sort({ pinnedAt: -1, createdAt: -1 })
     .skip((page - 1) * PAGE_SIZE)
     .limit(PAGE_SIZE)
     .toArray()
@@ -262,6 +265,35 @@ async function reviewPost(request: Request, id: string): Promise<Response> {
   })
 
   return json(request, { ok: true, status })
+}
+
+/**
+ * Pinning decides what readers see first, which is the same call as deciding
+ * what they see at all, so it needs the same permission as approving.
+ */
+async function pinPost(request: Request, id: string): Promise<Response> {
+  if (!ObjectId.isValid(id)) throw new HttpError(404, 'Post not found.')
+
+  const moderator = await requirePermission(request, 'posts.review')
+  const body = await readJsonBody<Record<string, unknown>>(request)
+  if (typeof body.pinned !== 'boolean') throw new HttpError(400, 'Say whether the post is pinned.')
+
+  const db = await getDb()
+  const collection = db.collection<PostDoc>('posts')
+  const post = await collection.findOne({ _id: new ObjectId(id) })
+  if (!post) throw new HttpError(404, 'Post not found.')
+
+  if (body.pinned) {
+    await collection.updateOne({ _id: post._id }, { $set: { pinnedAt: new Date().toISOString() } })
+  } else {
+    await collection.updateOne({ _id: post._id }, { $unset: { pinnedAt: '' } })
+  }
+
+  await recordAudit(moderator, body.pinned ? 'post.pinned' : 'post.unpinned', {
+    target: { kind: 'post', id, label: firstWritten(post.title) },
+  })
+
+  return json(request, { ok: true, pinned: body.pinned })
 }
 
 async function deletePost(request: Request, id: string): Promise<Response> {

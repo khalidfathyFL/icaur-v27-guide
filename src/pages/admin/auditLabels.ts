@@ -4,6 +4,8 @@ export const ACTION_LABELS: Record<string, { en: string; ar: string }> = {
   'post.updated': { en: 'edited a post', ar: 'عدّل مقالا' },
   'post.approved': { en: 'approved a post', ar: 'وافق على مقال' },
   'post.rejected': { en: 'rejected a post', ar: 'رفض مقالا' },
+  'post.pinned': { en: 'pinned a post', ar: 'ثبّت مقالا' },
+  'post.unpinned': { en: 'unpinned a post', ar: 'ألغى تثبيت مقال' },
   'post.deleted': { en: 'deleted a post', ar: 'حذف مقالا' },
   'comment.created': { en: 'commented on a post', ar: 'علّق على مقال' },
   'comment.approved': { en: 'approved a comment', ar: 'وافق على تعليق' },

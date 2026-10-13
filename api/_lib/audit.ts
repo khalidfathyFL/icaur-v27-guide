@@ -17,6 +17,8 @@ export type AuditAction =
   | 'post.updated'
   | 'post.approved'
   | 'post.rejected'
+  | 'post.pinned'
+  | 'post.unpinned'
   | 'post.deleted'
   | 'comment.created'
   | 'comment.approved'
