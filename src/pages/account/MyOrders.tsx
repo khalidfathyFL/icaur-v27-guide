@@ -8,10 +8,10 @@ import {
   ORDER_STATUS_TONE,
   ORDER_STEPS,
   PAYMENT_LABELS,
-  fittingUnpriced,
+  hasUnpriced,
   lineTotal,
 } from '../../features/orders/labels'
-import { egp, partName } from '../../features/parts/labels'
+import { egp, partName, priceOrAsk } from '../../features/parts/labels'
 import { useLanguage, useShortText } from '../../i18n/languageContext'
 import { api, type ApiOrder } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
@@ -141,7 +141,7 @@ function OrderCard({ order, startOpen, onChanged }: { order: ApiOrder; startOpen
                       {item.note ? ` · ${item.note}` : ''}
                     </small>
                   </td>
-                  <td dir="ltr">{egp.format(lineTotal(item))}</td>
+                  <td dir="ltr">{priceOrAsk(lineTotal(item), tx)}</td>
                 </tr>
               ))}
             </tbody>
@@ -152,8 +152,10 @@ function OrderCard({ order, startOpen, onChanged }: { order: ApiOrder; startOpen
               </tr>
             </tfoot>
           </table>
-          {order.finalTotalEgp === undefined && fittingUnpriced(order) && (
-            <p className="panel-muted">{tx('Fitting without a listed price is added when we confirm.', 'التركيب غير المسعّر يضاف عند التأكيد.')}</p>
+          {order.finalTotalEgp === undefined && hasUnpriced(order) && (
+            <p className="panel-muted">
+              {tx('Items or fitting without a listed price are priced when we confirm.', 'القطع أو التركيب بلا سعر مدرج تُسعّر عند التأكيد.')}
+            </p>
           )}
           <p className="panel-muted">
             {tx('Payment', 'الدفع')}: {t(PAYMENT_LABELS[order.payment.status])}

@@ -41,8 +41,17 @@ export const PAYMENT_LABELS: Record<PaymentStatus, Localized> = {
   paid: { en: 'Paid', ar: 'مدفوع' },
 }
 
-/** Item, shipping and customs for every unit, plus fitting once per line when asked for. */
-export function lineTotal(line: { quantity: number; fitting: boolean; unitPriceEgp: number; installEgp?: number }): number {
+/**
+ * Item, shipping and customs for every unit, plus fitting once per line when
+ * asked for. Null when the accessory has no price yet.
+ */
+export function lineTotal(line: {
+  quantity: number
+  fitting: boolean
+  unitPriceEgp?: number | null
+  installEgp?: number
+}): number | null {
+  if (line.unitPriceEgp === undefined || line.unitPriceEgp === null) return null
   return line.unitPriceEgp * line.quantity + (line.fitting ? (line.installEgp ?? 0) : 0)
 }
 
@@ -50,12 +59,18 @@ export function cartEstimate(lines: ApiCartLine[]): number {
   return lines.reduce(
     (sum, line) =>
       line.part
-        ? sum + lineTotal({ ...line, unitPriceEgp: line.part.unitPriceEgp, installEgp: line.part.installEgp })
+        ? sum + (lineTotal({ ...line, unitPriceEgp: line.part.unitPriceEgp, installEgp: line.part.installEgp }) ?? 0)
         : sum,
     0,
   )
 }
 
-/** Fitting was asked for on a line whose price does not include it yet. */
-export const fittingUnpriced = (order: Pick<ApiOrder, 'items'>) =>
-  order.items.some((item) => item.fitting && item.installEgp === undefined)
+/** Something on the request has no price yet: an item, or fitting that was asked for. */
+export const hasUnpriced = (order: Pick<ApiOrder, 'items'>) =>
+  order.items.some((item) => item.unitPriceEgp === undefined || (item.fitting && item.installEgp === undefined))
+
+/** The same, for the request list before it is sent. */
+export const cartHasUnpriced = (lines: ApiCartLine[]) =>
+  lines.some(
+    (line) => line.part && (line.part.unitPriceEgp === null || (line.fitting && line.part.installEgp === undefined)),
+  )

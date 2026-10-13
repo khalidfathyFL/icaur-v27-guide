@@ -8,10 +8,10 @@ import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_TONE,
   PAYMENT_LABELS,
-  fittingUnpriced,
+  hasUnpriced,
   lineTotal,
 } from '../../features/orders/labels'
-import { SOURCE_LABELS, egp, partName, whatsappLink } from '../../features/parts/labels'
+import { SOURCE_LABELS, egp, partName, priceOrAsk, whatsappLink } from '../../features/parts/labels'
 import { useLanguage, useShortText } from '../../i18n/languageContext'
 import { api, type ApiOrder, type OrderStatus, type PaymentStatus } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
@@ -244,9 +244,15 @@ function OrderDrawer({ order, onClose, onSaved }: { order: ApiOrder; onClose: ()
                   </small>
                 </td>
                 <td dir="ltr">
-                  {egp.format(item.unitPriceEgp)} × {item.quantity}
-                  <br />
-                  <strong>{egp.format(lineTotal(item))}</strong>
+                  {item.unitPriceEgp === undefined ? (
+                    <strong>{tx('No price yet', 'بلا سعر بعد')}</strong>
+                  ) : (
+                    <>
+                      {egp.format(item.unitPriceEgp)} × {item.quantity}
+                      <br />
+                      <strong>{priceOrAsk(lineTotal(item), tx)}</strong>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}
@@ -258,8 +264,13 @@ function OrderDrawer({ order, onClose, onSaved }: { order: ApiOrder; onClose: ()
             </tr>
           </tfoot>
         </table>
-        {fittingUnpriced(order) && (
-          <p className="panel-callout">{tx('Fitting was asked for on a line with no fitting price; add it to the agreed total.', 'طُلب التركيب لبند بلا سعر تركيب؛ أضفه إلى الإجمالي المتفق عليه.')}</p>
+        {hasUnpriced(order) && (
+          <p className="panel-callout">
+            {tx(
+              'Some items or fitting have no listed price; include them in the agreed total.',
+              'بعض القطع أو التركيب بلا سعر مدرج؛ أضفها إلى الإجمالي المتفق عليه.',
+            )}
+          </p>
         )}
       </section>
 

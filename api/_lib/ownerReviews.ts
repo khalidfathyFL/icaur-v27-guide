@@ -4,7 +4,7 @@ import { hasPermission, requirePermission } from './permissions.js'
 import { HttpError, json, readJsonBody, searchParams } from './http.js'
 import { getDb } from './mongo.js'
 import { recordAudit, type AuditAction } from './audit.js'
-import { requireReviewStatus, requireString, type Localized } from './models.js'
+import { optionalString, requireReviewStatus, requireString, type Localized } from './models.js'
 import { toPlainText } from './sanitize.js'
 
 /**
@@ -149,8 +149,9 @@ export function createReviewHandler(kind: ReviewKind) {
       throw new HttpError(400, 'Give a rating from 1 to 5 stars.')
     }
 
-    const text = toPlainText(requireString(body.body, 'Review', { min: 2, max: 2000 }))
-    if (!text) throw new HttpError(400, 'Write something first.')
+    // The stars are the review; the words are optional.
+    const written = optionalString(body.body, 'Review', { max: 2000 })
+    const text = written ? toPlainText(written) : ''
 
     const doc = {
       [idField]: targetId,

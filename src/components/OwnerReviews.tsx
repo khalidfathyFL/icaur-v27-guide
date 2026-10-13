@@ -4,6 +4,7 @@ import { useAuth } from '../auth/authContext'
 import { useLanguage } from '../i18n/languageContext'
 import { ApiError, api, type ApiOwnerReview, type ReviewTarget } from '../lib/api'
 import { formatDate } from '../lib/format'
+import { Req } from './RequiredMark'
 
 export function Stars({ value, size = 14 }: { value: number; size?: number }) {
   return (
@@ -122,7 +123,7 @@ export function OwnerReviews({
               <time dateTime={review.createdAt}>{formatDate(review.createdAt, language)}</time>
             </header>
             <Stars value={review.rating} size={13} />
-            <p>{review.body}</p>
+            {review.body && <p>{review.body}</p>}
           </li>
         ))}
       </ol>
@@ -156,6 +157,10 @@ export function OwnerReviews({
         </div>
       ) : (
         <form className="comment-form" onSubmit={submit}>
+          <span className="review-rating-label">
+            {tx('Your rating', 'تقييمك')}
+            <Req />
+          </span>
           <div className="part-star-picker" role="radiogroup" aria-label={tx('Your rating', 'تقييمك')}>
             {[1, 2, 3, 4, 5].map((value) => (
               <button
@@ -172,8 +177,8 @@ export function OwnerReviews({
             ))}
           </div>
           <label>
-            <span>{tx('Your experience', 'تجربتك')}</span>
-            <textarea value={body} onChange={(event) => setBody(event.target.value)} required minLength={2} maxLength={2000} rows={3} />
+            <span>{tx('Your experience (optional)', 'تجربتك (اختياري)')}</span>
+            <textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={2000} rows={3} />
           </label>
 
           {error && <p className="form-error">{error}</p>}

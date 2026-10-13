@@ -10,7 +10,7 @@ import {
   durationText,
   packageName,
 } from '../features/centers/labels'
-import { egp, whatsappLink } from '../features/parts/labels'
+import { egp, priceOrAsk, whatsappLink } from '../features/parts/labels'
 import { useLanguage } from '../i18n/languageContext'
 import { api, apiConfigured, type ApiCenter, type ProtectionService } from '../lib/api'
 import { formatDate } from '../lib/format'
@@ -23,7 +23,10 @@ const asService = (value: string | null): ProtectionService | 'all' =>
 
 /** The cheapest package offering this service, or the cheapest overall. */
 function fromPrice(center: ApiCenter, service: ProtectionService | 'all'): number | null {
-  const prices = center.packages.filter((item) => service === 'all' || item.service === service).map((item) => item.priceEgp)
+  const prices = center.packages
+    .filter((item) => service === 'all' || item.service === service)
+    .map((item) => item.priceEgp)
+    .filter((price): price is number => price !== undefined)
   return prices.length === 0 ? null : Math.min(...prices)
 }
 
@@ -55,7 +58,10 @@ export function ProtectionPage({ params }: { params: URLSearchParams }) {
     }
   }, [tx])
 
-  const cities = useMemo(() => [...new Set((centers ?? []).map((center) => center.city))].sort(), [centers])
+  const cities = useMemo(
+    () => [...new Set((centers ?? []).map((center) => center.city).filter((city): city is string => Boolean(city)))].sort(),
+    [centers],
+  )
 
   const shown = useMemo(() => {
     if (!centers) return null
@@ -166,10 +172,11 @@ export function ProtectionPage({ params }: { params: URLSearchParams }) {
                 )}
               </div>
               <div className="part-card-body">
-                <small>
-                  <MapPin size={12} aria-hidden="true" /> {center.city}
-                  {center.area ? ` · ${center.area}` : ''}
-                </small>
+                {(center.city || center.area) && (
+                  <small>
+                    <MapPin size={12} aria-hidden="true" /> {[center.city, center.area].filter(Boolean).join(' · ')}
+                  </small>
+                )}
                 <h2>{centerName(center, language)}</h2>
                 <div className="center-service-tags">
                   {center.services.slice(0, 3).map((key) => (
@@ -236,7 +243,8 @@ export function ProtectionCenterPage({ slug }: { slug: string }) {
   const name = centerName(center, language)
   const side = language === 'ar' && center.description.ar ? 'ar' : 'en'
   const description = center.description[side] || center.description.en || center.description.ar
-  const descriptionAlt = side === 'en' && center.description.ar ? alt(center.description) : null
+  // The Arabic underneath only when it is a second version, not the fallback already shown.
+  const descriptionAlt = side === 'en' && center.description.en && center.description.ar ? alt(center.description) : null
   const image = center.images[photo] ?? center.images[0]
   const packages = center.packages.filter((item) => service === 'all' || item.service === service)
   const where = [center.area, center.city].filter(Boolean).join(', ')
@@ -394,14 +402,14 @@ export function ProtectionCenterPage({ slug }: { slug: string }) {
                     {item.wildPriceEgp !== undefined ? (
                       <>
                         <span>
-                          Play <strong dir="ltr">{egp.format(item.priceEgp)}</strong>
+                          Play <strong dir="ltr">{priceOrAsk(item.priceEgp, tx)}</strong>
                         </span>
                         <span>
                           Wild <strong dir="ltr">{egp.format(item.wildPriceEgp)}</strong>
                         </span>
                       </>
                     ) : (
-                      <strong dir="ltr">{egp.format(item.priceEgp)}</strong>
+                      <strong dir="ltr">{priceOrAsk(item.priceEgp, tx)}</strong>
                     )}
                   </div>
                 </header>

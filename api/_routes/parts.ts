@@ -8,7 +8,6 @@ import {
   deleteBlobs,
   optionalLocalized,
   readDayRange,
-  requireLocalizedLoose,
   requireName,
   setAndUnset,
 } from '../_lib/catalog.js'
@@ -24,7 +23,6 @@ import {
   optionalUrl,
   requireBlobImages,
   requireEnum,
-  requireMoneyEgp,
   requireString,
   slugify,
   type PartDoc,
@@ -33,8 +31,12 @@ import {
   type PartSupplier,
 } from '../_lib/models.js'
 
-/** What the part costs to have on the car: the item, getting it here, and fitting it. */
-export function landedCostEgp(price: PartPrice): number {
+/**
+ * What the part costs to have on the car: the item, getting it here, and
+ * fitting it. Null when the item has no price yet ("price on request").
+ */
+export function landedCostEgp(price: PartPrice): number | null {
+  if (price.amountEgp === undefined) return null
   return price.amountEgp + (price.shippingEgp ?? 0) + (price.customsEgp ?? 0) + (price.installEgp ?? 0)
 }
 
@@ -139,12 +141,12 @@ async function readPart(request: Request, idOrSlug: string): Promise<Response> {
 
 /* ---------- validation ---------- */
 
+/** Every figure is optional: a part with no price is listed as "price on request". */
 function readPrice(value: unknown, isImport: boolean): PartPrice {
-  if (typeof value !== 'object' || value === null) throw new HttpError(400, 'Enter the price.')
-  const body = value as Record<string, unknown>
+  const body = (typeof value === 'object' && value !== null ? value : {}) as Record<string, unknown>
 
   const price: PartPrice = {
-    amountEgp: requireMoneyEgp(body.amountEgp, 'Price'),
+    amountEgp: optionalMoney(body.amountEgp, 'Price'),
     installEgp: optionalMoney(body.installEgp, 'Installation cost'),
   }
 
@@ -203,7 +205,7 @@ function readPartBody(body: Record<string, unknown>) {
   const isImport = source === 'china'
   // Like posts, a part may be written up in English, Arabic or both.
   const name = requireName(body.name, 'accessory')
-  const description = requireLocalizedLoose(body.description, 'Description', 5000)
+  const description = optionalLocalized(body.description, 'Description', 5000) ?? { en: '', ar: '' }
 
   return {
     name,

@@ -23,8 +23,6 @@ import {
   optionalUrl,
   requireBlobImages,
   requireEnum,
-  requireMoneyEgp,
-  requireString,
   slugify,
   type CenterDoc,
   type CenterPackage,
@@ -39,9 +37,11 @@ import {
 
 const MAX_PACKAGES = 20
 
-/** The cheapest Play price across the packages, for "from X EGP" on the list. */
-const fromPrice = (packages: CenterPackage[]) =>
-  packages.length === 0 ? null : Math.min(...packages.map((item) => item.priceEgp))
+/** The cheapest priced package, for "from X EGP" on the list; null when none has a price. */
+function fromPrice(packages: CenterPackage[]): number | null {
+  const prices = packages.map((item) => item.priceEgp).filter((price): price is number => price !== undefined)
+  return prices.length === 0 ? null : Math.min(...prices)
+}
 
 function toPublic(center: CenterDoc) {
   return {
@@ -154,7 +154,7 @@ function readPackage(value: unknown, index: number, previousIds: Set<string>): C
   const id = sentId && !previousIds.has(sentId) ? sentId : randomBytes(6).toString('hex')
   previousIds.add(id)
 
-  const priceEgp = requireMoneyEgp(body.priceEgp, `${label} price`)
+  const priceEgp = optionalMoney(body.priceEgp, `${label} price`)
   const wildPriceEgp = optionalMoney(body.wildPriceEgp, `${label} Wild price`)
 
   return compact({
@@ -191,8 +191,8 @@ function readCenterBody(body: Record<string, unknown>) {
 
   return {
     name: requireName(body.name, 'center'),
-    description: requireLocalizedLoose(body.description, 'Description', 5000),
-    city: requireString(body.city, 'City', { min: 2, max: 80 }),
+    description: optionalLocalized(body.description, 'Description', 5000) ?? { en: '', ar: '' },
+    city: optionalString(body.city, 'City', { max: 80 }),
     area: optionalString(body.area, 'Area', { max: 120 }),
     address: optionalString(body.address, 'Address', { max: 300 }),
     mapUrl: optionalUrl(body.mapUrl, 'Map link'),

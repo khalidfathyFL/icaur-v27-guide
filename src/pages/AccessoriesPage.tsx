@@ -12,6 +12,7 @@ import {
   SOURCE_LABELS,
   egp,
   formatOriginal,
+  priceOrAsk,
   leadTimeText,
   partName,
   partSide,
@@ -74,8 +75,9 @@ export function AccessoriesPage({ params }: { params: URLSearchParams }) {
         (!needle || `${part.name.en} ${part.name.ar} ${part.subcategory ?? ''}`.toLowerCase().includes(needle)),
     )
     const sorted = [...list]
-    if (sort === 'price-asc') sorted.sort((a, b) => a.landedEgp - b.landedEgp)
-    if (sort === 'price-desc') sorted.sort((a, b) => b.landedEgp - a.landedEgp)
+    // Parts without a price sort last either way.
+    if (sort === 'price-asc') sorted.sort((a, b) => (a.landedEgp ?? Infinity) - (b.landedEgp ?? Infinity))
+    if (sort === 'price-desc') sorted.sort((a, b) => (b.landedEgp ?? -Infinity) - (a.landedEgp ?? -Infinity))
     if (sort === 'rating') sorted.sort((a, b) => b.ratingAvg - a.ratingAvg || b.ratingCount - a.ratingCount)
     return sorted
   }, [parts, category, source, trim, sort, query])
@@ -182,7 +184,7 @@ export function AccessoriesPage({ params }: { params: URLSearchParams }) {
                   {partName(part, language)}
                 </h2>
                 <div className="part-card-foot">
-                  <strong dir="ltr">{egp.format(part.landedEgp)}</strong>
+                  <strong dir="ltr">{priceOrAsk(part.landedEgp, tx)}</strong>
                   <span className={`badge ${AVAILABILITY_TONE[part.availability]}`}>
                     {t(AVAILABILITY_LABELS[part.availability])}
                   </span>
@@ -235,7 +237,8 @@ export function AccessoryPage({ slug }: { slug: string }) {
   const side = partSide(part, language)
   const name = partName(part, language)
   const description = part.description[side] || part.description.en || part.description.ar
-  const descriptionAlt = side === 'en' && part.description.ar ? alt(part.description) : null
+  // The Arabic underneath only when it is a second version, not the fallback already shown.
+  const descriptionAlt = side === 'en' && part.description.en && part.description.ar ? alt(part.description) : null
   const isImport = part.source === 'china'
   const { price, specs } = part
   const lead = leadTimeText(part.leadTimeDays, tx)
@@ -297,6 +300,10 @@ export function AccessoryPage({ slug }: { slug: string }) {
             {part.ratingCount > 0 && <Rating value={part.ratingAvg} count={part.ratingCount} />}
           </div>
 
+          {part.landedEgp === null && (
+            <p className="part-price-ask">{tx('Price on request', 'السعر عند الطلب')}</p>
+          )}
+          {part.landedEgp !== null && (
           <table className="part-price-table">
             <tbody>
               {priceRows.map((row) => (
@@ -315,6 +322,7 @@ export function AccessoryPage({ slug }: { slug: string }) {
               </tfoot>
             )}
           </table>
+          )}
 
           {isImport && price.originalAmount !== undefined && price.originalCurrency && (
             <p className="muted-note">

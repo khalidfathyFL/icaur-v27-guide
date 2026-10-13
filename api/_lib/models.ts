@@ -112,8 +112,8 @@ export const IMPORT_CURRENCIES = ['CNY', 'USD'] as const
 export type ImportCurrency = (typeof IMPORT_CURRENCIES)[number]
 
 export type PartPrice = {
-  /** The item itself, in EGP. For an import, what it costs converted. */
-  amountEgp: number
+  /** The item itself, in EGP. For an import, what it costs converted. Missing means "price on request". */
+  amountEgp?: number
   installEgp?: number
   /** Imports only: the price as the seller lists it. */
   originalAmount?: number
@@ -218,7 +218,8 @@ export type CenterPackage = {
   name: Localized
   service: ProtectionService
   coverage: CoverageArea[]
-  priceEgp: number
+  /** Missing means "price on request". */
+  priceEgp?: number
   /** Only when the Wild is charged differently from the Play. */
   wildPriceEgp?: number
   durationDays?: { min: number; max: number }
@@ -241,7 +242,7 @@ export type CenterDoc = {
   slug: string
   name: Localized
   description: Localized
-  city: string
+  city?: string
   area?: string
   address?: string
   /** A Google Maps (or similar) link to the workshop. */
@@ -302,8 +303,8 @@ export type OrderItem = {
   quantity: number
   note?: string
   fitting: boolean
-  /** Item plus shipping and customs, per unit. */
-  unitPriceEgp: number
+  /** Item plus shipping and customs, per unit; missing when the accessory had no price. */
+  unitPriceEgp?: number
   /** Fitting for the whole line, when asked for and known. */
   installEgp?: number
 }
@@ -312,7 +313,7 @@ export type OrderContact = {
   name: string
   phone: string
   whatsapp?: string
-  city: string
+  city?: string
   address?: string
 }
 

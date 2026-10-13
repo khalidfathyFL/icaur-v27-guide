@@ -27,6 +27,7 @@ import {
 import { errorMessage } from '../../lib/errors'
 import { formatDate } from '../../lib/format'
 import { PhotoEditor } from './PhotoEditor'
+import { Req, RequiredLegend } from '../../components/RequiredMark'
 
 /** `null` while closed; `'new'` for the add form, or the center being edited. */
 type Editing = null | 'new' | ApiCenter
@@ -440,17 +441,10 @@ function CenterForm({ center, onClose, onSaved }: { center: ApiCenter | null; on
     }
     // Checked here rather than with `required`: a folded package is hidden, and
     // the browser cannot point at a field it cannot show.
-    const problem = draft.packages.findIndex(
-      (item) => (!item.nameEn.trim() && !item.nameAr.trim()) || !(Number(item.priceEgp) > 0),
-    )
+    const problem = draft.packages.findIndex((item) => !item.nameEn.trim() && !item.nameAr.trim())
     if (problem !== -1) {
-      const item = draft.packages[problem]
-      setOpen((current) => new Set(current).add(item.key))
-      setError(
-        !item.nameEn.trim() && !item.nameAr.trim()
-          ? tx(`Give package ${problem + 1} a name.`, `أضف اسما للباقة ${problem + 1}.`)
-          : tx(`Enter a price for package ${problem + 1}.`, `أدخل سعر الباقة ${problem + 1}.`),
-      )
+      setOpen((current) => new Set(current).add(draft.packages[problem].key))
+      setError(tx(`Give package ${problem + 1} a name in English or Arabic.`, `أضف اسما للباقة ${problem + 1} بالإنجليزية أو العربية.`))
       return
     }
 
@@ -505,20 +499,28 @@ function CenterForm({ center, onClose, onSaved }: { center: ApiCenter | null; on
       }
     >
       <form id="center-form" className="auth-form wide panel-form part-form" onSubmit={onSubmit}>
+        <RequiredLegend bilingual />
         <section className="part-form-section">
           <h3>{tx('The center', 'المركز')}</h3>
           <div className="panel-form-grid">
             <label>
-              <span>{tx('Name (English)', 'الاسم (بالإنجليزية)')}</span>
-              <input value={draft.nameEn} onChange={(e) => set('nameEn', e.target.value)} maxLength={160} dir="ltr" autoFocus />
+              <span>
+                {tx('Name (English)', 'الاسم (بالإنجليزية)')}
+                <Req />
+              </span>
+              <input aria-required value={draft.nameEn} onChange={(e) => set('nameEn', e.target.value)} maxLength={160} dir="ltr" autoFocus />
             </label>
             <label>
-              <span>{tx('Name (Arabic)', 'الاسم (بالعربية)')}</span>
-              <input value={draft.nameAr} onChange={(e) => set('nameAr', e.target.value)} maxLength={160} dir="rtl" lang="ar" />
+              <span>
+                {tx('Name (Arabic)', 'الاسم (بالعربية)')}
+                <Req />
+              </span>
+              <input aria-required value={draft.nameAr} onChange={(e) => set('nameAr', e.target.value)} maxLength={160} dir="rtl" lang="ar" />
+              <small>{tx('English, Arabic or both.', 'بالإنجليزية أو العربية أو كلتيهما.')}</small>
             </label>
             <label>
               <span>{tx('City', 'المدينة')}</span>
-              <input value={draft.city} onChange={(e) => set('city', e.target.value)} required minLength={2} maxLength={80} placeholder={tx('e.g. Cairo', 'مثل: القاهرة')} />
+              <input value={draft.city} onChange={(e) => set('city', e.target.value)} maxLength={80} placeholder={tx('e.g. Cairo', 'مثل: القاهرة')} />
             </label>
             <label>
               <span>{tx('Area', 'المنطقة')}</span>
@@ -676,12 +678,18 @@ function PackageEditor({
       <div id={bodyId} className="center-package-body" hidden={!open}>
         <div className="panel-form-grid">
           <label>
-            <span>{tx('Package name (English)', 'اسم الباقة (بالإنجليزية)')}</span>
-            <input value={item.nameEn} onChange={(e) => onChange({ nameEn: e.target.value })} maxLength={120} dir="ltr" placeholder="Full front PPF" />
+            <span>
+              {tx('Package name (English)', 'اسم الباقة (بالإنجليزية)')}
+              <Req />
+            </span>
+            <input aria-required value={item.nameEn} onChange={(e) => onChange({ nameEn: e.target.value })} maxLength={120} dir="ltr" placeholder="Full front PPF" />
           </label>
           <label>
-            <span>{tx('Package name (Arabic)', 'اسم الباقة (بالعربية)')}</span>
-            <input value={item.nameAr} onChange={(e) => onChange({ nameAr: e.target.value })} maxLength={120} dir="rtl" lang="ar" />
+            <span>
+              {tx('Package name (Arabic)', 'اسم الباقة (بالعربية)')}
+              <Req />
+            </span>
+            <input aria-required value={item.nameAr} onChange={(e) => onChange({ nameAr: e.target.value })} maxLength={120} dir="rtl" lang="ar" />
           </label>
           <label>
             <span>{tx('Service', 'الخدمة')}</span>

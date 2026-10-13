@@ -1,6 +1,7 @@
 import type { Localized } from '../../content/types'
 import type { Language } from '../../i18n/translator'
 import type { ApiPart, PartAvailability, PartCategory, PartSource } from '../../lib/api'
+import { priceFormatter } from '../../content/egypt'
 
 /** Wording shared by the public catalog and the admin screens. */
 
@@ -68,6 +69,11 @@ export function partName(part: Pick<ApiPart, 'name'>, language: Language): strin
 
 /** The same pound formatting the Egypt page uses. */
 export { priceFormatter as egp } from '../../content/egypt'
+
+/** A price, or "Price on request" when there is none yet. */
+export function priceOrAsk(value: number | null | undefined, tx: (en: string, ar: string) => string): string {
+  return value === null || value === undefined ? tx('Price on request', 'السعر عند الطلب') : priceFormatter.format(value)
+}
 
 export function formatOriginal(amount: number, currency: 'CNY' | 'USD'): string {
   return new Intl.NumberFormat('en', { style: 'currency', currency, maximumFractionDigits: 2 }).format(amount)

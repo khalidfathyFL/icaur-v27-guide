@@ -5336,3 +5336,30 @@ ol.path-pills li:last-child {
     align-items: center;
   }
 }
+
+/* ---------- required fields ---------- */
+
+.req {
+  color: var(--danger, #b91c1c);
+  font-weight: 800;
+}
+
+.form-legend {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.review-rating-label {
+  color: var(--heading);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.part-price-ask {
+  margin: 0;
+  color: var(--heading);
+  font-size: 1.15rem;
+  font-weight: 800;
+}

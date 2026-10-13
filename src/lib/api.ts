@@ -167,7 +167,8 @@ export type PartAvailability = 'in_stock' | 'on_order' | 'unavailable'
 export type ImportCurrency = 'CNY' | 'USD'
 
 export type PartPrice = {
-  amountEgp: number
+  /** Missing means "price on request". */
+  amountEgp?: number
   installEgp?: number
   originalAmount?: number
   originalCurrency?: ImportCurrency
@@ -206,8 +207,8 @@ export type ApiPart = {
   subcategory?: string
   source: PartSource
   price: PartPrice
-  /** Item, shipping, customs and fitting added up, worked out by the server. */
-  landedEgp: number
+  /** Item, shipping, customs and fitting added up by the server; null with no price. */
+  landedEgp: number | null
   availability: PartAvailability
   leadTimeDays?: { min: number; max: number }
   suppliers: PartSupplier[]
@@ -298,7 +299,8 @@ export type CenterPackage = {
   name: Localized
   service: ProtectionService
   coverage: CoverageArea[]
-  priceEgp: number
+  /** Missing means "price on request". */
+  priceEgp?: number
   /** Only when the Wild is charged differently. */
   wildPriceEgp?: number
   durationDays?: { min: number; max: number }
@@ -317,7 +319,7 @@ export type ApiCenter = {
   slug: string
   name: Localized
   description: Localized
-  city: string
+  city?: string
   area?: string
   address?: string
   mapUrl?: string
@@ -355,7 +357,7 @@ export type ApiCartLine = CartItemInput & {
     name: Localized
     source: PartSource
     availability: PartAvailability
-    unitPriceEgp: number
+    unitPriceEgp: number | null
     installEgp?: number
     leadTimeDays?: { min: number; max: number }
     image?: PartImage
@@ -367,7 +369,7 @@ export type ApiCart = { items: ApiCartLine[]; updatedAt: string | null }
 export type OrderStatus = 'new' | 'confirmed' | 'ordered' | 'arrived' | 'delivered' | 'cancelled'
 export type PaymentStatus = 'unpaid' | 'deposit' | 'paid'
 
-export type OrderContact = { name: string; phone: string; whatsapp?: string; city: string; address?: string }
+export type OrderContact = { name: string; phone: string; whatsapp?: string; city?: string; address?: string }
 
 export type ApiOrder = {
   id: string
@@ -382,7 +384,8 @@ export type ApiOrder = {
     quantity: number
     note?: string
     fitting: boolean
-    unitPriceEgp: number
+    /** Missing when the accessory had no price. */
+    unitPriceEgp?: number
     installEgp?: number
   }[]
   estimatedTotalEgp: number
