@@ -17,6 +17,7 @@ import { Centers } from './admin/Centers'
 import { Comments } from './admin/Comments'
 import { Dashboard } from './admin/Dashboard'
 import { Dealers } from './admin/Dealers'
+import { Insurers } from './admin/Insurers'
 import { Orders } from './admin/Orders'
 import { Parts } from './admin/Parts'
 import { Permissions } from './admin/Permissions'
@@ -77,6 +78,7 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
     comments: counts?.comments,
     'part-reviews': counts?.partReviews,
     'center-reviews': counts?.centerReviews,
+    'insurer-reviews': counts?.insurerReviews,
     orders: counts?.orders,
   }
 
@@ -144,6 +146,8 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
         return <ReviewQueue kind="part" params={params} onChanged={refresh} />
       case 'center-reviews':
         return <ReviewQueue kind="center" params={params} onChanged={refresh} />
+      case 'insurer-reviews':
+        return <ReviewQueue kind="insurer" params={params} onChanged={refresh} />
       case 'dealers':
         return <Dealers />
       case 'pricing':
@@ -152,6 +156,8 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
         return <Parts />
       case 'protection':
         return <Centers />
+      case 'insurance':
+        return <Insurers />
       case 'orders':
         return <Orders params={params} onChanged={refresh} />
       case 'users':

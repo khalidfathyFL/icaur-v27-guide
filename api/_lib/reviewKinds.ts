@@ -31,6 +31,20 @@ export const CENTER_REVIEWS: ReviewKind = {
   noun: 'Protection center',
 }
 
+export const INSURER_REVIEWS: ReviewKind = {
+  collection: 'insurerReviews',
+  targetCollection: 'insurers',
+  fields: { id: 'insurerId', name: 'insurerName', slug: 'insurerSlug' },
+  auditKind: 'insurer',
+  actions: {
+    created: 'insurer_review.created',
+    approved: 'insurer_review.approved',
+    rejected: 'insurer_review.rejected',
+    deleted: 'insurer_review.deleted',
+  },
+  noun: 'Insurance company',
+}
+
 /** Indexes for one kind, including the unique one: an owner reviews each thing once. */
 export function reviewIndexes(db: Db, kind: ReviewKind): Promise<string>[] {
   const reviews = db.collection(kind.collection)

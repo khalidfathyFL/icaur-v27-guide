@@ -3,6 +3,7 @@ import { Redirect } from '../components/Redirect'
 import { AccessoriesPage, AccessoryPage } from '../pages/AccessoriesPage'
 import { AdminPage } from '../pages/AdminPage'
 import { CartPage } from '../pages/CartPage'
+import { InsurancePage, InsurerPage } from '../pages/InsurancePage'
 import { ProtectionCenterPage, ProtectionPage } from '../pages/ProtectionPage'
 import { SignInPage } from '../pages/AccountPage'
 import { AccountPanel } from '../pages/account/AccountPanel'
@@ -24,6 +25,7 @@ const GUIDE_PREFIX = '/guides/'
 const BLOG_PREFIX = '/blog/'
 const ACCESSORY_PREFIX = '/accessories/'
 const PROTECTION_PREFIX = '/protection/'
+const INSURANCE_PREFIX = '/insurance/'
 
 const STATIC_ROUTES: Record<string, (params: URLSearchParams) => React.ReactElement> = {
   '/': () => <HomePage />,
@@ -39,6 +41,7 @@ const STATIC_ROUTES: Record<string, (params: URLSearchParams) => React.ReactElem
   '/accessories': (params) => <AccessoriesPage params={params} />,
   '/protection': (params) => <ProtectionPage params={params} />,
   '/cart': () => <CartPage />,
+  '/insurance': () => <InsurancePage />,
   '/signin': (params) => <SignInPage next={params.get('next')} />,
   // Both moved into the account panel; old links and bookmarks still land.
   '/contribute': () => <Redirect to="/account/new-post" />,
@@ -101,6 +104,10 @@ export function resolveRoute(path: string, params: URLSearchParams): React.React
 
   if (path.startsWith(PROTECTION_PREFIX)) {
     return <ProtectionCenterPage slug={decodeSlug(path.slice(PROTECTION_PREFIX.length))} />
+  }
+
+  if (path.startsWith(INSURANCE_PREFIX)) {
+    return <InsurerPage slug={decodeSlug(path.slice(INSURANCE_PREFIX.length))} />
   }
 
   return <NotFoundPage />

@@ -25,6 +25,7 @@ const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const FOLDERS: Record<string, Permission | 'signedIn'> = {
   parts: 'parts.manage',
   centers: 'centers.manage',
+  insurers: 'insurance.manage',
   posts: 'signedIn',
 }
 
@@ -50,7 +51,7 @@ export async function handleUploads(request: Request, segments: string[]): Promi
       const match = /^([a-z]+)\/[A-Za-z0-9._-]{1,120}$/.exec(pathname)
       const permission = match ? FOLDERS[match[1] ?? ''] : undefined
       if (!permission) {
-        throw new HttpError(400, 'Photos are stored under parts/, centers/ or posts/ with a plain file name.')
+        throw new HttpError(400, 'Photos are stored under parts/, centers/, insurers/ or posts/ with a plain file name.')
       }
       // requireUser above has already established the account is signed in.
       if (permission !== 'signedIn' && !hasPermission(editor, permission)) {

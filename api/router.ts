@@ -4,6 +4,8 @@ import { handleCenterReviews } from './_routes/centerReviews.js'
 import { handleCenters } from './_routes/centers.js'
 import { handleComments } from './_routes/comments.js'
 import { handleDealers } from './_routes/dealers.js'
+import { handleInsurerReviews } from './_routes/insurerReviews.js'
+import { handleInsurers } from './_routes/insurers.js'
 import { handleOrders } from './_routes/orders.js'
 import { handlePartReviews } from './_routes/partReviews.js'
 import { handleParts } from './_routes/parts.js'
@@ -29,6 +31,8 @@ const ROUTES: Record<string, RouteHandler> = {
   centers: handleCenters,
   'center-reviews': handleCenterReviews,
   cart: handleCart,
+  insurers: handleInsurers,
+  'insurer-reviews': handleInsurerReviews,
   orders: handleOrders,
   uploads: handleUploads,
 }

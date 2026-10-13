@@ -13,6 +13,7 @@ import {
   Package,
   PenLine,
   ShieldCheck,
+  ShieldHalf,
   ShieldPlus,
   ShoppingBag,
   Star,
@@ -110,6 +111,14 @@ export const ADMIN_SECTIONS: PanelSection[] = [
     description: { en: 'Owner ratings of protection centers', ar: 'تقييمات الملاك لمراكز الحماية' },
   },
   {
+    key: 'insurer-reviews',
+    group: 'moderation',
+    icon: Star,
+    permission: 'comments.review',
+    label: { en: 'Insurer reviews', ar: 'مراجعات التأمين' },
+    description: { en: 'Owner ratings of insurance companies', ar: 'تقييمات الملاك لشركات التأمين' },
+  },
+  {
     key: 'dealers',
     group: 'market',
     icon: Store,
@@ -135,6 +144,14 @@ export const ADMIN_SECTIONS: PanelSection[] = [
       en: 'Accessories and protection parts, local and imported',
       ar: 'الإكسسوارات وقطع الحماية، المحلية والمستوردة',
     },
+  },
+  {
+    key: 'insurance',
+    group: 'market',
+    icon: ShieldHalf,
+    permission: 'insurance.manage',
+    label: { en: 'Car insurance', ar: 'تأمين السيارة' },
+    description: { en: 'Insurers, their plans, rates, cover and cashback', ar: 'شركات التأمين وخططها ونسبها وتغطيتها والاسترداد' },
   },
   {
     key: 'orders',

@@ -228,7 +228,7 @@ export type PartInput = Omit<
 >
 
 /** Owner reviews: accessories and protection centers share one shape and one set of rules. */
-export type ReviewTarget = 'part' | 'center'
+export type ReviewTarget = 'part' | 'center' | 'insurer'
 
 export type ApiOwnerReview = {
   id: string
@@ -247,6 +247,7 @@ export type ApiOwnerReview = {
 const REVIEW_ROUTES: Record<ReviewTarget, { route: string; id: string; name: string; slug: string }> = {
   part: { route: 'part-reviews', id: 'partId', name: 'partName', slug: 'partSlug' },
   center: { route: 'center-reviews', id: 'centerId', name: 'centerName', slug: 'centerSlug' },
+  insurer: { route: 'insurer-reviews', id: 'insurerId', name: 'insurerName', slug: 'insurerSlug' },
 }
 
 function toOwnerReview(kind: ReviewTarget, raw: Record<string, unknown>): ApiOwnerReview {
@@ -410,11 +411,76 @@ export type OrderUpdate = {
   staffNote?: string
 }
 
+export type InsuranceCover =
+  | 'own-damage'
+  | 'total-loss'
+  | 'theft'
+  | 'fire'
+  | 'third-party'
+  | 'natural-disasters'
+  | 'riots'
+  | 'glass'
+  | 'battery'
+  | 'personal-accident'
+  | 'roadside'
+  | 'towing'
+  | 'replacement-car'
+  | 'abroad'
+
+/** One insurance plan. Everything but the name is optional. */
+export type InsurancePlan = {
+  /** Assigned by the server; send it back on edit to keep the plan's link. */
+  id?: string
+  name: Localized
+  /** Yearly premium as a percentage of the car's value. */
+  ratePct?: number
+  minPremiumEgp?: number
+  covers: InsuranceCover[]
+  /** Agency repair for the car's first N years; 0 means never. */
+  agencyRepairYears?: number
+  cashbackPct?: number
+  cashbackCondition?: Localized
+  noClaimsDiscountPct?: number
+  deductiblePct?: number
+  deductibleEgp?: number
+  maxCarAgeYears?: number
+  installments?: Localized
+  notes?: Localized
+}
+
+export type ApiInsurer = {
+  id: string
+  slug: string
+  name: Localized
+  description: Localized
+  hotline?: string
+  phone?: string
+  whatsapp?: string
+  website?: string
+  email?: string
+  branches?: string
+  plans: (InsurancePlan & { id: string })[]
+  /** The lowest yearly rate across the plans; null when none has one. */
+  lowestRatePct: number | null
+  bestCashbackPct: number | null
+  images: PartImage[]
+  ratingAvg: number
+  ratingCount: number
+  active: boolean
+  checkedAt: string
+  updatedAt: string
+}
+
+export type InsurerInput = Omit<
+  ApiInsurer,
+  'id' | 'slug' | 'plans' | 'lowestRatePct' | 'bestCashbackPct' | 'ratingAvg' | 'ratingCount' | 'active' | 'checkedAt' | 'updatedAt'
+> & { plans: InsurancePlan[] }
+
 /**
  * Where uploaded photos go. Listing folders are open only to that listing's
  * editors; `posts` to any signed-in account.
  */
-export type UploadFolder = 'parts' | 'centers' | 'posts'
+export type UploadFolder = 'parts' | 'centers' | 'posts' | 'insurers'
 
 export type PartFilters = {
   category?: PartCategory
@@ -684,6 +750,21 @@ export const api = {
     request<{ center: ApiCenter }>(`centers/${id}`, { method: 'PATCH', body: input, auth: true }),
 
   removeCenter: (id: string) => request<{ ok: true }>(`centers/${id}`, { method: 'DELETE', auth: true }),
+
+  /* ---------- insurance ---------- */
+
+  listInsurers: (params: { all?: boolean } = {}) =>
+    request<{ insurers: ApiInsurer[] }>(`insurers${params.all ? '?all=1' : ''}`, { auth: Boolean(params.all) }),
+
+  readInsurer: (idOrSlug: string) => request<{ insurer: ApiInsurer }>(`insurers/${idOrSlug}`),
+
+  createInsurer: (input: InsurerInput) =>
+    request<{ insurer: ApiInsurer }>('insurers', { method: 'POST', body: input, auth: true }),
+
+  updateInsurer: (id: string, input: Partial<InsurerInput> & { active?: boolean; checked?: boolean }) =>
+    request<{ insurer: ApiInsurer }>(`insurers/${id}`, { method: 'PATCH', body: input, auth: true }),
+
+  removeInsurer: (id: string) => request<{ ok: true }>(`insurers/${id}`, { method: 'DELETE', auth: true }),
 
   /* ---------- owner reviews ---------- */
 
