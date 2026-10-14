@@ -3,7 +3,7 @@ import { Check, ShoppingBag } from 'lucide-react'
 import { useAuth } from '../../auth/authContext'
 import { useLanguage } from '../../i18n/languageContext'
 import { ApiError, type ApiPart } from '../../lib/api'
-import { egp } from '../parts/labels'
+import { egp, priceOrAsk } from '../parts/labels'
 import { useCart } from './cartContext'
 
 const MAX_QUANTITY = 20
@@ -56,7 +56,10 @@ function RequestForm({ part }: { part: ApiPart }) {
     }
   }
 
-  const unit = part.price.amountEgp + (part.price.shippingEgp ?? 0) + (part.price.customsEgp ?? 0)
+  const unit =
+    part.price.amountEgp === undefined
+      ? null
+      : part.price.amountEgp + (part.price.shippingEgp ?? 0) + (part.price.customsEgp ?? 0)
   const install = fitting ? (part.price.installEgp ?? 0) : 0
 
   return (
@@ -115,7 +118,7 @@ function RequestForm({ part }: { part: ApiPart }) {
 
       <p className="request-estimate">
         <span>{tx('Estimate', 'التقدير')}</span>
-        <strong dir="ltr">{egp.format(unit * quantity + install)}</strong>
+        <strong dir="ltr">{priceOrAsk(unit === null ? null : unit * quantity + install, tx)}</strong>
       </p>
 
       {error && <p className="form-error">{error}</p>}

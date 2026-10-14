@@ -114,8 +114,8 @@ export const IMPORT_CURRENCIES = ['CNY', 'USD'] as const
 export type ImportCurrency = (typeof IMPORT_CURRENCIES)[number]
 
 export type PartPrice = {
-  /** The item itself, in EGP. For an import, what it costs converted. */
-  amountEgp: number
+  /** The item itself, in EGP. For an import, what it costs converted. Missing means "price on request". */
+  amountEgp?: number
   installEgp?: number
   /** Imports only: the price as the seller lists it. */
   originalAmount?: number
@@ -220,7 +220,8 @@ export type CenterPackage = {
   name: Localized
   service: ProtectionService
   coverage: CoverageArea[]
-  priceEgp: number
+  /** Missing means "price on request". */
+  priceEgp?: number
   /** Only when the Wild is charged differently from the Play. */
   wildPriceEgp?: number
   durationDays?: { min: number; max: number }
@@ -243,7 +244,7 @@ export type CenterDoc = {
   slug: string
   name: Localized
   description: Localized
-  city: string
+  city?: string
   area?: string
   address?: string
   /** A Google Maps (or similar) link to the workshop. */
@@ -261,6 +262,84 @@ export type CenterDoc = {
   ratingCount: number
   active: boolean
   /** When someone last confirmed the packages and prices. */
+  checkedAt: string
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+/** What an insurance plan can pay for. */
+export const INSURANCE_COVERS = [
+  'own-damage',
+  'total-loss',
+  'theft',
+  'fire',
+  'third-party',
+  'natural-disasters',
+  'riots',
+  'glass',
+  'battery',
+  'personal-accident',
+  'roadside',
+  'towing',
+  'replacement-car',
+  'abroad',
+] as const
+export type InsuranceCover = (typeof INSURANCE_COVERS)[number]
+
+/**
+ * One plan an insurer sells. Egyptian car insurance is quoted as a yearly
+ * percentage of the car's value, so the page works out the premium for each
+ * trim from its current price. Everything but the name is optional.
+ */
+export type InsurancePlan = {
+  /** Stable within the insurer, so the page can link to one plan. */
+  id: string
+  name: Localized
+  /** Yearly premium as a percentage of the car's value, e.g. 2.25. */
+  ratePct?: number
+  /** The premium never goes below this, whatever the rate gives. */
+  minPremiumEgp?: number
+  covers: InsuranceCover[]
+  /** Repairs at the official agency for the car's first N years; 0 means never. */
+  agencyRepairYears?: number
+  /** Share of the premium paid back, e.g. 10 for 10%. */
+  cashbackPct?: number
+  /** When the cashback is paid, e.g. "No claims during the year". */
+  cashbackCondition?: Localized
+  /** Discount on renewal after a year without claims. */
+  noClaimsDiscountPct?: number
+  /** The owner's share of each claim, as a percentage, an amount, or both. */
+  deductiblePct?: number
+  deductibleEgp?: number
+  /** Oldest car the plan accepts. */
+  maxCarAgeYears?: number
+  /** e.g. "12 monthly installments, no interest". */
+  installments?: Localized
+  /** Offers, exclusions, waiting periods and anything else. */
+  notes?: Localized
+}
+
+export type InsurerDoc = {
+  _id: ObjectId
+  slug: string
+  name: Localized
+  description: Localized
+  /** Short number such as 19xxx. */
+  hotline?: string
+  phone?: string
+  whatsapp?: string
+  website?: string
+  email?: string
+  /** Where to find them, in a sentence: "Branches in Cairo, Giza and Alexandria". */
+  branches?: string
+  plans: InsurancePlan[]
+  /** Logo and photos. */
+  images: PartImage[]
+  ratingAvg: number
+  ratingCount: number
+  active: boolean
+  /** When someone last confirmed the plans and rates. */
   checkedAt: string
   createdBy: string
   createdAt: string
@@ -304,8 +383,8 @@ export type OrderItem = {
   quantity: number
   note?: string
   fitting: boolean
-  /** Item plus shipping and customs, per unit. */
-  unitPriceEgp: number
+  /** Item plus shipping and customs, per unit; missing when the accessory had no price. */
+  unitPriceEgp?: number
   /** Fitting for the whole line, when asked for and known. */
   installEgp?: number
 }
@@ -314,7 +393,7 @@ export type OrderContact = {
   name: string
   phone: string
   whatsapp?: string
-  city: string
+  city?: string
   address?: string
 }
 

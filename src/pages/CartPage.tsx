@@ -3,11 +3,12 @@ import { Package, ShoppingBag, Trash2 } from 'lucide-react'
 import { PageFrame } from '../components/layout'
 import { useAuth } from '../auth/authContext'
 import { useCart } from '../features/orders/cartContext'
-import { cartEstimate, lineTotal } from '../features/orders/labels'
-import { SOURCE_LABELS, egp, leadTimeText, partName } from '../features/parts/labels'
+import { cartEstimate, cartHasUnpriced, lineTotal } from '../features/orders/labels'
+import { SOURCE_LABELS, egp, leadTimeText, partName, priceOrAsk } from '../features/parts/labels'
 import { useLanguage } from '../i18n/languageContext'
 import { ApiError, api, apiConfigured, type ApiCartLine } from '../lib/api'
 import { ServiceUnavailable } from './AccountPage'
+import { Req, RequiredLegend } from '../components/RequiredMark'
 
 /**
  * The request list: what the user wants ordered, and how to reach them. It is
@@ -162,7 +163,7 @@ function CartLine({ line }: { line: ApiCartLine }) {
       </div>
       <div className="request-line-side">
         <strong dir="ltr">
-          {egp.format(lineTotal({ ...line, unitPriceEgp: part.unitPriceEgp, installEgp: part.installEgp }))}
+          {priceOrAsk(lineTotal({ ...line, unitPriceEgp: part.unitPriceEgp, installEgp: part.installEgp }), tx)}
         </strong>
         <button type="button" className="comment-remove" onClick={remove} disabled={cart.busy}>
           <Trash2 size={13} aria-hidden="true" /> {tx('Remove', 'حذف')}
@@ -187,7 +188,7 @@ function SendRequest({ lines }: { lines: ApiCartLine[] }) {
   const [busy, setBusy] = useState(false)
 
   const blocked = lines.some((line) => !line.part || line.part.availability === 'unavailable')
-  const unpricedFitting = lines.some((line) => line.fitting && line.part && line.part.installEgp === undefined)
+  const unpriced = cartHasUnpriced(lines)
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -199,7 +200,7 @@ function SendRequest({ lines }: { lines: ApiCartLine[] }) {
           name: name.trim(),
           phone: phone.trim(),
           whatsapp: whatsapp.trim() || undefined,
-          city: city.trim(),
+          city: city.trim() || undefined,
           address: address.trim() || undefined,
         },
         note: note.trim() || undefined,
@@ -220,19 +221,26 @@ function SendRequest({ lines }: { lines: ApiCartLine[] }) {
         <strong dir="ltr">{egp.format(cartEstimate(lines))}</strong>
       </p>
       <p className="muted-note">
-        {unpricedFitting
-          ? tx('Fitting without a listed price is added when we confirm. ', 'التركيب غير المسعّر يضاف عند التأكيد. ')
+        {unpriced
+          ? tx('Items or fitting without a listed price are priced when we confirm. ', 'القطع أو التركيب بلا سعر مدرج تُسعّر عند التأكيد. ')
           : ''}
         {tx('Prices for imports can move; we confirm the final price before ordering.', 'أسعار المستورد قد تتغير؛ نؤكد السعر النهائي قبل الطلب.')}
       </p>
 
       <h2>{tx('How to reach you', 'كيف نتواصل معك')}</h2>
+      <RequiredLegend />
       <label>
-        <span>{tx('Name', 'الاسم')}</span>
+        <span>
+          {tx('Name', 'الاسم')}
+          <Req />
+        </span>
         <input value={name} onChange={(event) => setName(event.target.value)} required minLength={2} maxLength={120} autoComplete="name" />
       </label>
       <label>
-        <span>{tx('Phone', 'الهاتف')}</span>
+        <span>
+          {tx('Phone', 'الهاتف')}
+          <Req />
+        </span>
         <input value={phone} onChange={(event) => setPhone(event.target.value)} required maxLength={32} dir="ltr" inputMode="tel" autoComplete="tel" />
       </label>
       <label>
@@ -241,7 +249,7 @@ function SendRequest({ lines }: { lines: ApiCartLine[] }) {
       </label>
       <label>
         <span>{tx('City', 'المدينة')}</span>
-        <input value={city} onChange={(event) => setCity(event.target.value)} required minLength={2} maxLength={80} autoComplete="address-level2" />
+        <input value={city} onChange={(event) => setCity(event.target.value)} maxLength={80} autoComplete="address-level2" />
       </label>
       <label>
         <span>{tx('Delivery address (optional)', 'عنوان التسليم (اختياري)')}</span>

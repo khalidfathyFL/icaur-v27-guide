@@ -7,6 +7,7 @@ export type PendingCounts = {
   comments: number
   partReviews: number
   centerReviews: number
+  insurerReviews: number
   /** Requests nobody has answered yet. */
   orders: number
 }
@@ -27,14 +28,16 @@ export function usePendingCounts(can: (permission: string) => boolean) {
       can('comments.review') ? api.commentQueue('pending') : none,
       can('comments.review') ? api.reviewQueue('part', 'pending') : none,
       can('comments.review') ? api.reviewQueue('center', 'pending') : none,
+      can('comments.review') ? api.reviewQueue('insurer', 'pending') : none,
       can('orders.manage') ? api.orderQueue('new') : none,
-    ]).then(([posts, suggestions, comments, partReviews, centerReviews, orders]) => {
+    ]).then(([posts, suggestions, comments, partReviews, centerReviews, insurerReviews, orders]) => {
       setCounts({
         posts: posts.status === 'fulfilled' && posts.value ? posts.value.posts.length : 0,
         suggestions: suggestions.status === 'fulfilled' && suggestions.value ? suggestions.value.suggestions.length : 0,
         comments: comments.status === 'fulfilled' && comments.value ? comments.value.comments.length : 0,
         partReviews: partReviews.status === 'fulfilled' && partReviews.value ? partReviews.value.length : 0,
         centerReviews: centerReviews.status === 'fulfilled' && centerReviews.value ? centerReviews.value.length : 0,
+        insurerReviews: insurerReviews.status === 'fulfilled' && insurerReviews.value ? insurerReviews.value.length : 0,
         orders: orders.status === 'fulfilled' && orders.value ? orders.value.orders.length : 0,
       })
     })

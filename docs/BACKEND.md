@@ -147,6 +147,27 @@ promote them.
   queue rules as comments: the **Approve comments** permission works all three
   queues.
 
+## Car insurance
+
+Editors with **Manage insurance** (`insurance.manage`) list insurance
+companies at `#/admin/insurance`, each with its plans. Only the company name and
+each plan's name are required. A plan can record:
+
+- the yearly rate as a percentage of the car's value, and a minimum premium;
+- what it covers (accident damage, total loss, theft, fire, third party,
+  floods, riots, glass, the high-voltage battery, injury, roadside help,
+  towing, a replacement car, cover abroad) and for how many years repairs are
+  done at the agency;
+- cashback as a percentage of the premium and when it is paid, and the
+  no-claims discount on renewal;
+- the deductible (a percentage, an amount, or both), the oldest car accepted,
+  installments, and free-text offers, exclusions and notes.
+
+`#/insurance` works out each plan's yearly cost for the reader's trim from the
+current list price on the Egypt page (rate x price, never below the minimum),
+and the cashback in pounds. Owners can review insurers, moderated with the
+comments.
+
 ## Order requests
 
 Signed-in users can put accessories on a request list (quantity, a note,
@@ -182,6 +203,8 @@ request numbered `IC-0001`, `IC-0002`…
 | `partReviews` | owner reviews of accessories and their review state |
 | `centers` | protection centers: contact details, photo addresses, and their packages |
 | `centerReviews` | owner reviews of protection centers and their review state |
+| `insurers` | insurance companies, their contact details, logo, and their plans |
+| `insurerReviews` | owner reviews of insurance companies and their review state |
 | `carts` | each signed-in user's request list, before they send it |
 | `orders` | sent order requests: contact details, a copy of the lines and prices, status history, payment |
 | `counters` | the running number behind request numbers such as `IC-0007` |

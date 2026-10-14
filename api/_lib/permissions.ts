@@ -25,6 +25,7 @@ export const PERMISSION_KEYS = [
   'pricing.manage',
   'parts.manage',
   'centers.manage',
+  'insurance.manage',
   'orders.manage',
   'users.manage',
   'audit.read',
@@ -103,6 +104,12 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     key: 'centers.manage',
     label: 'Manage protection centers',
     description: 'Add, edit and remove protection centers and their packages, prices and photos.',
+    group: 'Market data',
+  },
+  {
+    key: 'insurance.manage',
+    label: 'Manage insurance',
+    description: 'Add, edit and remove insurance companies and their plans, rates, coverage and cashback.',
     group: 'Market data',
   },
   {

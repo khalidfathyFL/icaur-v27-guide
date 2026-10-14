@@ -1,5 +1,5 @@
 import { MongoClient, type Db } from 'mongodb'
-import { CENTER_REVIEWS, PART_REVIEWS, reviewIndexes } from './reviewKinds.js'
+import { CENTER_REVIEWS, INSURER_REVIEWS, PART_REVIEWS, reviewIndexes } from './reviewKinds.js'
 
 /**
  * Serverless functions are re-invoked constantly, and a fresh connection per
@@ -58,6 +58,9 @@ async function ensureIndexes(db: Db): Promise<void> {
     // One review per owner per thing; a second attempt is a 409, not a duplicate.
     ...reviewIndexes(db, PART_REVIEWS),
     ...reviewIndexes(db, CENTER_REVIEWS),
+    db.collection('insurers').createIndex({ slug: 1 }, { unique: true }),
+    db.collection('insurers').createIndex({ active: 1 }),
+    ...reviewIndexes(db, INSURER_REVIEWS),
     db.collection('audit').createIndex({ at: -1 }),
     db.collection('emailQueue').createIndex({ kind: 1, failed: 1, createdAt: 1 }),
     db.collection('audit').createIndex({ actorId: 1, at: -1 }),

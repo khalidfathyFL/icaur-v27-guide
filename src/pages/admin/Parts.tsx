@@ -14,6 +14,7 @@ import {
   SUBCATEGORY_SUGGESTIONS,
   egp,
   partName,
+  priceOrAsk,
 } from '../../features/parts/labels'
 import { useLanguage, useShortText } from '../../i18n/languageContext'
 import {
@@ -29,6 +30,7 @@ import {
 import { errorMessage } from '../../lib/errors'
 import { formatDate } from '../../lib/format'
 import { PhotoEditor } from './PhotoEditor'
+import { Req, RequiredLegend } from '../../components/RequiredMark'
 
 /** `null` while closed; `'new'` for the add form, or the part being edited. */
 type Editing = null | 'new' | ApiPart
@@ -186,7 +188,7 @@ export function Parts() {
             key: 'price',
             header: tx('Total cost', 'التكلفة الكلية'),
             width: '130px',
-            render: (part) => <span dir="ltr">{egp.format(part.landedEgp)}</span>,
+            render: (part) => <span dir="ltr">{priceOrAsk(part.landedEgp, tx)}</span>,
           },
           {
             key: 'availability',
@@ -499,16 +501,24 @@ function PartForm({ part, onClose, onSaved }: { part: ApiPart | null; onClose: (
       }
     >
       <form id="part-form" className="auth-form wide panel-form part-form" onSubmit={onSubmit}>
+        <RequiredLegend bilingual />
         <section className="part-form-section">
           <h3>{tx('Basics', 'الأساسيات')}</h3>
           <div className="panel-form-grid">
             <label>
-              <span>{tx('Name (English)', 'الاسم (بالإنجليزية)')}</span>
-              <input value={draft.nameEn} onChange={(e) => set('nameEn', e.target.value)} maxLength={160} dir="ltr" autoFocus />
+              <span>
+                {tx('Name (English)', 'الاسم (بالإنجليزية)')}
+                <Req />
+              </span>
+              <input aria-required value={draft.nameEn} onChange={(e) => set('nameEn', e.target.value)} maxLength={160} dir="ltr" autoFocus />
             </label>
             <label>
-              <span>{tx('Name (Arabic)', 'الاسم (بالعربية)')}</span>
-              <input value={draft.nameAr} onChange={(e) => set('nameAr', e.target.value)} maxLength={160} dir="rtl" lang="ar" />
+              <span>
+                {tx('Name (Arabic)', 'الاسم (بالعربية)')}
+                <Req />
+              </span>
+              <input aria-required value={draft.nameAr} onChange={(e) => set('nameAr', e.target.value)} maxLength={160} dir="rtl" lang="ar" />
+              <small>{tx('English, Arabic or both.', 'بالإنجليزية أو العربية أو كلتيهما.')}</small>
             </label>
             <label>
               <span>{tx('Category', 'الفئة')}</span>
@@ -587,8 +597,11 @@ function PartForm({ part, onClose, onSaved }: { part: ApiPart | null; onClose: (
           <div className="panel-form-grid">
             <label>
               <span>{isImport ? tx('Item price in EGP', 'سعر القطعة بالجنيه') : tx('Price (EGP)', 'السعر (جنيه)')}</span>
-              <input type="number" inputMode="decimal" min={1} step="any" required value={draft.amountEgp} onChange={(e) => set('amountEgp', e.target.value)} dir="ltr" />
-              {isImport && <small>{tx('The seller price converted to pounds.', 'سعر البائع محولا إلى الجنيه.')}</small>}
+              <input type="number" inputMode="decimal" min={1} step="any" value={draft.amountEgp} onChange={(e) => set('amountEgp', e.target.value)} dir="ltr" />
+              <small>
+                {isImport ? tx('The seller price converted to pounds. ', 'سعر البائع محولا إلى الجنيه. ') : ''}
+                {tx('Leave empty to show "Price on request".', 'اتركه فارغا ليظهر "السعر عند الطلب".')}
+              </small>
             </label>
             <label>
               <span>{tx('Installation (EGP)', 'التركيب (جنيه)')}</span>
@@ -661,7 +674,10 @@ function PartForm({ part, onClose, onSaved }: { part: ApiPart | null; onClose: (
             <div className="part-supplier" key={index}>
               <div className="panel-form-grid">
                 <label>
-                  <span>{tx('Name', 'الاسم')}</span>
+                  <span>
+                    {tx('Supplier name', 'اسم المورد')}
+                    <Req />
+                  </span>
                   <input value={supplier.name} onChange={(e) => setSupplier(index, { name: e.target.value })} required minLength={2} maxLength={160} />
                 </label>
                 <label>

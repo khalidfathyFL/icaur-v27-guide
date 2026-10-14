@@ -132,7 +132,7 @@ function readContact(value: unknown) {
     name: requireString(body.name, 'Name', { min: 2, max: 120 }),
     phone,
     whatsapp: optionalPhone(body.whatsapp),
-    city: requireString(body.city, 'City', { min: 2, max: 80 }),
+    city: optionalString(body.city, 'City', { max: 80 }),
     address: optionalString(body.address, 'Address', { max: 400 }),
   })
 }
@@ -179,12 +179,19 @@ async function createOrder(request: Request): Promise<Response> {
       quantity: line.quantity,
       note: line.note,
       fitting: line.fitting,
-      unitPriceEgp: part.price.amountEgp + (part.price.shippingEgp ?? 0) + (part.price.customsEgp ?? 0),
+      unitPriceEgp:
+        part.price.amountEgp === undefined
+          ? undefined
+          : part.price.amountEgp + (part.price.shippingEgp ?? 0) + (part.price.customsEgp ?? 0),
       installEgp: line.fitting ? part.price.installEgp : undefined,
     })
   })
 
-  const estimatedTotalEgp = items.reduce((sum, item) => sum + item.unitPriceEgp * item.quantity + (item.installEgp ?? 0), 0)
+  // Lines with no price are left out; the team prices them when confirming.
+  const estimatedTotalEgp = items.reduce(
+    (sum, item) => sum + (item.unitPriceEgp ?? 0) * item.quantity + (item.installEgp ?? 0),
+    0,
+  )
   const now = new Date().toISOString()
 
   const doc = compact({

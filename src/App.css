@@ -5341,3 +5341,157 @@ ol.path-pills li:last-child {
     align-items: center;
   }
 }
+
+/* ---------- required fields ---------- */
+
+.req {
+  color: var(--danger, #b91c1c);
+  font-weight: 800;
+}
+
+.form-legend {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.review-rating-label {
+  color: var(--heading);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.part-price-ask {
+  margin: 0;
+  color: var(--heading);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+/* ---------- car insurance ---------- */
+
+.insurance-basis {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+  margin-bottom: 1.25rem;
+}
+
+.insurance-basis p {
+  margin: 0;
+}
+
+.insurance-needs-label {
+  align-self: center;
+  margin-inline-end: 0.25rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.insurer-logo img {
+  object-fit: contain;
+  padding: 1rem;
+  background: #fff;
+}
+
+.insurer-head {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.insurer-head-logo {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--muted);
+}
+
+.insurer-head-logo img {
+  width: 100%;
+  height: 100%;
+  padding: 0.75rem;
+  object-fit: contain;
+}
+
+.center-contact-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.center-contact-line svg {
+  flex: none;
+  margin-top: 0.2rem;
+  color: var(--muted);
+}
+
+.insurance-cashback {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ok, #15803d) 12%, transparent);
+}
+
+.insurance-cashback strong {
+  color: var(--heading);
+}
+
+.insurance-cashback small {
+  color: var(--muted);
+}
+
+.insurance-covers {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.88rem;
+}
+
+.insurance-covers li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.insurance-covers svg {
+  flex: none;
+  margin-top: 0.2rem;
+}
+
+.insurance-covers .yes svg {
+  color: var(--ok, #15803d);
+}
+
+.insurance-covers .no {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--muted) 50%, transparent);
+}
+
+.insurance-covers .no svg {
+  color: var(--danger, #b91c1c);
+}
+
+.insurance-disclaimer {
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .insurer-head {
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 1rem;
+  }
+}

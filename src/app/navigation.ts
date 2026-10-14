@@ -23,6 +23,7 @@ export const SECONDARY_NAV: NavItem[] = [
     ? [
         { href: '/accessories', en: 'Accessories', ar: 'الإكسسوارات' },
         { href: '/protection', en: 'Protection centers', ar: 'مراكز الحماية' },
+        { href: '/insurance', en: 'Car insurance', ar: 'تأمين السيارة' },
       ]
     : []),
   { href: '/sources', en: 'Sources', ar: 'المصادر' },
