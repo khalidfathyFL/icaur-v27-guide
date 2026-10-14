@@ -2,6 +2,7 @@ import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
 import { requireUser } from '../_lib/auth.js'
 import { hasPermission, type Permission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody } from '../_lib/http.js'
+import { isMerchantOf, type MerchantKind } from '../_lib/merchants.js'
 
 /**
  * Issues short-lived tokens for the browser to upload listing and post photos straight
@@ -22,6 +23,9 @@ const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
  * that listing's editors; `posts` is open to any signed-in account, because
  * anyone may write a post, and the post itself is still reviewed.
  */
+/** A merchant may upload photos for their own listing, so these folders also open to them. */
+const MERCHANT_FOLDERS: Record<string, MerchantKind> = { centers: 'center', insurers: 'insurer' }
+
 const FOLDERS: Record<string, Permission | 'signedIn'> = {
   parts: 'parts.manage',
   centers: 'centers.manage',
@@ -55,7 +59,10 @@ export async function handleUploads(request: Request, segments: string[]): Promi
       }
       // requireUser above has already established the account is signed in.
       if (permission !== 'signedIn' && !hasPermission(editor, permission)) {
-        throw new HttpError(403, 'Your account does not have permission to do that.')
+        const merchantKind = MERCHANT_FOLDERS[match?.[1] ?? '']
+        if (!merchantKind || !(await isMerchantOf(editor, merchantKind))) {
+          throw new HttpError(403, 'Your account does not have permission to do that.')
+        }
       }
 
       return {

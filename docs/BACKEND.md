@@ -175,6 +175,30 @@ current list price on the Egypt page (rate x price, never below the minimum),
 and the cashback in pounds. Owners can review insurers, moderated with the
 comments.
 
+## Merchant accounts
+
+An insurance company or a protection center can keep its own listing up to
+date. Someone from the business signs up on the site like anyone else; then
+staff with **Manage insurance** or **Manage protection centers** open the
+listing in the admin panel and add that account's email under **Merchant
+accounts**.
+
+- The merchant sees **Car insurance** or **Protection centers** in the admin
+  panel with only their own listings in it, and can edit the details, photos
+  and plans or packages. Changes go live straight away.
+- They cannot see other listings, add or remove a listing, take theirs off
+  the site, or change who its merchants are.
+- Every change is in the activity log with the merchant's name, which fields
+  changed, and which plans or packages were added, removed or edited.
+- Removing the account from the listing takes effect on its next request.
+
+## Email history
+
+**Admin → Emails → Sent emails** lists every email the site tried to send,
+newest first: who it was for, the subject, and whether it was sent, is
+waiting for tomorrow, or failed (with Brevo's reason). An email held for
+the next day appears again when it goes out.
+
 ## Order requests
 
 Signed-in users can put accessories on a request list (quantity, a note,

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { BadgeCheck, ChevronDown, Copy, Pencil, Plus, RotateCcw, ShieldCheck, Trash2, X } from 'lucide-react'
 import { DataTable } from '../../components/panel/DataTable'
 import { Drawer } from '../../components/panel/Drawer'
-import { EmptyState, FilterSelect } from '../../components/panel/blocks'
+import { EmptyState, FilterSelect, PageHeader } from '../../components/panel/blocks'
 import { useConfirm, useToast } from '../../components/panel/feedback'
 import {
   BRAND_SUGGESTIONS,
@@ -17,6 +17,7 @@ import { egp } from '../../features/parts/labels'
 import { useLanguage, useShortText } from '../../i18n/languageContext'
 import {
   api,
+  type ApiMerchant,
   type ApiCenter,
   type CenterInput,
   type CenterPackage,
@@ -27,10 +28,15 @@ import {
 import { errorMessage } from '../../lib/errors'
 import { formatDate } from '../../lib/format'
 import { PhotoEditor } from './PhotoEditor'
+import { MerchantAccounts } from './MerchantAccounts'
+import { useAuth } from '../../auth/authContext'
 import { Req, RequiredLegend } from '../../components/RequiredMark'
 
+/** A listing as the table has it: staff also get the merchant accounts behind it. */
+type Row = ApiCenter & { merchants?: ApiMerchant[] }
+
 /** `null` while closed; `'new'` for the add form, or the center being edited. */
-type Editing = null | 'new' | ApiCenter
+type Editing = null | 'new' | Row
 
 const MAX_PACKAGES = 20
 
@@ -39,20 +45,24 @@ export function Centers() {
   const tx = useShortText()
   const toast = useToast()
   const confirm = useConfirm()
-  const [centers, setCenters] = useState<ApiCenter[] | null>(null)
+  const [centers, setCenters] = useState<Row[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<Editing>(null)
   const [service, setService] = useState<ProtectionService | 'all'>('all')
 
+  const { can } = useAuth()
+  // Staff see every listing; a merchant sees only the ones they run.
+  const staff = can('centers.manage')
+
   const load = useCallback(() => {
     api
-      .listCenters({ all: true })
+      .listCenters(staff ? { all: true } : { mine: true })
       .then(({ centers: list }) => {
         setCenters(list)
         setError(null)
       })
       .catch((caught) => setError(errorMessage(caught, tx('Could not load.', 'تعذر التحميل.'))))
-  }, [tx])
+  }, [tx, staff])
 
   useEffect(load, [load])
 
@@ -101,6 +111,14 @@ export function Centers() {
 
   return (
     <>
+      {!staff && (
+        <PageHeader
+          description={tx(
+            'The listings you run. Edit your details, photos and packages; changes go live on the site straight away and are recorded with your name.',
+            'الصفحات التي تديرها. عدّل بياناتك وصورك والباقات؛ تظهر التغييرات على الموقع فورا وتسجل باسمك.',
+          )}
+        />
+      )}
       <DataTable
         rows={shown}
         rowKey={(center) => center.id}
@@ -120,7 +138,7 @@ export function Centers() {
             ]}
           />
         }
-        actions={addButton}
+        actions={staff ? addButton : undefined}
         onRowClick={(center) => setEditing(center)}
         empty={
           <EmptyState
@@ -130,7 +148,7 @@ export function Centers() {
               'Add the first center with its packages and it will appear on the protection page.',
               'أضف أول مركز بباقاته وسيظهر في صفحة الحماية.',
             )}
-            action={addButton}
+            action={staff ? addButton : undefined}
           />
         }
         columns={[
@@ -180,6 +198,20 @@ export function Centers() {
                 <span className="badge no">{tx('Removed', 'محذوف')}</span>
               ),
           },
+          ...(staff
+            ? [
+                {
+                  key: 'merchants',
+                  header: tx('Merchant', 'التاجر'),
+                  width: '150px',
+                  render: (center: Row) => (
+                    <span className="panel-muted panel-clamp">
+                      {center.merchants?.length ? center.merchants.map((merchant) => merchant.name).join(', ') : '—'}
+                    </span>
+                  ),
+                },
+              ]
+            : []),
           {
             key: 'checked',
             header: tx('Checked', 'آخر تحقق'),
@@ -202,7 +234,8 @@ export function Centers() {
                 >
                   <Pencil size={15} />
                 </button>
-                {center.active ? (
+                {staff &&
+                  (center.active ? (
                   <button
                     type="button"
                     className="panel-icon-button danger"
@@ -222,7 +255,7 @@ export function Centers() {
                   >
                     <RotateCcw size={15} />
                   </button>
-                )}
+                ))}
               </span>
             ),
           },
@@ -233,7 +266,12 @@ export function Centers() {
         <CenterForm
           key={editing === 'new' ? 'new' : editing.id}
           center={editing === 'new' ? null : editing}
-          onClose={() => setEditing(null)}
+          merchants={staff && editing !== 'new' ? (editing.merchants ?? []) : undefined}
+          onClose={() => {
+            setEditing(null)
+            // Merchant accounts save on their own, so the table may be out of date.
+            if (staff) load()
+          }}
           onSaved={() => {
             setEditing(null)
             load()
@@ -382,7 +420,18 @@ function toInput(draft: Draft): CenterInput {
   }
 }
 
-function CenterForm({ center, onClose, onSaved }: { center: ApiCenter | null; onClose: () => void; onSaved: () => void }) {
+function CenterForm({
+  center,
+  merchants,
+  onClose,
+  onSaved,
+}: {
+  center: ApiCenter | null
+  /** Staff only: who runs this business on the site. */
+  merchants?: ApiMerchant[]
+  onClose: () => void
+  onSaved: () => void
+}) {
   const tx = useShortText()
   const toast = useToast()
   const [draft, setDraft] = useState<Draft>(() => toDraft(center))
@@ -608,6 +657,7 @@ function CenterForm({ center, onClose, onSaved }: { center: ApiCenter | null; on
 
         {error && <p className="form-error">{error}</p>}
       </form>
+      {center && merchants && <MerchantAccounts kind="centers" listingId={center.id} initial={merchants} />}
       {/* Once per form: every package's brand and material fields point here. */}
       <datalist id="center-brands">
         {BRAND_SUGGESTIONS.map((brand) => (

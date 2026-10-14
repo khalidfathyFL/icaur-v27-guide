@@ -41,6 +41,8 @@ export type PanelSection = {
   icon: LucideIcon
   group: string
   permission?: string
+  /** Also shown to merchants of this kind, who see only their own listings in it. */
+  merchant?: string
 }
 
 export type PanelGroupDef = { key: string; label: Text; icon: LucideIcon }
@@ -151,6 +153,7 @@ export const ADMIN_SECTIONS: PanelSection[] = [
     group: 'market',
     icon: ShieldHalf,
     permission: 'insurance.manage',
+    merchant: 'merchant.insurer',
     label: { en: 'Car insurance', ar: 'تأمين السيارة' },
     description: { en: 'Insurers, their plans, rates, cover and cashback', ar: 'شركات التأمين وخططها ونسبها وتغطيتها والاسترداد' },
   },
@@ -167,6 +170,7 @@ export const ADMIN_SECTIONS: PanelSection[] = [
     group: 'market',
     icon: ShieldPlus,
     permission: 'centers.manage',
+    merchant: 'merchant.center',
     label: { en: 'Protection centers', ar: 'مراكز الحماية' },
     description: {
       en: 'Where to fit PPF, ceramic and film, with each package',
@@ -277,5 +281,7 @@ export const ACCOUNT_SECTIONS: PanelSection[] = [
 
 /** The admin sections this person may open, in sidebar order. */
 export function visibleAdminSections(can: (permission: string) => boolean): PanelSection[] {
-  return ADMIN_SECTIONS.filter((section) => !section.permission || can(section.permission))
+  return ADMIN_SECTIONS.filter(
+    (section) => !section.permission || can(section.permission) || (section.merchant !== undefined && can(section.merchant)),
+  )
 }

@@ -28,6 +28,7 @@ import {
 import { parseRoleIds } from '../_lib/roles.js'
 import { sendTransactional } from '../_lib/email/outbox.js'
 import { welcomeEmail } from '../_lib/email/templates.js'
+import { managedListings } from '../_lib/merchants.js'
 
 /**
  * The first account to register becomes the admin, which bootstraps the site
@@ -138,7 +139,9 @@ async function login(request: Request): Promise<Response> {
 }
 
 async function me(request: Request): Promise<Response> {
-  return json(request, { user: await requireUser(request) })
+  const user = await requireUser(request)
+  // The listings this account runs as a merchant, so the panel can offer them.
+  return json(request, { user: { ...user, manages: await managedListings(user.id) } })
 }
 
 /** The permission catalogue: one definition per key, in display order. */

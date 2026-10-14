@@ -66,6 +66,63 @@ export type EmailJob = {
   createdAt: string
 }
 
+/* ---------- the record of every email ---------- */
+
+export type EmailLogStatus = 'sent' | 'queued' | 'failed'
+
+/**
+ * One row per attempt to deliver an email: who it was for, what it was, and
+ * what happened. This is what answers "did they get it?". A queued email gets
+ * a second row when it finally goes out.
+ */
+export type EmailLogEntry = {
+  _id: ObjectId
+  at: string
+  to: { email: string; name: string }
+  userId?: string
+  subject: string
+  /** Which email it was, e.g. post-approved or announcement. */
+  tag: string
+  kind: Kind
+  status: EmailLogStatus
+  error?: string
+}
+
+/** Logging must never stop an email, so a failure here is only reported. */
+async function logEmail(db: Db, entry: Omit<EmailLogEntry, '_id' | 'at'>): Promise<void> {
+  try {
+    await db.collection('emailLog').insertOne({ ...entry, at: new Date().toISOString() })
+  } catch (error) {
+    console.error('Could not record the email:', error)
+  }
+}
+
+export async function emailLog(options: { page: number; search?: string }) {
+  const db = await getDb()
+  const pattern = options.search?.trim()
+  const filter = pattern
+    ? {
+        $or: [
+          { 'to.email': { $regex: escapeRegex(pattern), $options: 'i' } },
+          { 'to.name': { $regex: escapeRegex(pattern), $options: 'i' } },
+          { subject: { $regex: escapeRegex(pattern), $options: 'i' } },
+        ],
+      }
+    : {}
+
+  const entries = await db
+    .collection<EmailLogEntry>('emailLog')
+    .find(filter)
+    .sort({ at: -1 })
+    .skip((options.page - 1) * 50)
+    .limit(50)
+    .toArray()
+
+  return entries.map(({ _id, ...entry }) => ({ id: _id.toHexString(), ...entry }))
+}
+
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
 /* ---------- the daily allowance ---------- */
 
 /** Brevo counts per calendar day; the counter uses UTC days. */
@@ -211,15 +268,21 @@ export async function sendTransactional(
       tags: [content.tag],
     }
 
+    const record = (status: EmailLogStatus, error?: string) =>
+      logEmail(db, { to: job.to, userId: to.userId, subject: job.subject, tag: content.tag, kind: 'transactional', status, error })
+
     if ((await reserve(db, 'transactional', 1)) === 0) {
       await queue(db).insertOne({ ...job, attempts: 0, createdAt: new Date().toISOString() } as EmailJob)
+      await record('queued')
       return { outcome: 'queued' }
     }
 
     try {
       await sendViaBrevo({ to: job.to, subject: job.subject, html: job.html, text: job.text, tags: job.tags })
+      await record('sent')
       return { outcome: 'sent' }
     } catch (error) {
+      await record(error instanceof BrevoError && error.quotaExhausted ? 'queued' : 'failed', String(error).slice(0, 500))
       await release(db, 'transactional', 1)
       const quota = error instanceof BrevoError && error.quotaExhausted
       if (quota) await markDaySpent(db)
@@ -404,6 +467,8 @@ async function sendBatch(db: Db, jobs: Collection<EmailJob>, batch: EmailJob[]) 
 
   async function sendOne(job: EmailJob): Promise<void> {
     if (quotaExhausted) return
+    let subject = job.subject ?? ''
+    let tag = job.tags?.[0] ?? job.kind
     try {
       if (job.kind === 'broadcast') {
         const content = job.announcementId
@@ -418,14 +483,26 @@ async function sendBatch(db: Db, jobs: Collection<EmailJob>, batch: EmailJob[]) 
         }
         const unsubscribe = job.userId ? await unsubscribeUrl(job.userId) : undefined
         const rendered = renderEmail(content, job.to.name, unsubscribe)
+        subject = rendered.subject
+        tag = content.tag
         await sendViaBrevo({ to: job.to, ...rendered, unsubscribeUrl: unsubscribe, tags: [content.tag] })
       } else {
         await sendViaBrevo({ to: job.to, subject: job.subject!, html: job.html!, text: job.text!, tags: job.tags })
       }
       await jobs.deleteOne({ _id: job._id })
       sent++
+      await logEmail(db, { to: job.to, userId: job.userId, subject, tag, kind: job.kind, status: 'sent' })
     } catch (error) {
       if (error instanceof BrevoError && error.quotaExhausted) quotaExhausted = true
+      await logEmail(db, {
+        to: job.to,
+        userId: job.userId,
+        subject,
+        tag,
+        kind: job.kind,
+        status: quotaExhausted ? 'queued' : 'failed',
+        error: String(error).slice(0, 500),
+      })
       firstError ??= error instanceof Error ? error.message : String(error)
       const attempts = job.attempts + 1
       await jobs.updateOne(

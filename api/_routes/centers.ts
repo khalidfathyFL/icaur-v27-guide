@@ -3,7 +3,8 @@ import { ObjectId } from 'mongodb'
 import { requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
-import { auditableChanges, recordAudit } from '../_lib/audit.js'
+import { auditableChanges, listingChanges, recordAudit } from '../_lib/audit.js'
+import { adminListFilter, handleMerchants, merchantsByListing, requireListingEditor } from '../_lib/merchants.js'
 import {
   compact,
   deleteBlobs,
@@ -71,7 +72,9 @@ function toPublic(center: CenterDoc) {
 }
 
 export async function handleCenters(request: Request, segments: string[]): Promise<Response> {
-  const [id] = segments
+  const [id, sub, subId] = segments
+
+  if (id && sub === 'merchants') return handleMerchants(request, 'center', id, subId)
 
   if (!id) {
     if (request.method === 'GET') return listCenters(request)
@@ -89,13 +92,9 @@ export async function handleCenters(request: Request, segments: string[]): Promi
 /** Public: every active center. `all=1` adds removed ones, for the admin table. */
 async function listCenters(request: Request): Promise<Response> {
   const params = searchParams(request)
-  const filter: Record<string, unknown> = {}
-
-  if (params.get('all') === '1') {
-    await requirePermission(request, 'centers.manage')
-  } else {
-    filter.active = true
-  }
+  // Staff see every listing, a merchant sees their own, and the public sees what is live.
+  const scope = await adminListFilter(request, 'center')
+  const filter: Record<string, unknown> = scope ?? { active: true }
 
   const service = params.get('service')
   if (service) filter.services = requireEnum(service, PROTECTION_SERVICES, 'Service')
@@ -108,7 +107,14 @@ async function listCenters(request: Request): Promise<Response> {
     .limit(300)
     .toArray()
 
-  return json(request, { centers: centers.map(toPublic) })
+  // Only the staff table names the accounts behind each listing.
+  const merchants = params.get('all') === '1' ? await merchantsByListing(centers) : null
+  return json(request, {
+    centers: centers.map((center) => ({
+      ...toPublic(center),
+      ...(merchants ? { merchants: merchants.get(center._id.toHexString()) ?? [] } : {}),
+    })),
+  })
 }
 
 async function readCenter(request: Request, idOrSlug: string): Promise<Response> {
@@ -238,8 +244,8 @@ async function createCenter(request: Request): Promise<Response> {
 }
 
 async function updateCenter(request: Request, id: string): Promise<Response> {
-  const editor = await requirePermission(request, 'centers.manage')
-  if (!ObjectId.isValid(id)) throw new HttpError(404, 'Protection center not found.')
+  // Staff may edit any listing; a merchant only their own.
+  const { user: editor, staff } = await requireListingEditor(request, 'center', id)
 
   const body = await readJsonBody<Record<string, unknown>>(request)
   const db = await getDb()
@@ -262,7 +268,11 @@ async function updateCenter(request: Request, id: string): Promise<Response> {
     const kept = new Set(fields.images.map((image) => image.url))
     removedImages = existing.images.map((image) => image.url).filter((url) => !kept.has(url))
   }
-  if (body.active !== undefined) update.active = body.active === true
+  if (body.active !== undefined) {
+    // Taking a listing off the site, or putting it back, is the site's call.
+    if (!staff) throw new HttpError(403, 'Only the site team can remove or restore a listing.')
+    update.active = body.active === true
+  }
   if (body.checked === true) update.checkedAt = now
 
   const { set, update: changes } = setAndUnset(update)
@@ -272,11 +282,11 @@ async function updateCenter(request: Request, id: string): Promise<Response> {
 
   await recordAudit(editor, 'center.updated', {
     target: { kind: 'center', id, label: existing.name.en || existing.name.ar },
-    changes: auditableChanges(
-      body.name !== undefined
-        ? { fields: Object.keys(set).filter((key) => key !== 'updatedAt'), packages: (set.packages as unknown[]).length }
-        : set,
-    ),
+    changes: {
+      ...auditableChanges(body.name !== undefined ? listingChanges(existing as unknown as Record<string, unknown>, set, 'packages') : set),
+      // A merchant's edit is marked, so staff can tell it from their own.
+      ...(staff ? {} : { byMerchant: true }),
+    },
   })
 
   const saved = await collection.findOne({ _id: existing._id })

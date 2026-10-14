@@ -31,6 +31,8 @@ export type ApiUser = {
   colour?: string
   /** Whether they get an email when a new post is published. */
   emailNewPosts?: boolean
+  /** For the signed-in person: the listings they run as a merchant. */
+  manages?: { insurers: string[]; centers: string[] }
   /**
    * For the signed-in person (`me`), everything they hold including their
    * roles. In the admin account list, only what was granted individually.
@@ -139,6 +141,26 @@ export type AnnouncementInput = {
 export type EmailSource = { template: string } | { announcement: AnnouncementInput }
 
 export type EmailOutcome = 'sent' | 'queued' | 'off' | 'failed'
+
+export type ApiEmailLogEntry = {
+  id: string
+  at: string
+  to: { email: string; name: string }
+  userId?: string
+  subject: string
+  tag: string
+  kind: 'transactional' | 'broadcast'
+  status: 'sent' | 'queued' | 'failed'
+  error?: string
+}
+
+/** An account linked to a listing as its merchant. */
+export type ApiMerchant = { id: string; name: string; email: string }
+
+/** Staff see every listing; a merchant only their own. */
+export type ListingScope = { all?: boolean; mine?: boolean }
+
+const scopeQuery = (params: ListingScope) => (params.all ? '?all=1' : params.mine ? '?mine=1' : '')
 
 export type ApiPost = {
   id: string
@@ -735,6 +757,12 @@ export const api = {
       auth: true,
     }),
 
+  emailLog: (params: { page?: number; q?: string } = {}) =>
+    request<{ entries: ApiEmailLogEntry[]; page: number }>(
+      `email/log?page=${params.page ?? 1}${params.q ? `&q=${encodeURIComponent(params.q)}` : ''}`,
+      { auth: true },
+    ),
+
   drainEmails: () => request<{ sent: number; deferred: number; error?: string; status: ApiEmailStatus }>('email/drain', { method: 'POST', auth: true }),
 
   listPricing: () => request<{ pricing: ApiPricing[] }>('pricing'),
@@ -795,8 +823,10 @@ export const api = {
 
   /* ---------- protection centers ---------- */
 
-  listCenters: (params: { all?: boolean } = {}) =>
-    request<{ centers: ApiCenter[] }>(`centers${params.all ? '?all=1' : ''}`, { auth: Boolean(params.all) }),
+  listCenters: (params: ListingScope = {}) =>
+    request<{ centers: (ApiCenter & { merchants?: ApiMerchant[] })[] }>(`centers${scopeQuery(params)}`, {
+      auth: Boolean(params.all || params.mine),
+    }),
 
   readCenter: (idOrSlug: string) => request<{ center: ApiCenter }>(`centers/${idOrSlug}`),
 
@@ -810,8 +840,17 @@ export const api = {
 
   /* ---------- insurance ---------- */
 
-  listInsurers: (params: { all?: boolean } = {}) =>
-    request<{ insurers: ApiInsurer[] }>(`insurers${params.all ? '?all=1' : ''}`, { auth: Boolean(params.all) }),
+  listInsurers: (params: ListingScope = {}) =>
+    request<{ insurers: (ApiInsurer & { merchants?: ApiMerchant[] })[] }>(`insurers${scopeQuery(params)}`, {
+      auth: Boolean(params.all || params.mine),
+    }),
+
+  /** Staff: link an account to a listing as its merchant, or unlink it. */
+  addMerchant: (kind: 'insurers' | 'centers', listingId: string, email: string) =>
+    request<{ merchant: ApiMerchant }>(`${kind}/${listingId}/merchants`, { method: 'POST', body: { email }, auth: true }),
+
+  removeMerchant: (kind: 'insurers' | 'centers', listingId: string, userId: string) =>
+    request<{ ok: true }>(`${kind}/${listingId}/merchants/${userId}`, { method: 'DELETE', auth: true }),
 
   readInsurer: (idOrSlug: string) => request<{ insurer: ApiInsurer }>(`insurers/${idOrSlug}`),
 

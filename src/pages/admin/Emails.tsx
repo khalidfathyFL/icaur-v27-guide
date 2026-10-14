@@ -1,18 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { AlertTriangle, Clock, FlaskConical, Mail, Monitor, Send, Smartphone, Users } from 'lucide-react'
+import { AlertTriangle, Clock, FlaskConical, History, Mail, Monitor, Send, Smartphone, Users } from 'lucide-react'
+import { DataTable } from '../../components/panel/DataTable'
 import { Card, EmptyState, PageHeader, StatCard } from '../../components/panel/blocks'
 import { useConfirm, useToast } from '../../components/panel/feedback'
 import { Segmented } from '../../components/Segmented'
-import { useShortText } from '../../i18n/languageContext'
+import { useLanguage, useShortText } from '../../i18n/languageContext'
 import {
   api,
   type AnnouncementInput,
+  type ApiEmailLogEntry,
   type ApiEmailStatus,
   type ApiEmailTemplate,
   type EmailImage,
   type EmailSource,
 } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
+import { formatDate } from '../../lib/format'
 
 /**
  * Everything about the emails the site sends: how much of today's Brevo
@@ -23,7 +26,7 @@ export function Emails() {
   const tx = useShortText()
   const toast = useToast()
   const [status, setStatus] = useState<ApiEmailStatus | null>(null)
-  const [tab, setTab] = useState<'templates' | 'compose'>('templates')
+  const [tab, setTab] = useState<'templates' | 'compose' | 'log'>('templates')
   const [draining, setDraining] = useState(false)
 
   const loadStatus = useCallback(() => {
@@ -128,10 +131,13 @@ export function Emails() {
         options={[
           { value: 'templates', label: tx('Site emails', 'رسائل الموقع') },
           { value: 'compose', label: tx('Write an announcement', 'اكتب إعلانا') },
+          { value: 'log', label: tx('Sent emails', 'الرسائل المرسلة') },
         ]}
       />
 
-      {tab === 'templates' ? <Templates onSent={loadStatus} /> : <Compose status={status} onSent={loadStatus} />}
+      {tab === 'templates' && <Templates onSent={loadStatus} />}
+      {tab === 'compose' && <Compose status={status} onSent={loadStatus} />}
+      {tab === 'log' && <EmailLog />}
     </>
   )
 }
@@ -512,5 +518,117 @@ function Compose({ status, onSent }: { status: ApiEmailStatus | null; onSent: ()
         <EmailPreview source={source} delay={500} />
       </Card>
     </div>
+  )
+}
+
+/* ---------- who received what ---------- */
+
+const LOG_STATUS = {
+  sent: { className: 'badge ok', label: { en: 'Sent', ar: 'أُرسل' } },
+  queued: { className: 'badge likely', label: { en: 'Waiting', ar: 'منتظر' } },
+  failed: { className: 'badge no', label: { en: 'Failed', ar: 'فشل' } },
+} as const
+
+/**
+ * Every email the site tried to send, newest first: who it was for, what it
+ * was and what happened. A waiting email shows twice once it goes out: when it
+ * was held, and when it was sent.
+ */
+function EmailLog() {
+  const { language, t } = useLanguage()
+  const tx = useShortText()
+  const [entries, setEntries] = useState<ApiEmailLogEntry[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [more, setMore] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    api
+      .emailLog({ page })
+      .then(({ entries: list }) => {
+        if (cancelled) return
+        setEntries((current) => (page === 1 ? list : [...(current ?? []), ...list]))
+        // The server sends 50 at a time; a full page means there may be older ones.
+        setMore(list.length === 50)
+      })
+      .catch((caught) => !cancelled && setError(errorMessage(caught, tx('Could not load.', 'تعذر التحميل.'))))
+    return () => {
+      cancelled = true
+    }
+  }, [page, tx])
+
+  return (
+    <>
+      <DataTable
+        rows={entries}
+        rowKey={(entry) => entry.id}
+        error={error}
+        searchText={(entry) => `${entry.to.name} ${entry.to.email} ${entry.subject}`}
+        searchPlaceholder={tx('Search person, address or subject…', 'ابحث بالشخص أو البريد أو الموضوع…')}
+        empty={
+          <EmptyState
+            icon={History}
+            title={tx('No emails yet', 'لا توجد رسائل بعد')}
+            text={tx('Every email the site sends will be listed here.', 'ستظهر هنا كل رسالة يرسلها الموقع.')}
+          />
+        }
+        pageSize={25}
+        columns={[
+          {
+            key: 'to',
+            header: tx('To', 'إلى'),
+            width: 'minmax(0, 1.3fr)',
+            render: (entry) => (
+              <span className="panel-cell-main">
+                <strong>{entry.to.name}</strong>
+                <small dir="ltr">{entry.to.email}</small>
+              </span>
+            ),
+          },
+          {
+            key: 'what',
+            header: tx('Email', 'الرسالة'),
+            width: 'minmax(0, 2fr)',
+            render: (entry) => (
+              <span className="panel-cell-main">
+                <span className="panel-clamp" dir="auto">{entry.subject}</span>
+                <small>{entry.kind === 'broadcast' ? tx('To everyone', 'للجميع') : tx('To one person', 'لشخص واحد')}</small>
+              </span>
+            ),
+          },
+          {
+            key: 'status',
+            header: tx('Result', 'النتيجة'),
+            width: 'minmax(0, 1fr)',
+            render: (entry) => (
+              <span className="panel-cell-main">
+                <span className={LOG_STATUS[entry.status].className}>{t(LOG_STATUS[entry.status].label)}</span>
+                {entry.error && (
+                  <small className="panel-clamp" title={entry.error} dir="ltr">
+                    {entry.error}
+                  </small>
+                )}
+              </span>
+            ),
+          },
+          {
+            key: 'when',
+            header: tx('When', 'متى'),
+            width: '170px',
+            render: (entry) => (
+              <time className="panel-muted" dateTime={entry.at}>
+                {formatDate(entry.at, language, true)}
+              </time>
+            ),
+          },
+        ]}
+      />
+      {more && (
+        <button type="button" className="panel-button" onClick={() => setPage((current) => current + 1)}>
+          {tx('Show older emails', 'اعرض الرسائل الأقدم')}
+        </button>
+      )}
+    </>
   )
 }

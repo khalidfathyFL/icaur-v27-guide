@@ -2,18 +2,23 @@ import { useCallback, useEffect, useState, type FormEvent, type InputHTMLAttribu
 import { BadgeCheck, ChevronDown, Copy, Pencil, Plus, RotateCcw, ShieldHalf, Trash2, X } from 'lucide-react'
 import { DataTable } from '../../components/panel/DataTable'
 import { Drawer } from '../../components/panel/Drawer'
-import { EmptyState } from '../../components/panel/blocks'
+import { EmptyState, PageHeader } from '../../components/panel/blocks'
 import { useConfirm, useToast } from '../../components/panel/feedback'
 import { Req, RequiredLegend } from '../../components/RequiredMark'
 import { COVERS, COVER_LABELS, insurerName, pct } from '../../features/insurance/labels'
 import { useLanguage, useShortText } from '../../i18n/languageContext'
-import { api, type ApiInsurer, type InsuranceCover, type InsurancePlan, type InsurerInput, type PartImage } from '../../lib/api'
+import { api, type ApiMerchant, type ApiInsurer, type InsuranceCover, type InsurancePlan, type InsurerInput, type PartImage } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
 import { formatDate } from '../../lib/format'
 import { PhotoEditor } from './PhotoEditor'
+import { MerchantAccounts } from './MerchantAccounts'
+import { useAuth } from '../../auth/authContext'
+
+/** A listing as the table has it: staff also get the merchant accounts behind it. */
+type Row = ApiInsurer & { merchants?: ApiMerchant[] }
 
 /** `null` while closed; `'new'` for the add form, or the insurer being edited. */
-type Editing = null | 'new' | ApiInsurer
+type Editing = null | 'new' | Row
 
 const MAX_PLANS = 15
 
@@ -22,19 +27,23 @@ export function Insurers() {
   const tx = useShortText()
   const toast = useToast()
   const confirm = useConfirm()
-  const [insurers, setInsurers] = useState<ApiInsurer[] | null>(null)
+  const [insurers, setInsurers] = useState<Row[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<Editing>(null)
 
+  const { can } = useAuth()
+  // Staff see every listing; a merchant sees only the ones they run.
+  const staff = can('insurance.manage')
+
   const load = useCallback(() => {
     api
-      .listInsurers({ all: true })
+      .listInsurers(staff ? { all: true } : { mine: true })
       .then(({ insurers: list }) => {
         setInsurers(list)
         setError(null)
       })
       .catch((caught) => setError(errorMessage(caught, tx('Could not load.', 'تعذر التحميل.'))))
-  }, [tx])
+  }, [tx, staff])
 
   useEffect(load, [load])
 
@@ -78,20 +87,28 @@ export function Insurers() {
 
   return (
     <>
+      {!staff && (
+        <PageHeader
+          description={tx(
+            'The listings you run. Edit your details, photos and plans; changes go live on the site straight away and are recorded with your name.',
+            'الصفحات التي تديرها. عدّل بياناتك وصورك والخطط؛ تظهر التغييرات على الموقع فورا وتسجل باسمك.',
+          )}
+        />
+      )}
       <DataTable
         rows={insurers}
         rowKey={(insurer) => insurer.id}
         error={error}
         searchText={(insurer) => `${insurer.name.en} ${insurer.name.ar} ${insurer.plans.map((plan) => `${plan.name.en} ${plan.name.ar}`).join(' ')}`}
         searchPlaceholder={tx('Search insurer or plan…', 'ابحث عن شركة أو خطة…')}
-        actions={addButton}
+        actions={staff ? addButton : undefined}
         onRowClick={(insurer) => setEditing(insurer)}
         empty={
           <EmptyState
             icon={ShieldHalf}
             title={tx('No insurers yet', 'لا توجد شركات تأمين بعد')}
             text={tx('Add the first insurance company with its plans.', 'أضف أول شركة تأمين بخططها.')}
-            action={addButton}
+            action={staff ? addButton : undefined}
           />
         }
         columns={[
@@ -138,6 +155,20 @@ export function Insurers() {
                 <span className="badge no">{tx('Removed', 'محذوف')}</span>
               ),
           },
+          ...(staff
+            ? [
+                {
+                  key: 'merchants',
+                  header: tx('Merchant', 'التاجر'),
+                  width: '150px',
+                  render: (insurer: Row) => (
+                    <span className="panel-muted panel-clamp">
+                      {insurer.merchants?.length ? insurer.merchants.map((merchant) => merchant.name).join(', ') : '—'}
+                    </span>
+                  ),
+                },
+              ]
+            : []),
           {
             key: 'checked',
             header: tx('Checked', 'آخر تحقق'),
@@ -154,7 +185,8 @@ export function Insurers() {
                 <button type="button" className="panel-icon-button" onClick={() => setEditing(insurer)} aria-label={tx('Edit', 'تعديل')} title={tx('Edit', 'تعديل')}>
                   <Pencil size={15} />
                 </button>
-                {insurer.active ? (
+                {staff &&
+                  (insurer.active ? (
                   <button type="button" className="panel-icon-button danger" onClick={() => remove(insurer)} aria-label={tx('Remove', 'حذف')} title={tx('Remove', 'حذف')}>
                     <Trash2 size={15} />
                   </button>
@@ -162,7 +194,7 @@ export function Insurers() {
                   <button type="button" className="panel-icon-button success" onClick={() => restore(insurer)} aria-label={tx('Restore', 'استعادة')} title={tx('Restore', 'استعادة')}>
                     <RotateCcw size={15} />
                   </button>
-                )}
+                ))}
               </span>
             ),
           },
@@ -173,7 +205,12 @@ export function Insurers() {
         <InsurerForm
           key={editing === 'new' ? 'new' : editing.id}
           insurer={editing === 'new' ? null : editing}
-          onClose={() => setEditing(null)}
+          merchants={staff && editing !== 'new' ? (editing.merchants ?? []) : undefined}
+          onClose={() => {
+            setEditing(null)
+            // Merchant accounts save on their own, so the table may be out of date.
+            if (staff) load()
+          }}
           onSaved={() => {
             setEditing(null)
             load()
@@ -305,7 +342,18 @@ function toInput(draft: Draft): InsurerInput {
   }
 }
 
-function InsurerForm({ insurer, onClose, onSaved }: { insurer: ApiInsurer | null; onClose: () => void; onSaved: () => void }) {
+function InsurerForm({
+  insurer,
+  merchants,
+  onClose,
+  onSaved,
+}: {
+  insurer: ApiInsurer | null
+  /** Staff only: who runs this business on the site. */
+  merchants?: ApiMerchant[]
+  onClose: () => void
+  onSaved: () => void
+}) {
   const tx = useShortText()
   const toast = useToast()
   const [draft, setDraft] = useState<Draft>(() => toDraft(insurer))
@@ -513,6 +561,7 @@ function InsurerForm({ insurer, onClose, onSaved }: { insurer: ApiInsurer | null
 
         {error && <p className="form-error">{error}</p>}
       </form>
+      {insurer && merchants && <MerchantAccounts kind="insurers" listingId={insurer.id} initial={merchants} />}
     </Drawer>
   )
 }

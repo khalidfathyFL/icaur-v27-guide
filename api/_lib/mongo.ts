@@ -60,9 +60,12 @@ async function ensureIndexes(db: Db): Promise<void> {
     ...reviewIndexes(db, CENTER_REVIEWS),
     db.collection('insurers').createIndex({ slug: 1 }, { unique: true }),
     db.collection('insurers').createIndex({ active: 1 }),
+    db.collection('insurers').createIndex({ merchantIds: 1 }),
+    db.collection('centers').createIndex({ merchantIds: 1 }),
     ...reviewIndexes(db, INSURER_REVIEWS),
     db.collection('audit').createIndex({ at: -1 }),
     db.collection('emailQueue').createIndex({ kind: 1, failed: 1, createdAt: 1 }),
+    db.collection('emailLog').createIndex({ at: -1 }),
     db.collection('audit').createIndex({ actorId: 1, at: -1 }),
   ])
 }

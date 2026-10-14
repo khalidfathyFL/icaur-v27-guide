@@ -3,7 +3,8 @@ import { ObjectId } from 'mongodb'
 import { requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
-import { auditableChanges, recordAudit } from '../_lib/audit.js'
+import { auditableChanges, listingChanges, recordAudit } from '../_lib/audit.js'
+import { adminListFilter, handleMerchants, merchantsByListing, requireListingEditor } from '../_lib/merchants.js'
 import {
   compact,
   deleteBlobs,
@@ -71,7 +72,9 @@ function toPublic(insurer: InsurerDoc) {
 }
 
 export async function handleInsurers(request: Request, segments: string[]): Promise<Response> {
-  const [id] = segments
+  const [id, sub, subId] = segments
+
+  if (id && sub === 'merchants') return handleMerchants(request, 'insurer', id, subId)
 
   if (!id) {
     if (request.method === 'GET') return listInsurers(request)
@@ -89,18 +92,21 @@ export async function handleInsurers(request: Request, segments: string[]): Prom
 /** Public: every active insurer. `all=1` adds removed ones, for the admin table. */
 async function listInsurers(request: Request): Promise<Response> {
   const params = searchParams(request)
-  const filter: Record<string, unknown> = {}
-
-  if (params.get('all') === '1') {
-    await requirePermission(request, 'insurance.manage')
-  } else {
-    filter.active = true
-  }
+  // Staff see every listing, a merchant sees their own, and the public sees what is live.
+  const scope = await adminListFilter(request, 'insurer')
+  const filter: Record<string, unknown> = scope ?? { active: true }
 
   const db = await getDb()
   const insurers = await db.collection<InsurerDoc>('insurers').find(filter).sort({ 'name.en': 1 }).limit(100).toArray()
 
-  return json(request, { insurers: insurers.map(toPublic) })
+  // Only the staff table names the accounts behind each listing.
+  const merchants = params.get('all') === '1' ? await merchantsByListing(insurers) : null
+  return json(request, {
+    insurers: insurers.map((insurer) => ({
+      ...toPublic(insurer),
+      ...(merchants ? { merchants: merchants.get(insurer._id.toHexString()) ?? [] } : {}),
+    })),
+  })
 }
 
 async function readInsurer(request: Request, idOrSlug: string): Promise<Response> {
@@ -211,8 +217,8 @@ async function createInsurer(request: Request): Promise<Response> {
 }
 
 async function updateInsurer(request: Request, id: string): Promise<Response> {
-  const editor = await requirePermission(request, 'insurance.manage')
-  if (!ObjectId.isValid(id)) throw new HttpError(404, 'Insurance company not found.')
+  // Staff may edit any listing; a merchant only their own.
+  const { user: editor, staff } = await requireListingEditor(request, 'insurer', id)
 
   const body = await readJsonBody<Record<string, unknown>>(request)
   const db = await getDb()
@@ -235,7 +241,11 @@ async function updateInsurer(request: Request, id: string): Promise<Response> {
     const kept = new Set(fields.images.map((image) => image.url))
     removedImages = existing.images.map((image) => image.url).filter((url) => !kept.has(url))
   }
-  if (body.active !== undefined) update.active = body.active === true
+  if (body.active !== undefined) {
+    // Taking a listing off the site, or putting it back, is the site's call.
+    if (!staff) throw new HttpError(403, 'Only the site team can remove or restore a listing.')
+    update.active = body.active === true
+  }
   if (body.checked === true) update.checkedAt = now
 
   const { set, update: changes } = setAndUnset(update)
@@ -245,11 +255,11 @@ async function updateInsurer(request: Request, id: string): Promise<Response> {
 
   await recordAudit(editor, 'insurer.updated', {
     target: { kind: 'insurer', id, label: existing.name.en || existing.name.ar },
-    changes: auditableChanges(
-      body.name !== undefined
-        ? { fields: Object.keys(set).filter((key) => key !== 'updatedAt'), plans: (set.plans as unknown[]).length }
-        : set,
-    ),
+    changes: {
+      ...auditableChanges(body.name !== undefined ? listingChanges(existing as unknown as Record<string, unknown>, set, 'plans') : set),
+      // A merchant's edit is marked, so staff can tell it from their own.
+      ...(staff ? {} : { byMerchant: true }),
+    },
   })
 
   const saved = await collection.findOne({ _id: existing._id })

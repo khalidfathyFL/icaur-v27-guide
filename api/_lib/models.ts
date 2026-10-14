@@ -241,6 +241,8 @@ export type CenterPackage = {
 
 export type CenterDoc = {
   _id: ObjectId
+  /** Accounts that run this business and may edit this listing (see api/_lib/merchants.ts). */
+  merchantIds?: string[]
   slug: string
   name: Localized
   description: Localized
@@ -322,6 +324,8 @@ export type InsurancePlan = {
 
 export type InsurerDoc = {
   _id: ObjectId
+  /** Accounts that run this business and may edit this listing (see api/_lib/merchants.ts). */
+  merchantIds?: string[]
   slug: string
   name: Localized
   description: Localized

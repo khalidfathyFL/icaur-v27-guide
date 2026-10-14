@@ -15,7 +15,35 @@ import { ACTION_LABELS, SENSITIVE_ACTIONS } from './auditLabels'
  * API has no endpoint for it. A log an admin can rewrite proves nothing.
  */
 
-type KindFilter = 'all' | 'sensitive' | 'post' | 'comment' | 'suggestion' | 'dealer' | 'pricing' | 'user'
+type KindFilter =
+  | 'all'
+  | 'sensitive'
+  | 'post'
+  | 'comment'
+  | 'suggestion'
+  | 'dealer'
+  | 'pricing'
+  | 'part'
+  | 'center'
+  | 'insurer'
+  | 'order'
+  | 'email'
+  | 'user'
+
+/** Readable names for the keys an entry's details use. */
+const CHANGE_LABELS: Record<string, { en: string; ar: string }> = {
+  fields: { en: 'Changed', ar: 'تغيّر' },
+  plansAdded: { en: 'Plans added', ar: 'خطط أضيفت' },
+  plansRemoved: { en: 'Plans removed', ar: 'خطط حذفت' },
+  plansEdited: { en: 'Plans edited', ar: 'خطط عدلت' },
+  packagesAdded: { en: 'Packages added', ar: 'باقات أضيفت' },
+  packagesRemoved: { en: 'Packages removed', ar: 'باقات حذفت' },
+  packagesEdited: { en: 'Packages edited', ar: 'باقات عدلت' },
+  merchant: { en: 'Merchant', ar: 'التاجر' },
+  byMerchant: { en: 'By the merchant', ar: 'بواسطة التاجر' },
+  recipients: { en: 'Recipients', ar: 'المستلمون' },
+  subject: { en: 'Subject', ar: 'الموضوع' },
+}
 
 export function Activity() {
   const { t, language } = useLanguage()
@@ -76,6 +104,11 @@ export function Activity() {
               { value: 'suggestion', label: tx('Corrections', 'التصحيحات') },
               { value: 'dealer', label: tx('Dealers', 'الوكلاء') },
               { value: 'pricing', label: tx('Prices', 'الأسعار') },
+              { value: 'part', label: tx('Accessories', 'الإكسسوارات') },
+              { value: 'center', label: tx('Protection centers', 'مراكز الحماية') },
+              { value: 'insurer', label: tx('Insurance', 'التأمين') },
+              { value: 'order', label: tx('Orders', 'الطلبات') },
+              { value: 'email', label: tx('Emails', 'البريد') },
               { value: 'user', label: tx('Accounts', 'الحسابات') },
             ]}
           />
@@ -117,7 +150,11 @@ export function Activity() {
                 {entry.changes && Object.keys(entry.changes).length > 0 && (
                   <small className="panel-clamp">
                     {Object.entries(entry.changes)
-                      .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : String(value)}`)
+                      .map(([key, value]) => {
+                        const label = CHANGE_LABELS[key] ? t(CHANGE_LABELS[key]) : key
+                        if (value === true) return label
+                        return `${label}: ${Array.isArray(value) ? value.join(', ') : String(value)}`
+                      })
                       .join(' · ')}
                   </small>
                 )}

@@ -9,6 +9,7 @@ import { emailConfigured } from '../_lib/email/brevo.js'
 import {
   announceToAll,
   drainQueue,
+  emailLog,
   emailStatus,
   readUnsubscribeToken,
   sendTransactional,
@@ -31,6 +32,7 @@ export async function handleEmail(request: Request, segments: string[]): Promise
 
   if (action === 'drain' && (request.method === 'GET' || request.method === 'POST')) return drain(request)
   if (action === 'status' && request.method === 'GET') return status(request)
+  if (action === 'log' && request.method === 'GET') return log(request)
   if (action === 'templates' && request.method === 'GET') return templates(request)
   if (action === 'preview' && request.method === 'POST') return preview(request)
   if (action === 'test' && request.method === 'POST') return sendTest(request)
@@ -58,6 +60,14 @@ async function drain(request: Request): Promise<Response> {
 async function status(request: Request): Promise<Response> {
   await requirePermission(request, 'emails.send')
   return json(request, { status: await emailStatus() })
+}
+
+/** Every email the site tried to send, newest first: to whom, what, and whether it went. */
+async function log(request: Request): Promise<Response> {
+  await requirePermission(request, 'emails.send')
+  const params = searchParams(request)
+  const page = Math.max(1, Number(params.get('page') ?? 1) || 1)
+  return json(request, { entries: await emailLog({ page, search: params.get('q') ?? undefined }), page })
 }
 
 /** The catalogue of built-in emails, for the panel's list. */
