@@ -735,7 +735,7 @@ export const api = {
       auth: true,
     }),
 
-  drainEmails: () => request<{ sent: number; deferred: number; status: ApiEmailStatus }>('email/drain', { method: 'POST', auth: true }),
+  drainEmails: () => request<{ sent: number; deferred: number; error?: string; status: ApiEmailStatus }>('email/drain', { method: 'POST', auth: true }),
 
   listPricing: () => request<{ pricing: ApiPricing[] }>('pricing'),
 

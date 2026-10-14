@@ -42,6 +42,10 @@ export function Emails() {
     try {
       const result = await api.drainEmails()
       setStatus(result.status)
+      if (result.error) {
+        toast(tx(`Brevo refused: ${result.error}`, `رفض Brevo: ${result.error}`), 'error')
+        return
+      }
       toast(
         result.deferred > 0
           ? tx(`Sent ${result.sent}. ${result.deferred} wait for tomorrow.`, `تم إرسال ${result.sent}. ${result.deferred} تنتظر الغد.`)

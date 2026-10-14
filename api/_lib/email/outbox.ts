@@ -330,12 +330,13 @@ export async function announceToAll(announcement: Announcement, createdBy: strin
  * first, because those are answers people are waiting for, then broadcasts
  * up to their own daily cap. Called by the daily cron and after a new post.
  */
-export async function drainQueue(db?: Db): Promise<{ sent: number; deferred: number }> {
+export async function drainQueue(db?: Db): Promise<{ sent: number; deferred: number; error?: string }> {
   if (!emailConfigured()) return { sent: 0, deferred: 0 }
   const database = db ?? (await getDb())
   const jobs = queue(database)
   let sent = 0
   let deferred = 0
+  let error: string | undefined
 
   for (const kind of ['transactional', 'broadcast'] as const) {
     const waiting = await jobs.countDocuments({ kind, failed: { $ne: true } })
@@ -349,6 +350,7 @@ export async function drainQueue(db?: Db): Promise<{ sent: number; deferred: num
 
     const batch = await jobs.find({ kind, failed: { $ne: true } }).sort({ createdAt: 1 }).limit(granted).toArray()
     const result = await sendBatch(database, jobs, batch)
+    error ??= result.error
     sent += result.sent
     deferred += waiting - result.sent
 
@@ -359,13 +361,15 @@ export async function drainQueue(db?: Db): Promise<{ sent: number; deferred: num
     }
   }
 
-  return { sent, deferred }
+  return { sent, deferred, error }
 }
 
 async function sendBatch(db: Db, jobs: Collection<EmailJob>, batch: EmailJob[]) {
   const posts = new Map<string, EmailContent | null>()
   let sent = 0
   let quotaExhausted = false
+  /** The first refusal, so whoever pressed the button learns why nothing went. */
+  let firstError: string | undefined
 
   const announcements = new Map<string, EmailContent | null>()
 
@@ -422,6 +426,7 @@ async function sendBatch(db: Db, jobs: Collection<EmailJob>, batch: EmailJob[]) 
       sent++
     } catch (error) {
       if (error instanceof BrevoError && error.quotaExhausted) quotaExhausted = true
+      firstError ??= error instanceof Error ? error.message : String(error)
       const attempts = job.attempts + 1
       await jobs.updateOne(
         { _id: job._id },
@@ -435,5 +440,5 @@ async function sendBatch(db: Db, jobs: Collection<EmailJob>, batch: EmailJob[]) 
     await Promise.all(batch.slice(index, index + CONCURRENCY).map(sendOne))
   }
 
-  return { sent, quotaExhausted }
+  return { sent, quotaExhausted, error: firstError }
 }
