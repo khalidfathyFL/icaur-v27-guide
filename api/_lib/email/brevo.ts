@@ -56,8 +56,9 @@ export async function sendViaBrevo(email: OutgoingEmail): Promise<void> {
       subject: email.subject,
       htmlContent: email.html,
       textContent: email.text,
-      headers,
-      tags: email.tags,
+      // Brevo rejects an empty headers object ("headers is blank"), so it is sent only when there is one.
+      ...(Object.keys(headers).length > 0 ? { headers } : {}),
+      ...(email.tags?.length ? { tags: email.tags } : {}),
     }),
   })
 
