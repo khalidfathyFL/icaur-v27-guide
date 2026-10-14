@@ -121,13 +121,14 @@ async function markDaySpent(db: Db): Promise<void> {
 
 export async function emailStatus() {
   const db = await getDb()
-  const [day, waiting, failed, subscribers] = await Promise.all([
+  const [day, waiting, failed, subscribers, lastFailure] = await Promise.all([
     usage(db).findOne({ _id: today() }),
     queue(db)
       .aggregate<{ _id: Kind; count: number }>([{ $match: { failed: { $ne: true } } }, { $group: { _id: '$kind', count: { $sum: 1 } } }])
       .toArray(),
     queue(db).countDocuments({ failed: true }),
     db.collection<UserDoc>('users').countDocuments(subscriberFilter()),
+    queue(db).findOne({ lastError: { $exists: true } }, { sort: { createdAt: -1 }, projection: { lastError: 1, createdAt: 1 } }),
   ])
   const count = (kind: Kind) => waiting.find((row) => row._id === kind)?.count ?? 0
 
@@ -141,6 +142,8 @@ export async function emailStatus() {
     waiting: { transactional: count('transactional'), broadcast: count('broadcast') },
     failed,
     subscribers,
+    /** The most recent reason Brevo refused something still in the queue. */
+    lastError: lastFailure?.lastError,
   }
 }
 
@@ -180,11 +183,20 @@ export async function readUnsubscribeToken(token: string): Promise<string | null
  */
 export type SendOutcome = 'sent' | 'queued' | 'off' | 'failed'
 
+/**
+ * `queued` means it will go out later because today is full; `failed` means
+ * Brevo refused it for another reason (a bad key, a blocked IP, an
+ * unverified sender), and `error` says which.
+ */
+export type SendResult = { outcome: SendOutcome; error?: string }
+
 export async function sendTransactional(
   to: { email: string; name: string; userId?: string },
   content: EmailContent,
-): Promise<SendOutcome> {
-  if (!emailConfigured()) return 'off'
+  /** False for test sends: a failed test is reported, not retried tomorrow. */
+  { retry = true }: { retry?: boolean } = {},
+): Promise<SendResult> {
+  if (!emailConfigured()) return { outcome: 'off' }
 
   try {
     const db = await getDb()
@@ -201,22 +213,25 @@ export async function sendTransactional(
 
     if ((await reserve(db, 'transactional', 1)) === 0) {
       await queue(db).insertOne({ ...job, attempts: 0, createdAt: new Date().toISOString() } as EmailJob)
-      return 'queued'
+      return { outcome: 'queued' }
     }
 
     try {
       await sendViaBrevo({ to: job.to, subject: job.subject, html: job.html, text: job.text, tags: job.tags })
-      return 'sent'
+      return { outcome: 'sent' }
     } catch (error) {
       await release(db, 'transactional', 1)
-      if (error instanceof BrevoError && error.quotaExhausted) await markDaySpent(db)
-      await queue(db).insertOne({ ...job, attempts: 1, lastError: String(error), createdAt: new Date().toISOString() } as EmailJob)
-      console.error('Email deferred:', content.tag, error)
-      return 'queued'
+      const quota = error instanceof BrevoError && error.quotaExhausted
+      if (quota) await markDaySpent(db)
+      if (quota || retry) {
+        await queue(db).insertOne({ ...job, attempts: 1, lastError: String(error), createdAt: new Date().toISOString() } as EmailJob)
+      }
+      console.error('Email not sent:', content.tag, error)
+      return quota ? { outcome: 'queued' } : { outcome: 'failed', error: error instanceof Error ? error.message : String(error) }
     }
   } catch (error) {
     console.error('Email failed:', content.tag, error)
-    return 'failed'
+    return { outcome: 'failed', error: error instanceof Error ? error.message : String(error) }
   }
 }
 

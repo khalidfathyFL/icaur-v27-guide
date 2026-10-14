@@ -6,7 +6,15 @@ import { getDb } from '../_lib/mongo.js'
 import { recordAudit } from '../_lib/audit.js'
 import { optionalString, optionalUrl, requireEmail, requireEnum, type Localized } from '../_lib/models.js'
 import { emailConfigured } from '../_lib/email/brevo.js'
-import { announceToAll, drainQueue, emailStatus, readUnsubscribeToken, sendTransactional, unsubscribeUrl } from '../_lib/email/outbox.js'
+import {
+  announceToAll,
+  drainQueue,
+  emailStatus,
+  readUnsubscribeToken,
+  sendTransactional,
+  unsubscribeUrl,
+  type SendResult,
+} from '../_lib/email/outbox.js'
 import { EMAIL_SAMPLES, findSample } from '../_lib/email/samples.js'
 import {
   EMAIL_IMAGES,
@@ -138,8 +146,26 @@ const OUTCOME_MESSAGE = {
   sent: 'Sent.',
   queued: "Today's email allowance is used up, so it will go out tomorrow morning.",
   off: 'Email is not set up yet.',
-  failed: 'Brevo did not accept the email. Check the Vercel logs.',
+  failed: 'Brevo did not accept the email.',
 } as const
+
+/** Brevo's own words, plus what to do about the usual causes. */
+function failureMessage(error?: string): string {
+  const detail = error ?? ''
+  if (/unrecogni[sz]ed IP|authori[sz]ed IP/i.test(detail)) {
+    return 'Brevo blocked the request because it came from an IP address it does not know. In Brevo, open Security → Authorized IPs and deactivate blocking for API keys: Vercel has no fixed IP.'
+  }
+  if (/401|key not found|unauthori[sz]ed/i.test(detail)) {
+    return 'Brevo rejected the API key. Check BREVO_API_KEY in Vercel (it starts with xkeysib-), then redeploy.'
+  }
+  if (/sender/i.test(detail)) {
+    return `Brevo rejected the sender. EMAIL_FROM must be a sender verified in Brevo. (${detail})`
+  }
+  return `${OUTCOME_MESSAGE.failed} ${detail}`.trim()
+}
+
+const resultMessage = (result: SendResult) =>
+  result.outcome === 'failed' ? failureMessage(result.error) : OUTCOME_MESSAGE[result.outcome]
 
 /** Sends one email to the person asking, so they can see it in a real inbox. */
 async function sendTest(request: Request): Promise<Response> {
@@ -149,10 +175,10 @@ async function sendTest(request: Request): Promise<Response> {
   const { content } = await contentFrom(body)
 
   const test: EmailContent = { ...content, subject: { en: `[Test] ${content.subject.en}`, ar: content.subject.ar ? `[تجربة] ${content.subject.ar}` : '' } }
-  const outcome = await sendTransactional({ email: user.email, name: user.name, userId: user.id }, test)
+  const result = await sendTransactional({ email: user.email, name: user.name, userId: user.id }, test, { retry: false })
 
-  await recordAudit(user, 'email.test_sent', { changes: { email: content.tag } })
-  return json(request, { outcome, message: OUTCOME_MESSAGE[outcome], to: user.email })
+  await recordAudit(user, 'email.test_sent', { changes: { email: content.tag, outcome: result.outcome } })
+  return json(request, { outcome: result.outcome, message: resultMessage(result), to: user.email })
 }
 
 /**
@@ -174,15 +200,16 @@ async function send(request: Request): Promise<Response> {
     if (!recipient) throw new HttpError(404, 'No account uses that email address.')
     if (recipient.status === 'blocked') throw new HttpError(409, 'That account is blocked.')
 
-    const outcome = await sendTransactional(
+    const result = await sendTransactional(
       { email: recipient.email, name: recipient.name, userId: recipient._id.toHexString() },
       announcementEmail(announcement),
+      { retry: false },
     )
     await recordAudit(user, 'email.sent_to_one', {
       target: { kind: 'user', id: recipient._id.toHexString(), label: recipient.email },
       changes: { subject: subjectLabel },
     })
-    return json(request, { outcome, message: OUTCOME_MESSAGE[outcome], recipients: 1 })
+    return json(request, { outcome: result.outcome, message: resultMessage(result), recipients: 1 })
   }
 
   if (body.audience !== 'all') throw new HttpError(400, 'Say who it goes to.')

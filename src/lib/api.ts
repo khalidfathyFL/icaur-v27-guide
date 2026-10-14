@@ -118,6 +118,8 @@ export type ApiEmailStatus = {
   failed: number
   /** Accounts that get new-post emails and announcements. */
   subscribers: number
+  /** Why Brevo last refused something still waiting, in its own words. */
+  lastError?: string
 }
 
 export type ApiEmailTemplate = { key: string; group: string; name: string; when: string; broadcast: boolean }

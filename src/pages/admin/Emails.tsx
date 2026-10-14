@@ -81,6 +81,15 @@ export function Emails() {
         </div>
       )}
 
+      {status?.lastError && (
+        <div className="email-warning" role="status">
+          <AlertTriangle size={18} aria-hidden="true" />
+          <span>
+            {tx('Brevo refused the last email it was given:', 'رفض Brevo آخر رسالة أُرسلت إليه:')} <code dir="ltr">{status.lastError}</code>
+          </span>
+        </div>
+      )}
+
       <div className="panel-grid stats">
         <StatCard
           icon={Mail}
@@ -159,7 +168,7 @@ function Templates() {
     setSending(true)
     try {
       const result = await api.sendTestEmail(source)
-      toast(result.outcome === 'sent' ? tx(`Test sent to ${result.to}.`, `أُرسلت التجربة إلى ${result.to}.`) : result.message, result.outcome === 'sent' ? 'success' : 'info')
+      toast(result.outcome === 'sent' ? tx(`Test sent to ${result.to}.`, `أُرسلت التجربة إلى ${result.to}.`) : result.message, result.outcome === 'sent' ? 'success' : result.outcome === 'failed' ? 'error' : 'info')
     } catch (caught) {
       toast(errorMessage(caught, tx('Could not send.', 'تعذر الإرسال.')), 'error')
     } finally {
@@ -336,7 +345,7 @@ function Compose({ status, onSent }: { status: ApiEmailStatus | null; onSent: ()
     setBusy('test')
     try {
       const result = await api.sendTestEmail({ announcement })
-      toast(result.outcome === 'sent' ? tx(`Test sent to ${result.to}.`, `أُرسلت التجربة إلى ${result.to}.`) : result.message, result.outcome === 'sent' ? 'success' : 'info')
+      toast(result.outcome === 'sent' ? tx(`Test sent to ${result.to}.`, `أُرسلت التجربة إلى ${result.to}.`) : result.message, result.outcome === 'sent' ? 'success' : result.outcome === 'failed' ? 'error' : 'info')
     } catch (caught) {
       toast(errorMessage(caught, tx('Could not send.', 'تعذر الإرسال.')), 'error')
     } finally {
@@ -381,7 +390,7 @@ function Compose({ status, onSent }: { status: ApiEmailStatus | null; onSent: ()
           'success',
         )
       } else {
-        toast(result.outcome === 'sent' ? tx(`Sent to ${email.trim()}.`, `أُرسلت إلى ${email.trim()}.`) : (result.message ?? ''), result.outcome === 'sent' ? 'success' : 'info')
+        toast(result.outcome === 'sent' ? tx(`Sent to ${email.trim()}.`, `أُرسلت إلى ${email.trim()}.`) : (result.message ?? ''), result.outcome === 'sent' ? 'success' : result.outcome === 'failed' ? 'error' : 'info')
       }
       onSent()
     } catch (caught) {

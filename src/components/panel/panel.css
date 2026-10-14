@@ -2475,3 +2475,7 @@ html[dir='rtl'] .panel-drawer {
     grid-template-columns: 1fr;
   }
 }
+
+.email-warning code {
+  overflow-wrap: anywhere;
+}
