@@ -131,14 +131,14 @@ export function Emails() {
         ]}
       />
 
-      {tab === 'templates' ? <Templates /> : <Compose status={status} onSent={loadStatus} />}
+      {tab === 'templates' ? <Templates onSent={loadStatus} /> : <Compose status={status} onSent={loadStatus} />}
     </>
   )
 }
 
 /* ---------- the built-in emails ---------- */
 
-function Templates() {
+function Templates({ onSent }: { onSent: () => void }) {
   const tx = useShortText()
   const toast = useToast()
   const [templates, setTemplates] = useState<ApiEmailTemplate[] | null>(null)
@@ -173,6 +173,7 @@ function Templates() {
     try {
       const result = await api.sendTestEmail(source)
       toast(result.outcome === 'sent' ? tx(`Test sent to ${result.to}.`, `أُرسلت التجربة إلى ${result.to}.`) : result.message, result.outcome === 'sent' ? 'success' : result.outcome === 'failed' ? 'error' : 'info')
+      onSent()
     } catch (caught) {
       toast(errorMessage(caught, tx('Could not send.', 'تعذر الإرسال.')), 'error')
     } finally {
@@ -217,7 +218,7 @@ function Templates() {
           </button>
         }
       >
-        <EmailPreview source={source} />
+        <EmailPreview source={source} placeholder={tx('Loading…', 'جارٍ التحميل…')} />
       </Card>
     </div>
   )
@@ -229,7 +230,7 @@ function Templates() {
  * Renders on the server, so what is shown is byte for byte what is sent.
  * An announcement is re-rendered shortly after typing stops.
  */
-function EmailPreview({ source, delay = 0 }: { source: EmailSource | null; delay?: number }) {
+function EmailPreview({ source, delay = 0, placeholder }: { source: EmailSource | null; delay?: number; placeholder?: string }) {
   const tx = useShortText()
   const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -302,7 +303,7 @@ function EmailPreview({ source, delay = 0 }: { source: EmailSource | null; delay
           />
         ) : (
           <p className="panel-muted email-placeholder">
-            {source ? tx('Rendering…', 'جارٍ العرض…') : tx('Write a heading and a message to see the email.', 'اكتب عنوانا ورسالة لترى البريد.')}
+            {source ? tx('Rendering…', 'جارٍ العرض…') : (placeholder ?? tx('Write a heading and a message to see the email.', 'اكتب عنوانا ورسالة لترى البريد.'))}
           </p>
         )}
       </div>
@@ -350,6 +351,7 @@ function Compose({ status, onSent }: { status: ApiEmailStatus | null; onSent: ()
     try {
       const result = await api.sendTestEmail({ announcement })
       toast(result.outcome === 'sent' ? tx(`Test sent to ${result.to}.`, `أُرسلت التجربة إلى ${result.to}.`) : result.message, result.outcome === 'sent' ? 'success' : result.outcome === 'failed' ? 'error' : 'info')
+      onSent()
     } catch (caught) {
       toast(errorMessage(caught, tx('Could not send.', 'تعذر الإرسال.')), 'error')
     } finally {
