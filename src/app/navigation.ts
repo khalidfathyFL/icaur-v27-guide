@@ -1,5 +1,11 @@
 import {
+  BadgeDollarSign,
+  BookMarked,
   BookOpen,
+  Gauge,
+  House,
+  MonitorSmartphone,
+  Newspaper,
   Clapperboard,
   FileText,
   GitCompareArrows,
@@ -73,6 +79,27 @@ export const SECONDARY_GROUPS: NavGroup[] = [
     ],
   },
 ].filter((group) => group.items.length > 0)
+
+/**
+ * The side menu on wide screens: every page, so nothing hides behind "More".
+ * The main pages come first, as their own group.
+ */
+export const SIDEBAR_GROUPS: NavGroup[] = [
+  {
+    key: 'guide',
+    en: 'Owner guide',
+    ar: 'دليل المالك',
+    items: [
+      { href: '/', en: 'Home', ar: 'البداية', icon: House, hint: { en: '', ar: '' } },
+      { href: '/guides', en: 'Guides', ar: 'الأدلة', icon: BookMarked, hint: { en: '', ar: '' } },
+      { href: '/guides/screen-map', en: 'Screen', ar: 'الشاشة', icon: MonitorSmartphone, hint: { en: '', ar: '' } },
+      { href: '/egypt', en: 'Egypt Prices', ar: 'أسعار مصر', icon: BadgeDollarSign, hint: { en: '', ar: '' } },
+      { href: '/specs', en: 'Specs', ar: 'المواصفات', icon: Gauge, hint: { en: '', ar: '' } },
+      { href: '/blog', en: 'Owner Posts', ar: 'مقالات الملاك', icon: Newspaper, hint: { en: '', ar: '' } },
+    ],
+  },
+  ...SECONDARY_GROUPS,
+]
 
 /** The same pages as one list, for places that do not group them. */
 export const SECONDARY_NAV: NavLink[] = SECONDARY_GROUPS.flatMap((group) => group.items)

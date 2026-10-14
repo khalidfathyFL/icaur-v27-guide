@@ -5,6 +5,7 @@ import { CartProvider } from './features/orders/CartProvider'
 import { useAuth } from './auth/authContext'
 import { SiteFooter } from './components/SiteFooter'
 import { SiteHeader } from './components/SiteHeader'
+import { SiteSidebar } from './components/SiteSidebar'
 import { SearchProvider } from './features/search/SearchProvider'
 import { LanguageProvider } from './i18n/LanguageProvider'
 import { useLanguage } from './i18n/languageContext'
@@ -58,11 +59,16 @@ function Shell() {
     <div className={`app-shell language-${language}`}>
       <SearchProvider>
         <SiteHeader path={path} mobileNavOpen={mobileNavOpen} setMobileNavOpen={setMobileNavOpen} />
-        {/* Keyed by route so each page starts fresh, e.g. a new guide's filters. */}
-        <main id="main" tabIndex={-1} key={route}>
-          {resolveRoute(path, params)}
-        </main>
-        <SiteFooter />
+        <div className="site-body">
+          <SiteSidebar path={path} />
+          <div className="site-content">
+            {/* Keyed by route so each page starts fresh, e.g. a new guide's filters. */}
+            <main id="main" tabIndex={-1} key={route}>
+              {resolveRoute(path, params)}
+            </main>
+            <SiteFooter />
+          </div>
+        </div>
       </SearchProvider>
     </div>
   )
