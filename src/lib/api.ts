@@ -29,6 +29,8 @@ export type ApiUser = {
   city?: string
   trim?: Trim
   colour?: string
+  /** Whether they get an email when a new post is published. */
+  emailNewPosts?: boolean
   /**
    * For the signed-in person (`me`), everything they hold including their
    * roles. In the admin account list, only what was granted individually.
@@ -102,6 +104,7 @@ export type ProfileInput = {
   city?: string
   trim?: Trim
   colour?: string
+  emailNewPosts?: boolean
 }
 
 export type ApiPost = {

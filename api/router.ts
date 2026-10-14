@@ -4,6 +4,7 @@ import { handleCenterReviews } from './_routes/centerReviews.js'
 import { handleCenters } from './_routes/centers.js'
 import { handleComments } from './_routes/comments.js'
 import { handleDealers } from './_routes/dealers.js'
+import { handleEmail } from './_routes/email.js'
 import { handleOrders } from './_routes/orders.js'
 import { handlePartReviews } from './_routes/partReviews.js'
 import { handleParts } from './_routes/parts.js'
@@ -31,6 +32,7 @@ const ROUTES: Record<string, RouteHandler> = {
   cart: handleCart,
   orders: handleOrders,
   uploads: handleUploads,
+  email: handleEmail,
 }
 
 /**
@@ -63,6 +65,9 @@ export default {
             JWT_SECRET: Boolean(process.env.JWT_SECRET),
             ALLOWED_ORIGINS: Boolean(process.env.ALLOWED_ORIGINS),
             BLOB_READ_WRITE_TOKEN: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+            BREVO_API_KEY: Boolean(process.env.BREVO_API_KEY),
+            EMAIL_FROM: Boolean(process.env.EMAIL_FROM),
+            CRON_SECRET: Boolean(process.env.CRON_SECRET),
           },
         })
       }

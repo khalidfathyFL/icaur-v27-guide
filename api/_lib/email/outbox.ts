@@ -1,0 +1,353 @@
+import { ObjectId, type Collection, type Db } from 'mongodb'
+import { SignJWT, jwtVerify } from 'jose'
+import { getDb } from '../mongo.js'
+import type { UserDoc } from '../auth.js'
+import { BrevoError, emailConfigured, sendViaBrevo } from './brevo.js'
+import { newPostEmail, renderEmail, type EmailContent } from './templates.js'
+
+/**
+ * Brevo's free plan sends 300 emails a day, and every email counts against
+ * it whatever caused it. Two kinds compete for that allowance:
+ *
+ * - transactional: a reply to something the reader did (welcome, approval,
+ *   order update). Sent straight away while the day has room.
+ * - broadcast: "there is a new post", to everyone. Capped at 200 a day, so
+ *   at least 100 stay free for transactional mail even on a busy day.
+ *
+ * Whatever does not fit today waits in `emailQueue`, and the daily cron
+ * (`email/drain`) sends it the next morning: waiting transactional mail
+ * first, then the next 200 broadcast recipients, oldest first.
+ */
+
+export const DAILY_LIMIT = Number(process.env.EMAIL_DAILY_LIMIT ?? 300)
+export const BROADCAST_DAILY_LIMIT = Number(process.env.EMAIL_BROADCAST_DAILY_LIMIT ?? 200)
+
+/** After this many failed sends a job stops being retried and is kept for inspection. */
+const MAX_ATTEMPTS = 5
+/** Parallel calls to Brevo while draining, so 200 sends fit in the function's time limit. */
+const CONCURRENCY = 8
+
+type Kind = 'transactional' | 'broadcast'
+
+type UsageDoc = { _id: string; total: number; broadcast: number }
+
+export type EmailJob = {
+  _id: ObjectId
+  kind: Kind
+  to: { email: string; name: string }
+  userId?: string
+  /** Transactional: the message, rendered when it was due. */
+  subject?: string
+  html?: string
+  text?: string
+  tags?: string[]
+  /** Broadcast: rendered at send time from the post, so a later edit or deletion is respected. */
+  postId?: string
+  attempts: number
+  lastError?: string
+  failed?: boolean
+  createdAt: string
+}
+
+/* ---------- the daily allowance ---------- */
+
+/** Brevo counts per calendar day; the counter uses UTC days. */
+const today = () => new Date().toISOString().slice(0, 10)
+
+const usage = (db: Db) => db.collection<UsageDoc>('emailUsage')
+const queue = (db: Db) => db.collection<EmailJob>('emailQueue')
+
+/**
+ * Claims up to `wanted` sends from today's allowance and returns how many it
+ * got. The claim is a conditional increment, so two requests at once cannot
+ * both take the last slot.
+ */
+async function reserve(db: Db, kind: Kind, wanted: number): Promise<number> {
+  const day = today()
+  await usage(db).updateOne({ _id: day }, { $setOnInsert: { total: 0, broadcast: 0 } }, { upsert: true })
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const doc = await usage(db).findOne({ _id: day })
+    if (!doc) return 0
+
+    let room = DAILY_LIMIT - doc.total
+    if (kind === 'broadcast') room = Math.min(room, BROADCAST_DAILY_LIMIT - doc.broadcast)
+    const granted = Math.max(0, Math.min(wanted, room))
+    if (granted === 0) return 0
+
+    const result = await usage(db).updateOne(
+      {
+        _id: day,
+        total: { $lte: DAILY_LIMIT - granted },
+        ...(kind === 'broadcast' ? { broadcast: { $lte: BROADCAST_DAILY_LIMIT - granted } } : {}),
+      },
+      { $inc: kind === 'broadcast' ? { total: granted, broadcast: granted } : { total: granted } },
+    )
+    if (result.modifiedCount === 1) return granted
+  }
+  return 0
+}
+
+/** Hands back slots that were claimed but not used, e.g. when Brevo refused. */
+async function release(db: Db, kind: Kind, count: number): Promise<void> {
+  if (count <= 0) return
+  await usage(db).updateOne(
+    { _id: today() },
+    { $inc: kind === 'broadcast' ? { total: -count, broadcast: -count } : { total: -count } },
+  )
+}
+
+/** Brevo says the day is spent, even if our counter disagrees: believe Brevo. */
+async function markDaySpent(db: Db): Promise<void> {
+  await usage(db).updateOne({ _id: today() }, { $max: { total: DAILY_LIMIT } })
+}
+
+export async function emailStatus() {
+  const db = await getDb()
+  const [day, waiting, failed] = await Promise.all([
+    usage(db).findOne({ _id: today() }),
+    queue(db)
+      .aggregate<{ _id: Kind; count: number }>([{ $match: { failed: { $ne: true } } }, { $group: { _id: '$kind', count: { $sum: 1 } } }])
+      .toArray(),
+    queue(db).countDocuments({ failed: true }),
+  ])
+  const count = (kind: Kind) => waiting.find((row) => row._id === kind)?.count ?? 0
+
+  return {
+    configured: emailConfigured(),
+    day: today(),
+    sentToday: day?.total ?? 0,
+    broadcastToday: day?.broadcast ?? 0,
+    dailyLimit: DAILY_LIMIT,
+    broadcastDailyLimit: BROADCAST_DAILY_LIMIT,
+    waiting: { transactional: count('transactional'), broadcast: count('broadcast') },
+    failed,
+  }
+}
+
+/* ---------- unsubscribe links ---------- */
+
+function secretKey(): Uint8Array {
+  return new TextEncoder().encode(process.env.JWT_SECRET ?? '')
+}
+
+/** The API's public address, which is where unsubscribe links point. */
+function apiUrl(): string {
+  const configured = process.env.API_URL ?? (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '')
+  return configured.replace(/\/$/, '')
+}
+
+/** Signed, so nobody can unsubscribe someone else by guessing an id. It never expires: old emails keep working. */
+export async function unsubscribeUrl(userId: string): Promise<string> {
+  const token = await new SignJWT({ purpose: 'unsubscribe' }).setProtectedHeader({ alg: 'HS256' }).setSubject(userId).sign(secretKey())
+  return `${apiUrl()}/api/router?p=email/unsubscribe&token=${token}`
+}
+
+export async function readUnsubscribeToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, secretKey())
+    return payload.purpose === 'unsubscribe' && payload.sub ? payload.sub : null
+  } catch {
+    return null
+  }
+}
+
+/* ---------- sending ---------- */
+
+/**
+ * Sends one message about something the reader did. Never throws: an email
+ * that cannot go out must not undo the approval or order that caused it.
+ * When today's allowance is spent it waits in the queue for tomorrow.
+ */
+export async function sendTransactional(to: { email: string; name: string; userId?: string }, content: EmailContent): Promise<void> {
+  if (!emailConfigured()) return
+
+  try {
+    const db = await getDb()
+    const rendered = renderEmail(content, to.name)
+    const job = {
+      kind: 'transactional' as const,
+      to: { email: to.email, name: to.name },
+      userId: to.userId,
+      subject: rendered.subject,
+      html: rendered.html,
+      text: rendered.text,
+      tags: [content.tag],
+    }
+
+    if ((await reserve(db, 'transactional', 1)) === 0) {
+      await queue(db).insertOne({ ...job, attempts: 0, createdAt: new Date().toISOString() } as EmailJob)
+      return
+    }
+
+    try {
+      await sendViaBrevo({ to: job.to, subject: job.subject, html: job.html, text: job.text, tags: job.tags })
+    } catch (error) {
+      await release(db, 'transactional', 1)
+      if (error instanceof BrevoError && error.quotaExhausted) await markDaySpent(db)
+      await queue(db).insertOne({ ...job, attempts: 1, lastError: String(error), createdAt: new Date().toISOString() } as EmailJob)
+      console.error('Email deferred:', content.tag, error)
+    }
+  } catch (error) {
+    console.error('Email failed:', content.tag, error)
+  }
+}
+
+/** Sends to someone by account id, looking up their address. */
+export async function sendToUser(userId: string, content: EmailContent): Promise<void> {
+  if (!emailConfigured() || !ObjectId.isValid(userId)) return
+  try {
+    const db = await getDb()
+    const user = await db.collection<UserDoc>('users').findOne({ _id: new ObjectId(userId) }, { projection: { email: 1, name: 1, status: 1 } })
+    if (!user || user.status === 'blocked') return
+    await sendTransactional({ email: user.email, name: user.name, userId }, content)
+  } catch (error) {
+    console.error('Email failed:', content.tag, error)
+  }
+}
+
+type PostForBroadcast = { _id: ObjectId; slug: string; title: { en: string; ar: string }; excerpt: { en: string; ar: string }; authorId: string; authorName: string; status: string; announcedAt?: string }
+
+/**
+ * Tells everyone about a newly published post, once. `announcedAt` is set
+ * atomically first, so re-approving an edited post, or two moderators
+ * approving at once, never announces it twice.
+ *
+ * Every recipient goes into the queue, then as many as today allows go out
+ * at once; the rest follow on the next days' cron runs.
+ */
+export async function announcePost(postId: ObjectId): Promise<void> {
+  if (!emailConfigured()) return
+
+  try {
+    const db = await getDb()
+    const claimed = await db
+      .collection<PostForBroadcast>('posts')
+      .findOneAndUpdate({ _id: postId, status: 'approved', announcedAt: { $exists: false } }, { $set: { announcedAt: new Date().toISOString() } })
+    if (!claimed) return
+
+    const recipients = await db
+      .collection<UserDoc>('users')
+      .find(
+        { status: { $ne: 'blocked' }, emailNewPosts: { $ne: false }, _id: { $ne: new ObjectId(claimed.authorId) } },
+        { projection: { email: 1, name: 1 } },
+      )
+      .toArray()
+    if (recipients.length === 0) return
+
+    const now = new Date().toISOString()
+    await queue(db).insertMany(
+      recipients.map((user) => ({
+        kind: 'broadcast' as const,
+        to: { email: user.email, name: user.name },
+        userId: user._id.toHexString(),
+        postId: postId.toHexString(),
+        attempts: 0,
+        createdAt: now,
+      })) as EmailJob[],
+    )
+
+    await drainQueue(db)
+  } catch (error) {
+    console.error('Announcing the post failed:', postId.toHexString(), error)
+  }
+}
+
+/**
+ * Sends what is waiting, as far as today's allowance goes: transactional
+ * first, because those are answers people are waiting for, then broadcasts
+ * up to their own daily cap. Called by the daily cron and after a new post.
+ */
+export async function drainQueue(db?: Db): Promise<{ sent: number; deferred: number }> {
+  if (!emailConfigured()) return { sent: 0, deferred: 0 }
+  const database = db ?? (await getDb())
+  const jobs = queue(database)
+  let sent = 0
+  let deferred = 0
+
+  for (const kind of ['transactional', 'broadcast'] as const) {
+    const waiting = await jobs.countDocuments({ kind, failed: { $ne: true } })
+    if (waiting === 0) continue
+
+    const granted = await reserve(database, kind, waiting)
+    if (granted === 0) {
+      deferred += waiting
+      continue
+    }
+
+    const batch = await jobs.find({ kind, failed: { $ne: true } }).sort({ createdAt: 1 }).limit(granted).toArray()
+    const result = await sendBatch(database, jobs, batch)
+    sent += result.sent
+    deferred += waiting - result.sent
+
+    await release(database, kind, granted - result.sent)
+    if (result.quotaExhausted) {
+      await markDaySpent(database)
+      break
+    }
+  }
+
+  return { sent, deferred }
+}
+
+async function sendBatch(db: Db, jobs: Collection<EmailJob>, batch: EmailJob[]) {
+  const posts = new Map<string, EmailContent | null>()
+  let sent = 0
+  let quotaExhausted = false
+
+  /** A broadcast is rendered from the post as it is now; a deleted or unpublished post sends nothing. */
+  async function contentFor(postId: string): Promise<EmailContent | null> {
+    if (!posts.has(postId)) {
+      const post = ObjectId.isValid(postId)
+        ? await db.collection<PostForBroadcast>('posts').findOne({ _id: new ObjectId(postId), status: 'approved' })
+        : null
+      posts.set(
+        postId,
+        post
+          ? newPostEmail({
+              title: post.title.en || post.title.ar,
+              excerpt: post.excerpt.en || post.excerpt.ar,
+              authorName: post.authorName,
+              slug: post.slug,
+            })
+          : null,
+      )
+    }
+    return posts.get(postId) ?? null
+  }
+
+  async function sendOne(job: EmailJob): Promise<void> {
+    if (quotaExhausted) return
+    try {
+      if (job.kind === 'broadcast') {
+        const content = job.postId ? await contentFor(job.postId) : null
+        if (!content) {
+          // The post is gone; the job is moot, and nothing was sent.
+          await jobs.deleteOne({ _id: job._id })
+          return
+        }
+        const unsubscribe = job.userId ? await unsubscribeUrl(job.userId) : undefined
+        const rendered = renderEmail(content, job.to.name, unsubscribe)
+        await sendViaBrevo({ to: job.to, ...rendered, unsubscribeUrl: unsubscribe, tags: [content.tag] })
+      } else {
+        await sendViaBrevo({ to: job.to, subject: job.subject!, html: job.html!, text: job.text!, tags: job.tags })
+      }
+      await jobs.deleteOne({ _id: job._id })
+      sent++
+    } catch (error) {
+      if (error instanceof BrevoError && error.quotaExhausted) quotaExhausted = true
+      const attempts = job.attempts + 1
+      await jobs.updateOne(
+        { _id: job._id },
+        { $set: { attempts, lastError: String(error).slice(0, 500), ...(attempts >= MAX_ATTEMPTS && !quotaExhausted ? { failed: true } : {}) } },
+      )
+    }
+  }
+
+  for (let index = 0; index < batch.length; index += CONCURRENCY) {
+    if (quotaExhausted) break
+    await Promise.all(batch.slice(index, index + CONCURRENCY).map(sendOne))
+  }
+
+  return { sent, quotaExhausted }
+}

@@ -26,6 +26,8 @@ import {
   requireString,
 } from '../_lib/models.js'
 import { parseRoleIds } from '../_lib/roles.js'
+import { sendTransactional } from '../_lib/email/outbox.js'
+import { welcomeEmail } from '../_lib/email/templates.js'
 
 /**
  * The first account to register becomes the admin, which bootstraps the site
@@ -100,6 +102,8 @@ async function register(request: Request): Promise<Response> {
     // Worth recording: the first account becomes the admin automatically.
     changes: { role, ownership },
   })
+
+  await sendTransactional({ email, name, userId: user.id }, welcomeEmail({ owner }))
 
   return json(request, { user, token: await issueToken(user) }, 201)
 }
@@ -248,6 +252,7 @@ async function updateProfile(request: Request): Promise<Response> {
   if (body.trim !== undefined) update.trim = optionalTrim(body.trim)
   if (body.colour !== undefined) update.colour = optionalString(body.colour, 'Colour', { max: 40 })
   if (body.ownership !== undefined) update.ownership = requireOwnership(body.ownership)
+  if (typeof body.emailNewPosts === 'boolean') update.emailNewPosts = body.emailNewPosts
 
   // Someone who no longer owns one should not keep a car on their profile.
   if (update.ownership === 'interested') {

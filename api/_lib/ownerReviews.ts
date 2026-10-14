@@ -4,6 +4,8 @@ import { hasPermission, requirePermission } from './permissions.js'
 import { HttpError, json, readJsonBody, searchParams } from './http.js'
 import { getDb } from './mongo.js'
 import { recordAudit, type AuditAction } from './audit.js'
+import { sendToUser } from './email/outbox.js'
+import { reviewDecisionEmail } from './email/templates.js'
 import { requireReviewStatus, requireString, type Localized } from './models.js'
 import { toPlainText } from './sanitize.js'
 
@@ -213,6 +215,19 @@ export function createReviewHandler(kind: ReviewKind) {
       target: { kind: `${kind.auditKind}_review`, id, label: review[nameField] as string },
       note,
     })
+
+    if (review.status !== status) {
+      await sendToUser(
+        review.authorId,
+        reviewDecisionEmail({
+          status,
+          kind: kind.auditKind,
+          targetName: review[nameField] as string,
+          targetSlug: review[slugField] as string,
+          note,
+        }),
+      )
+    }
 
     return json(request, { ok: true, status })
   }

@@ -19,6 +19,8 @@ import {
   type OrderItem,
 } from '../_lib/models.js'
 import { resolveCart } from './cart.js'
+import { sendTransactional } from '../_lib/email/outbox.js'
+import { orderEmail } from '../_lib/email/templates.js'
 
 /**
  * Order requests. A user sends their request list with how to reach them;
@@ -207,6 +209,11 @@ async function createOrder(request: Request): Promise<Response> {
     target: { kind: 'order', id: result.insertedId.toHexString(), label: doc.number },
   })
 
+  await sendTransactional(
+    { email: user.email, name: contact.name || user.name, userId: user.id },
+    orderEmail({ number: doc.number, status: 'new', itemCount: items.length, totalEgp: estimatedTotalEgp, agreedTotal: false }),
+  )
+
   return json(request, { order: toPublic({ ...doc, _id: result.insertedId } as OrderDoc, 'owner') }, 201)
 }
 
@@ -286,5 +293,22 @@ async function updateOrder(request: Request, id: string): Promise<Response> {
   }
 
   const saved = await orders.findOne({ _id: order._id })
+
+  // The customer hears about steps in their request: a new status or a message.
+  // Payment records and staff notes are bookkeeping and stay quiet.
+  if (saved && event) {
+    await sendTransactional(
+      { email: saved.userEmail, name: saved.contact.name, userId: saved.userId },
+      orderEmail({
+        number: saved.number,
+        status: event.status,
+        itemCount: saved.items.length,
+        totalEgp: saved.finalTotalEgp ?? saved.estimatedTotalEgp,
+        agreedTotal: saved.finalTotalEgp !== undefined,
+        note: event.note,
+      }),
+    )
+  }
+
   return json(request, { order: saved ? toPublic(saved, 'staff') : null })
 }

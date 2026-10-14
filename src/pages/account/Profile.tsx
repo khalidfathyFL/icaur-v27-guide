@@ -66,6 +66,7 @@ function ProfileForm() {
   const [city, setCity] = useState(user?.city ?? '')
   const [trim, setTrim] = useState(user?.trim ?? '')
   const [colour, setColour] = useState(user?.colour ?? '')
+  const [emailNewPosts, setEmailNewPosts] = useState(user?.emailNewPosts !== false)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -86,6 +87,7 @@ function ProfileForm() {
         city: city || undefined,
         trim: owner && (trim === 'play' || trim === 'wild') ? trim : undefined,
         colour: owner ? colour || undefined : undefined,
+        emailNewPosts,
       })
       await refresh()
       toast(tx('Profile saved.', 'تم حفظ الملف الشخصي.'))
@@ -205,6 +207,19 @@ function ProfileForm() {
           </>
         )}
       </div>
+
+      <label className="checkbox-row">
+        <input type="checkbox" checked={emailNewPosts} onChange={(event) => setEmailNewPosts(event.target.checked)} />
+        <span>
+          {tx('Email me when a new owner post is published', 'أرسل لي بريداً عند نشر مقال جديد من الملاك')}
+          <small>
+            {tx(
+              'Emails about your own posts, reviews and orders are always sent.',
+              'الرسائل الخاصة بمقالاتك وتقييماتك وطلباتك تصلك دائماً.',
+            )}
+          </small>
+        </span>
+      </label>
 
       {error && <p className="form-error">{error}</p>}
 

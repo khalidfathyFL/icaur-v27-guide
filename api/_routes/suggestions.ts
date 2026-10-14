@@ -4,6 +4,8 @@ import { requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
 import { recordAudit } from '../_lib/audit.js'
+import { sendToUser } from '../_lib/email/outbox.js'
+import { suggestionDecisionEmail } from '../_lib/email/templates.js'
 import {
   requireReviewStatus,
   requireString,
@@ -110,7 +112,7 @@ async function reviewSuggestion(request: Request, id: string): Promise<Response>
   const note = body.note === undefined ? undefined : requireString(body.note, 'Note', { max: 1000 })
 
   const db = await getDb()
-  const result = await db.collection<SuggestionDoc>('suggestions').updateOne(
+  const suggestion = await db.collection<SuggestionDoc>('suggestions').findOneAndUpdate(
     { _id: new ObjectId(id) },
     {
       $set: {
@@ -122,12 +124,16 @@ async function reviewSuggestion(request: Request, id: string): Promise<Response>
     },
   )
 
-  if (result.matchedCount === 0) throw new HttpError(404, 'Suggestion not found.')
+  if (!suggestion) throw new HttpError(404, 'Suggestion not found.')
 
   await recordAudit(admin, status === 'approved' ? 'suggestion.approved' : 'suggestion.rejected', {
     target: { kind: 'suggestion', id },
     note,
   })
+
+  if (suggestion.status !== status) {
+    await sendToUser(suggestion.authorId, suggestionDecisionEmail({ status, proposed: suggestion.proposed, note }))
+  }
 
   return json(request, { ok: true, status })
 }

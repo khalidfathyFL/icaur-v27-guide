@@ -1441,6 +1441,11 @@ body,
   font-weight: 500;
 }
 
+.auth-form label.checkbox-row > span small {
+  display: block;
+  font-weight: 400;
+}
+
 .auth-form input:focus,
 .auth-form textarea:focus,
 .auth-form select:focus {

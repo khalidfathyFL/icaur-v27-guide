@@ -5,6 +5,8 @@ import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
 import { sanitizeRichText, toPlainText } from '../_lib/sanitize.js'
 import { recordAudit } from '../_lib/audit.js'
+import { announcePost, sendToUser } from '../_lib/email/outbox.js'
+import { postDecisionEmail } from '../_lib/email/templates.js'
 import {
   firstWritten,
   requireLocalized,
@@ -181,6 +183,9 @@ async function createPost(request: Request): Promise<Response> {
     target: { kind: 'post', id: result.insertedId.toHexString(), label: firstWritten(title) },
   })
 
+  // Published without review, so it is news straight away.
+  if (doc.status === 'approved') await announcePost(result.insertedId)
+
   return json(request, { post: toPublic({ ...doc, _id: result.insertedId } as PostDoc) }, 201)
 }
 
@@ -245,7 +250,7 @@ async function reviewPost(request: Request, id: string): Promise<Response> {
   const note = body.note === undefined ? undefined : requireString(body.note, 'Note', { max: 1000 })
 
   const db = await getDb()
-  const result = await db.collection<PostDoc>('posts').updateOne(
+  const post = await db.collection<PostDoc>('posts').findOneAndUpdate(
     { _id: new ObjectId(id) },
     {
       $set: {
@@ -257,12 +262,18 @@ async function reviewPost(request: Request, id: string): Promise<Response> {
     },
   )
 
-  if (result.matchedCount === 0) throw new HttpError(404, 'Post not found.')
+  if (!post) throw new HttpError(404, 'Post not found.')
 
   await recordAudit(admin, status === 'approved' ? 'post.approved' : 'post.rejected', {
     target: { kind: 'post', id },
     note,
   })
+
+  // Only a change of decision is news to the author; saving the same verdict again is not.
+  if (post.status !== status) {
+    await sendToUser(post.authorId, postDecisionEmail({ status, title: firstWritten(post.title), slug: post.slug, note }))
+  }
+  if (status === 'approved') await announcePost(post._id)
 
   return json(request, { ok: true, status })
 }

@@ -21,6 +21,8 @@ export type PostDoc = {
   reviewNote?: string
   /** Pinned posts head the public list, the most recently pinned first. */
   pinnedAt?: string
+  /** When everyone was emailed about it; set once, so a re-approval never announces it again. */
+  announcedAt?: string
   createdAt: string
   updatedAt: string
 }

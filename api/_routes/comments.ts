@@ -6,6 +6,8 @@ import { getDb } from '../_lib/mongo.js'
 import { recordAudit } from '../_lib/audit.js'
 import { firstWritten, requireReviewStatus, requireString, type CommentDoc, type PostDoc } from '../_lib/models.js'
 import { toPlainText } from '../_lib/sanitize.js'
+import { sendToUser } from '../_lib/email/outbox.js'
+import { commentDecisionEmail } from '../_lib/email/templates.js'
 
 const PAGE_SIZE = 50
 
@@ -118,7 +120,7 @@ async function reviewComment(request: Request, id: string): Promise<Response> {
   const note = body.note === undefined ? undefined : requireString(body.note, 'Note', { max: 1000 })
 
   const db = await getDb()
-  const result = await db.collection<CommentDoc>('comments').updateOne(
+  const comment = await db.collection<CommentDoc>('comments').findOneAndUpdate(
     { _id: new ObjectId(id) },
     {
       $set: {
@@ -130,12 +132,16 @@ async function reviewComment(request: Request, id: string): Promise<Response> {
     },
   )
 
-  if (result.matchedCount === 0) throw new HttpError(404, 'Comment not found.')
+  if (!comment) throw new HttpError(404, 'Comment not found.')
 
   await recordAudit(reviewer, status === 'approved' ? 'comment.approved' : 'comment.rejected', {
     target: { kind: 'comment', id },
     note,
   })
+
+  if (comment.status !== status) {
+    await sendToUser(comment.authorId, commentDecisionEmail({ status, postTitle: comment.postTitle, postId: comment.postId, note }))
+  }
 
   return json(request, { ok: true, status })
 }

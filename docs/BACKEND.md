@@ -79,7 +79,51 @@ Push to `main` (or re-run the deploy workflow). Without this variable the site
 still builds and works — it simply hides the account, post and contribution
 features rather than showing broken buttons.
 
-## 4. Create the admin account
+## 4. Email through Brevo
+
+The API sends email through Brevo's free plan. Without these settings
+everything still works and simply sends no email.
+
+1. In Brevo, **Senders, domains, IPs → Senders**: add and verify the address
+   mail comes from. A Gmail address works, but Brevo cannot sign mail for
+   gmail.com, so Outlook and Yahoo often file it as spam. For reliable
+   delivery, authenticate your own domain under **Domains** (Brevo shows the
+   DNS records to add) and send from an address on it.
+2. **SMTP & API → API keys → Generate a new API key**. Under **Security →
+   Authorized IPs**, leave blocking off for API keys: Vercel's functions have
+   no fixed IPs.
+3. In the Vercel project, add:
+
+   | Name | Value |
+   |---|---|
+   | `BREVO_API_KEY` | the key, starting `xkeysib-` |
+   | `EMAIL_FROM` | the verified sender address |
+   | `EMAIL_FROM_NAME` | e.g. `iCAUR V27` |
+   | `SITE_URL` | `https://khalidfathyfl.github.io/icaur-v27-guide/` |
+   | `CRON_SECRET` | another random string, generated like `JWT_SECRET` |
+
+4. Redeploy. `/api/health` should list all of them as `true`.
+
+What is sent: a welcome on sign-up; the decision on a post, comment,
+correction or review, to its author, when the decision changes; every order
+status change or message, to the customer; and, once per post, a "new owner
+post" email to everyone who has not turned it off on their profile.
+
+**The daily limit.** The free plan allows 300 emails a day. New-post emails
+may use at most 200 of them, so at least 100 are always left for the emails
+people are waiting on. Whatever does not fit is kept in `emailQueue`, and a
+Vercel cron (`vercel.json`, 06:00 UTC daily) sends it the next morning:
+waiting transactional mail first, then the next 200 new-post emails. With 450
+users, a new post reaches 200 today, 200 tomorrow and 50 the day after.
+`EMAIL_DAILY_LIMIT` and `EMAIL_BROADCAST_DAILY_LIMIT` change the numbers if
+the plan changes. Admins can see the day's count and the queue at
+`/api/router?p=email/status`.
+
+Every new-post email carries a signed unsubscribe link and the
+`List-Unsubscribe` header, so Gmail shows its own unsubscribe button. The
+photos in the emails are `public/email/*.jpg`, served from the site.
+
+## 5. Create the admin account
 
 **The first account to register becomes the admin.** Open `#/signin` on the
 live site and register immediately after the API goes live, before sharing the

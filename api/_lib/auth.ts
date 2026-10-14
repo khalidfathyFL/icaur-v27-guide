@@ -35,6 +35,8 @@ export type UserProfile = {
   trim?: 'play' | 'wild'
   /** Body colour, from the launch palette. */
   colour?: string
+  /** Emails announcing new posts. Missing means yes; only an explicit false opts out. */
+  emailNewPosts?: boolean
 }
 
 export type UserDoc = UserProfile & {
@@ -173,6 +175,7 @@ export function toSessionUser(user: UserDoc): SessionUser {
     city: user.city,
     trim: user.trim,
     colour: user.colour,
+    emailNewPosts: user.emailNewPosts !== false,
     permissions: user.permissions ?? [],
     roleIds: user.roleIds ?? [],
   }
