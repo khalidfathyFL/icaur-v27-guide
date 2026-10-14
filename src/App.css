@@ -2263,6 +2263,90 @@ kbd {
   }
 }
 
+/* ---------- More menu, grouped ---------- */
+
+.mega-menu {
+  grid-template-columns: repeat(3, minmax(210px, 1fr));
+  gap: 6px 10px;
+  width: max-content;
+  max-width: min(760px, calc(100vw - 32px));
+  padding: 12px;
+}
+
+.mega-menu nav {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+}
+
+.mega-menu nav + nav {
+  padding-inline-start: 10px;
+  border-inline-start: 1px solid var(--line);
+}
+
+.grouped-link {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.grouped-link:hover,
+.grouped-link.active {
+  color: var(--heading);
+  background: var(--surface-2);
+}
+
+.grouped-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.grouped-link-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.grouped-link-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.grouped-link-text > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.grouped-link-text small {
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.new-tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--accent);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 /* ---------- mobile drawer ---------- */
 
 /* A backdrop-filter makes the header the containing block for fixed children,
@@ -2328,6 +2412,13 @@ kbd {
 
 html[dir='rtl'] .mobile-drawer nav a.active {
   box-shadow: inset -3px 0 0 var(--accent);
+}
+
+/* The drawer's grouped links carry a description, so they are taller than a plain row. */
+.mobile-drawer nav a.grouped-link {
+  align-items: flex-start;
+  min-height: 0;
+  padding: 10px 12px;
 }
 
 /* ---------- search dialog ---------- */
@@ -3086,7 +3177,7 @@ ol.path-pills li:last-child {
 
 .footer-inner {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.4fr) repeat(auto-fit, minmax(130px, 1fr));
   gap: 32px;
 }
 
@@ -5494,4 +5585,10 @@ ol.path-pills li:last-child {
     grid-template-columns: 96px minmax(0, 1fr);
     gap: 1rem;
   }
+}
+
+/* Three columns are wider than the More button's side of the header, so the menu opens toward the page's start. */
+.desktop-nav .popover.mega-menu {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
 }

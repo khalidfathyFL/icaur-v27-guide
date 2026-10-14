@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ArrowUp } from 'lucide-react'
-import { PRIMARY_NAV, SECONDARY_NAV } from '../app/navigation'
+import { PRIMARY_NAV, SECONDARY_GROUPS } from '../app/navigation'
 import { useLanguage } from '../i18n/languageContext'
 
 export function SiteFooter() {
@@ -34,14 +34,16 @@ export function SiteFooter() {
           ))}
         </nav>
 
-        <nav aria-label={tx('Research & community', 'البحث والمجتمع')}>
-          <strong>{tx('Research & community', 'البحث والمجتمع')}</strong>
-          {SECONDARY_NAV.map((item) => (
-            <a key={item.href} href={`#${item.href}`}>
-              {t(item)}
-            </a>
-          ))}
-        </nav>
+        {SECONDARY_GROUPS.map((group) => (
+          <nav key={group.key} aria-label={t(group)}>
+            <strong>{t(group)}</strong>
+            {group.items.map((item) => (
+              <a key={item.href} href={`#${item.href}`}>
+                {t(item)}
+              </a>
+            ))}
+          </nav>
+        ))}
       </div>
       <BackToTop />
     </footer>

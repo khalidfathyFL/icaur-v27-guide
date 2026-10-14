@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ChevronDown, Globe, Menu, Moon, Search, ShoppingBag, Sun, UserRound, X } from 'lucide-react'
-import { PRIMARY_NAV, SECONDARY_NAV, isActive, type NavItem } from '../app/navigation'
+import { PRIMARY_NAV, SECONDARY_GROUPS, SECONDARY_NAV, isActive, type NavItem, type NavLink as GroupLink } from '../app/navigation'
 import { visibleAdminSections } from '../app/panelNav'
 import { useAuth } from '../auth/authContext'
 import { useCart } from '../features/orders/cartContext'
@@ -137,13 +137,44 @@ function MoreMenu({ path }: { path: string }) {
         <ChevronDown size={15} aria-hidden="true" />
       </button>
       {open && (
-        <div className="popover menu-popover">
-          {SECONDARY_NAV.map((item) => (
-            <NavLink key={item.href} item={item} path={path} onClick={close} />
+        <div className="popover mega-menu">
+          {SECONDARY_GROUPS.map((group) => (
+            <nav key={group.key} aria-label={tx(group.en, group.ar)}>
+              <p className="popover-label">{tx(group.en, group.ar)}</p>
+              {group.items.map((item) => (
+                <GroupedLink key={item.href} item={item} path={path} onClick={close} />
+              ))}
+            </nav>
           ))}
         </div>
       )}
     </div>
+  )
+}
+
+/** A link in the More menu and the drawer: icon, name, a "New" tag where due, and what is there. */
+function GroupedLink({ item, path, onClick }: { item: GroupLink; path: string; onClick?: () => void }) {
+  const tx = useShortText()
+  const active = isActive(path, item.href)
+  const Icon = item.icon
+  return (
+    <a
+      className={active ? 'grouped-link active' : 'grouped-link'}
+      href={`#${item.href}`}
+      aria-current={active ? 'page' : undefined}
+      onClick={onClick}
+    >
+      <span className="grouped-link-icon" aria-hidden="true">
+        <Icon size={17} />
+      </span>
+      <span className="grouped-link-text">
+        <span>
+          {tx(item.en, item.ar)}
+          {item.isNew && <span className="new-tag">{tx('New', 'جديد')}</span>}
+        </span>
+        <small>{tx(item.hint.en, item.hint.ar)}</small>
+      </span>
+    </a>
   )
 }
 
@@ -312,12 +343,14 @@ function MobileDrawer({ path, onClose }: { path: string; onClose: () => void }) 
         ))}
       </nav>
 
-      <nav aria-label={tx('More pages', 'صفحات أخرى')}>
-        <p className="popover-label">{tx('Research & community', 'البحث والمجتمع')}</p>
-        {SECONDARY_NAV.map((item) => (
-          <NavLink key={item.href} item={item} path={path} />
-        ))}
-      </nav>
+      {SECONDARY_GROUPS.map((group) => (
+        <nav key={group.key} aria-label={tx(group.en, group.ar)}>
+          <p className="popover-label">{tx(group.en, group.ar)}</p>
+          {group.items.map((item) => (
+            <GroupedLink key={item.href} item={item} path={path} />
+          ))}
+        </nav>
+      ))}
 
       <section>
         <p className="popover-label">{tx('Language', 'اللغة')}</p>
