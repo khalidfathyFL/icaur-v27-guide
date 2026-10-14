@@ -211,7 +211,7 @@ function ProfileForm() {
       <label className="checkbox-row">
         <input type="checkbox" checked={emailNewPosts} onChange={(event) => setEmailNewPosts(event.target.checked)} />
         <span>
-          {tx('Email me when a new owner post is published', 'أرسل لي بريداً عند نشر مقال جديد من الملاك')}
+          {tx('Email me about new owner posts and announcements', 'أرسل لي بريداً بالمقالات الجديدة والإعلانات')}
           <small>
             {tx(
               'Emails about your own posts, reviews and orders are always sent.',

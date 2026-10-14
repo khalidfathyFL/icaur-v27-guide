@@ -1,16 +1,32 @@
 import { ObjectId } from 'mongodb'
 import type { UserDoc } from '../_lib/auth.js'
 import { requirePermission } from '../_lib/permissions.js'
-import { HttpError, json, searchParams } from '../_lib/http.js'
+import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
-import { drainQueue, emailStatus, readUnsubscribeToken } from '../_lib/email/outbox.js'
-import { escapeHtml, pageUrl } from '../_lib/email/templates.js'
+import { recordAudit } from '../_lib/audit.js'
+import { optionalString, optionalUrl, requireEmail, requireEnum, type Localized } from '../_lib/models.js'
+import { emailConfigured } from '../_lib/email/brevo.js'
+import { announceToAll, drainQueue, emailStatus, readUnsubscribeToken, sendTransactional, unsubscribeUrl } from '../_lib/email/outbox.js'
+import { EMAIL_SAMPLES, findSample } from '../_lib/email/samples.js'
+import {
+  EMAIL_IMAGES,
+  announcementEmail,
+  escapeHtml,
+  pageUrl,
+  renderEmail,
+  type Announcement,
+  type EmailContent,
+} from '../_lib/email/templates.js'
 
 export async function handleEmail(request: Request, segments: string[]): Promise<Response> {
   const action = segments[0]
 
   if (action === 'drain' && (request.method === 'GET' || request.method === 'POST')) return drain(request)
   if (action === 'status' && request.method === 'GET') return status(request)
+  if (action === 'templates' && request.method === 'GET') return templates(request)
+  if (action === 'preview' && request.method === 'POST') return preview(request)
+  if (action === 'test' && request.method === 'POST') return sendTest(request)
+  if (action === 'send' && request.method === 'POST') return send(request)
   if (action === 'unsubscribe') return unsubscribe(request)
 
   throw new HttpError(404, 'Unknown email endpoint.')
@@ -18,28 +34,168 @@ export async function handleEmail(request: Request, segments: string[]): Promise
 
 /**
  * Vercel's cron calls this once a day with `Authorization: Bearer
- * $CRON_SECRET`. An admin may also call it by hand, e.g. after raising the
- * daily limit.
+ * $CRON_SECRET`. Someone with `emails.send` may also run it from the panel,
+ * e.g. after raising the daily limit.
  */
 async function drain(request: Request): Promise<Response> {
   const secret = process.env.CRON_SECRET
   const fromCron = Boolean(secret) && request.headers.get('authorization') === `Bearer ${secret}`
-  if (!fromCron) await requirePermission(request, 'users.manage')
+  if (!fromCron) await requirePermission(request, 'emails.send')
 
   const result = await drainQueue()
   return json(request, { ...result, status: await emailStatus() })
 }
 
-/** Today's count against the limit, and what is waiting for tomorrow. */
+/** Today's count against the limit, what is waiting, and how many people get broadcasts. */
 async function status(request: Request): Promise<Response> {
-  await requirePermission(request, 'users.manage')
+  await requirePermission(request, 'emails.send')
   return json(request, { status: await emailStatus() })
 }
 
+/** The catalogue of built-in emails, for the panel's list. */
+async function templates(request: Request): Promise<Response> {
+  await requirePermission(request, 'emails.send')
+  return json(request, {
+    templates: EMAIL_SAMPLES.map(({ key, group, name, when, broadcast }) => ({ key, group, name, when, broadcast: Boolean(broadcast) })),
+  })
+}
+
+/* ---------- what to render: a built-in sample, or an announcement being written ---------- */
+
+const LANG_MAX = { subject: 150, heading: 150, body: 5000, label: 40 }
+
+function readLang(value: unknown, field: string, max: number): Localized {
+  const source = (typeof value === 'object' && value !== null ? value : {}) as Record<string, unknown>
+  const side = (lang: 'en' | 'ar') =>
+    typeof source[lang] === 'string' ? (optionalString((source[lang] as string).trim(), field, { max }) ?? '') : ''
+  return { en: side('en'), ar: side('ar') }
+}
+
 /**
- * The link in every new-post email. Opening it only shows a button: mail
- * scanners follow links, and a GET that unsubscribed would silently opt
- * people out. The button, and mail apps' one-click unsubscribe, POST here.
+ * An announcement may be English only, Arabic only, or both, but each
+ * language it is written in needs a heading and a message.
+ */
+function readAnnouncement(value: unknown): Announcement {
+  if (typeof value !== 'object' || value === null) throw new HttpError(400, 'Write the message first.')
+  const body = value as Record<string, unknown>
+
+  const heading = readLang(body.heading, 'Heading', LANG_MAX.heading)
+  const message = readLang(body.body, 'Message', LANG_MAX.body)
+  const subject = readLang(body.subject, 'Subject', LANG_MAX.subject)
+
+  if (!heading.en && !heading.ar) throw new HttpError(400, 'Write a heading in English or Arabic.')
+  for (const [side, label] of [['en', 'English'], ['ar', 'Arabic']] as const) {
+    if (heading[side] && !message[side]) throw new HttpError(400, `The ${label} heading has no ${label} message.`)
+    if (message[side] && !heading[side]) throw new HttpError(400, `The ${label} message needs an ${label} heading.`)
+    // The subject defaults to the heading, which is what most people would type anyway.
+    if (heading[side] && !subject[side]) subject[side] = heading[side]
+  }
+
+  const url = optionalUrl(body.ctaUrl, 'Button link')
+  const label = readLang(body.ctaLabel, 'Button text', LANG_MAX.label)
+
+  return {
+    image: requireEnum(body.image ?? 'hero', EMAIL_IMAGES, 'Photo'),
+    subject,
+    heading,
+    body: message,
+    cta: url
+      ? {
+          url,
+          label: { en: label.en || (heading.en ? 'Open the guide' : ''), ar: label.ar || (heading.ar ? 'افتح الدليل' : '') },
+        }
+      : undefined,
+  }
+}
+
+async function contentFrom(body: Record<string, unknown>): Promise<{ content: EmailContent; broadcast: boolean }> {
+  if (typeof body.template === 'string') {
+    const sample = findSample(body.template)
+    if (!sample) throw new HttpError(404, 'Unknown email.')
+    return { content: sample.build(), broadcast: Boolean(sample.broadcast) }
+  }
+  return { content: announcementEmail(readAnnouncement(body.announcement)), broadcast: true }
+}
+
+/** Renders exactly what would be sent, for the panel's preview frame. Sends nothing. */
+async function preview(request: Request): Promise<Response> {
+  const user = await requirePermission(request, 'emails.send')
+  const body = await readJsonBody<Record<string, unknown>>(request)
+  const { content, broadcast } = await contentFrom(body)
+
+  // A broadcast shows its real unsubscribe footer; the link in a preview is the viewer's own.
+  const rendered = renderEmail(content, user.name, broadcast ? await unsubscribeUrl(user.id) : undefined)
+  return json(request, { subject: rendered.subject, html: rendered.html })
+}
+
+function requireConfigured() {
+  if (!emailConfigured()) {
+    throw new HttpError(503, 'Email is not set up yet. Add BREVO_API_KEY and EMAIL_FROM in Vercel, then redeploy.')
+  }
+}
+
+const OUTCOME_MESSAGE = {
+  sent: 'Sent.',
+  queued: "Today's email allowance is used up, so it will go out tomorrow morning.",
+  off: 'Email is not set up yet.',
+  failed: 'Brevo did not accept the email. Check the Vercel logs.',
+} as const
+
+/** Sends one email to the person asking, so they can see it in a real inbox. */
+async function sendTest(request: Request): Promise<Response> {
+  const user = await requirePermission(request, 'emails.send')
+  requireConfigured()
+  const body = await readJsonBody<Record<string, unknown>>(request)
+  const { content } = await contentFrom(body)
+
+  const test: EmailContent = { ...content, subject: { en: `[Test] ${content.subject.en}`, ar: content.subject.ar ? `[تجربة] ${content.subject.ar}` : '' } }
+  const outcome = await sendTransactional({ email: user.email, name: user.name, userId: user.id }, test)
+
+  await recordAudit(user, 'email.test_sent', { changes: { email: content.tag } })
+  return json(request, { outcome, message: OUTCOME_MESSAGE[outcome], to: user.email })
+}
+
+/**
+ * An announcement, to everyone who gets broadcasts or to one account.
+ * Everyone goes through the queue and its 200-a-day cap; one person is sent
+ * straight away like any other reply.
+ */
+async function send(request: Request): Promise<Response> {
+  const user = await requirePermission(request, 'emails.send')
+  requireConfigured()
+  const body = await readJsonBody<Record<string, unknown>>(request)
+  const announcement = readAnnouncement(body.announcement)
+  const subjectLabel = announcement.subject.en || announcement.subject.ar
+
+  if (body.audience === 'one') {
+    const email = requireEmail(body.email)
+    const db = await getDb()
+    const recipient = await db.collection<UserDoc>('users').findOne({ email }, { projection: { email: 1, name: 1, status: 1 } })
+    if (!recipient) throw new HttpError(404, 'No account uses that email address.')
+    if (recipient.status === 'blocked') throw new HttpError(409, 'That account is blocked.')
+
+    const outcome = await sendTransactional(
+      { email: recipient.email, name: recipient.name, userId: recipient._id.toHexString() },
+      announcementEmail(announcement),
+    )
+    await recordAudit(user, 'email.sent_to_one', {
+      target: { kind: 'user', id: recipient._id.toHexString(), label: recipient.email },
+      changes: { subject: subjectLabel },
+    })
+    return json(request, { outcome, message: OUTCOME_MESSAGE[outcome], recipients: 1 })
+  }
+
+  if (body.audience !== 'all') throw new HttpError(400, 'Say who it goes to.')
+
+  const result = await announceToAll(announcement, user.name)
+  await recordAudit(user, 'email.announced', { changes: { subject: subjectLabel, recipients: result.recipients } })
+  return json(request, { ...result, status: await emailStatus() })
+}
+
+/**
+ * The link in every broadcast. Opening it only shows a button: mail scanners
+ * follow links, and a GET that unsubscribed would silently opt people out.
+ * The button, and mail apps' one-click unsubscribe, POST here.
  */
 async function unsubscribe(request: Request): Promise<Response> {
   const token = searchParams(request).get('token') ?? ''
@@ -52,17 +208,17 @@ async function unsubscribe(request: Request): Promise<Response> {
     const db = await getDb()
     await db.collection<UserDoc>('users').updateOne({ _id: new ObjectId(userId) }, { $set: { emailNewPosts: false } })
     return page(
-      'You will not get new-post emails any more',
-      'You will still get emails about your own posts, reviews and orders. You can turn new-post emails back on from your profile.',
-      'لن تصلك رسائل المقالات الجديدة بعد الآن. ستصلك فقط الرسائل الخاصة بمقالاتك وتقييماتك وطلباتك، ويمكنك إعادة تفعيلها من ملفك الشخصي.',
+      'You will not get these emails any more',
+      'No more emails about new posts or announcements. You will still get emails about your own posts, reviews and orders, and you can turn these back on from your profile.',
+      'لن تصلك رسائل المقالات الجديدة والإعلانات بعد الآن. ستصلك فقط الرسائل الخاصة بمقالاتك وتقييماتك وطلباتك، ويمكنك إعادة تفعيلها من ملفك الشخصي.',
     )
   }
 
-  const form = `<form method="post"><button type="submit">Stop new-post emails · إيقاف الرسائل</button></form>`
+  const form = `<form method="post"><button type="submit">Stop these emails · إيقاف الرسائل</button></form>`
   return page(
-    'Stop emails about new posts?',
+    'Stop emails about new posts and announcements?',
     'You will still get emails about your own posts, reviews and orders.',
-    'هل تريد إيقاف رسائل المقالات الجديدة؟ ستصلك فقط الرسائل الخاصة بمقالاتك وتقييماتك وطلباتك.',
+    'هل تريد إيقاف رسائل المقالات الجديدة والإعلانات؟ ستصلك فقط الرسائل الخاصة بمقالاتك وتقييماتك وطلباتك.',
     200,
     form,
   )

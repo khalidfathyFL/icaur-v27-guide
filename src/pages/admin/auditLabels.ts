@@ -52,6 +52,9 @@ export const ACTION_LABELS: Record<string, { en: string; ar: string }> = {
   'user.status_changed': { en: 'blocked or unblocked an account', ar: 'حظر أو رفع حظر حساب' },
   'user.password_changed': { en: 'changed their password', ar: 'غيّر كلمة المرور' },
   'user.profile_updated': { en: 'updated their profile', ar: 'حدّث ملفه الشخصي' },
+  'email.announced': { en: 'emailed an announcement to everyone', ar: 'أرسل إعلانا بالبريد للجميع' },
+  'email.sent_to_one': { en: 'emailed a message to one person', ar: 'أرسل رسالة بالبريد لشخص واحد' },
+  'email.test_sent': { en: 'sent themselves a test email', ar: 'أرسل لنفسه بريدا تجريبيا' },
 }
 
 /** Actions that change who can do what deserve to stand out. */

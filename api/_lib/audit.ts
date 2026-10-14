@@ -65,6 +65,9 @@ export type AuditAction =
   | 'user.status_changed'
   | 'user.password_changed'
   | 'user.profile_updated'
+  | 'email.announced'
+  | 'email.sent_to_one'
+  | 'email.test_sent'
 
 export type AuditEntry = {
   _id: ObjectId

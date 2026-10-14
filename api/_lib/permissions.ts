@@ -28,6 +28,7 @@ export const PERMISSION_KEYS = [
   'insurance.manage',
   'orders.manage',
   'users.manage',
+  'emails.send',
   'audit.read',
   'stats.read',
 ] as const
@@ -123,6 +124,13 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     key: 'users.manage',
     label: 'Manage accounts',
     description: 'Grant permissions, block accounts, and make other people admins.',
+    group: 'Administration',
+  },
+  {
+    key: 'emails.send',
+    label: 'Send emails',
+    description:
+      'Preview the emails the site sends, send test emails, and write announcements to every user or to one person.',
     group: 'Administration',
   },
   {

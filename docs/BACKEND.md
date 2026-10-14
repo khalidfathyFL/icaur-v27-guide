@@ -119,6 +119,13 @@ users, a new post reaches 200 today, 200 tomorrow and 50 the day after.
 the plan changes. Admins can see the day's count and the queue at
 `/api/router?p=email/status`.
 
+**The Emails page** (`#/admin/emails`, permission **Send emails**) shows
+today's count and the queue, previews every email the site sends with
+sample data, and sends you a test of any of them. It also has a composer for
+announcements, in English, Arabic or both, to everyone or to one account.
+An announcement to everyone goes through the same 200-a-day queue as
+new-post emails, and people who turned those off do not get it.
+
 Every new-post email carries a signed unsubscribe link and the
 `List-Unsubscribe` header, so Gmail shows its own unsubscribe button. The
 photos in the emails are `public/email/*.jpg`, served from the site.

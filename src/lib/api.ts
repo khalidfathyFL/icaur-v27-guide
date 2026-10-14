@@ -107,6 +107,37 @@ export type ProfileInput = {
   emailNewPosts?: boolean
 }
 
+export type ApiEmailStatus = {
+  configured: boolean
+  day: string
+  sentToday: number
+  broadcastToday: number
+  dailyLimit: number
+  broadcastDailyLimit: number
+  waiting: { transactional: number; broadcast: number }
+  failed: number
+  /** Accounts that get new-post emails and announcements. */
+  subscribers: number
+}
+
+export type ApiEmailTemplate = { key: string; group: string; name: string; when: string; broadcast: boolean }
+
+export type EmailImage = 'hero' | 'cabin' | 'screen' | 'rear'
+
+export type AnnouncementInput = {
+  image: EmailImage
+  subject: Localized
+  heading: Localized
+  body: Localized
+  ctaUrl?: string
+  ctaLabel?: Localized
+}
+
+/** A built-in email by key, or an announcement being written. */
+export type EmailSource = { template: string } | { announcement: AnnouncementInput }
+
+export type EmailOutcome = 'sent' | 'queued' | 'off' | 'failed'
+
 export type ApiPost = {
   id: string
   slug: string
@@ -682,6 +713,27 @@ export const api = {
     request<{ ok: true }>(`dealers/${id}`, { method: 'PATCH', body: input, auth: true }),
 
   removeDealer: (id: string) => request<{ ok: true }>(`dealers/${id}`, { method: 'DELETE', auth: true }),
+
+  /* ---------- email ---------- */
+
+  emailStatus: () => request<{ status: ApiEmailStatus }>('email/status', { auth: true }),
+
+  emailTemplates: () => request<{ templates: ApiEmailTemplate[] }>('email/templates', { auth: true }),
+
+  previewEmail: (source: EmailSource) =>
+    request<{ subject: string; html: string }>('email/preview', { method: 'POST', body: source, auth: true }),
+
+  sendTestEmail: (source: EmailSource) =>
+    request<{ outcome: EmailOutcome; message: string; to: string }>('email/test', { method: 'POST', body: source, auth: true }),
+
+  sendAnnouncement: (input: { announcement: AnnouncementInput; audience: 'all' } | { announcement: AnnouncementInput; audience: 'one'; email: string }) =>
+    request<{ recipients: number; sentNow?: number; outcome?: EmailOutcome; message?: string }>('email/send', {
+      method: 'POST',
+      body: input,
+      auth: true,
+    }),
+
+  drainEmails: () => request<{ sent: number; deferred: number; status: ApiEmailStatus }>('email/drain', { method: 'POST', auth: true }),
 
   listPricing: () => request<{ pricing: ApiPricing[] }>('pricing'),
 

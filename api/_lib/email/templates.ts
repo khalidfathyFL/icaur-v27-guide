@@ -133,7 +133,7 @@ ${content.details
 ${badge(content.badge.label[lang], content.badge.tone, font)}
 <h1 style="margin:18px 0 14px;font-family:${font};font-size:26px;line-height:1.25;font-weight:800;color:${C.forest};">${escapeHtml(content.heading[lang])}</h1>
 <p style="margin:0 0 12px;font-family:${font};font-size:16px;line-height:1.65;color:${C.ink};">${escapeHtml(greeting)}</p>
-${content.paragraphs.map((p) => `<p style="margin:0 0 12px;font-family:${font};font-size:16px;line-height:1.65;color:${C.ink};">${multiline(p[lang])}</p>`).join('\n')}
+${content.paragraphs.filter((p) => p[lang]).map((p) => `<p style="margin:0 0 12px;font-family:${font};font-size:16px;line-height:1.65;color:${C.ink};">${multiline(p[lang])}</p>`).join('\n')}
 ${quote}
 ${details}
 ${content.cta ? button(content.cta.label[lang], content.cta.url, font) : ''}
@@ -152,8 +152,17 @@ ${cell('cabin', 'Cabin')}${cell('screen', 'Tech')}${cell('rear', 'Off-road')}
 </tr></table>`
 }
 
-/** Both languages on one line, or the text once when it reads the same in both. */
-const both = (value: Lang) => (value.en === value.ar ? value.en : `${value.en} · ${value.ar}`)
+/** Both languages on one line, or the text once when it reads the same in both or one side is empty. */
+const both = (value: Lang) => (!value.ar || value.en === value.ar ? value.en : !value.en ? value.ar : `${value.en} · ${value.ar}`)
+
+/**
+ * The languages a message is written in. Every built-in message has both; an
+ * announcement written in only one language shows just that one.
+ */
+const languagesOf = (content: EmailContent): ('en' | 'ar')[] => {
+  const written = (['en', 'ar'] as const).filter((lang) => content.heading[lang].trim())
+  return written.length > 0 ? written : ['en']
+}
 
 export function renderEmail(content: EmailContent, recipientName: string, unsubscribeUrl?: string): RenderedEmail {
   const name = recipientName.trim().split(/\s+/)[0] || recipientName
@@ -161,7 +170,7 @@ export function renderEmail(content: EmailContent, recipientName: string, unsubs
   const preheader = both(content.preheader)
 
   const unsubscribe = unsubscribeUrl
-    ? `<p style="margin:14px 0 0;font-family:${FONT_EN};font-size:12px;line-height:1.6;color:#9fb3aa;">You get these because you have an account on the V27 owners' guide. <a href="${escapeHtml(unsubscribeUrl)}" style="color:${C.copperLight};">Stop emails about new posts</a><br><span dir="rtl" style="font-family:${FONT_AR};">تصلك هذه الرسائل لأن لديك حساباً على دليل ملاك V27. <a href="${escapeHtml(unsubscribeUrl)}" style="color:${C.copperLight};">إيقاف رسائل المقالات الجديدة</a></span></p>`
+    ? `<p style="margin:14px 0 0;font-family:${FONT_EN};font-size:12px;line-height:1.6;color:#9fb3aa;">You get these because you have an account on the V27 owners' guide. <a href="${escapeHtml(unsubscribeUrl)}" style="color:${C.copperLight};">Stop emails about new posts and announcements</a><br><span dir="rtl" style="font-family:${FONT_AR};">تصلك هذه الرسائل لأن لديك حساباً على دليل ملاك V27. <a href="${escapeHtml(unsubscribeUrl)}" style="color:${C.copperLight};">إيقاف رسائل المقالات الجديدة والإعلانات</a></span></p>`
     : `<p style="margin:14px 0 0;font-family:${FONT_EN};font-size:12px;line-height:1.6;color:#9fb3aa;">This is about something you did on the V27 owners' guide, so it is sent whatever your email settings.</p>`
 
   const html = `<!doctype html>
@@ -193,13 +202,13 @@ export function renderEmail(content: EmailContent, recipientName: string, unsubs
 <tr><td style="height:6px;line-height:6px;font-size:0;background:${C.copper};background-image:linear-gradient(90deg,${C.copper},${C.copperLight},${C.copper});">&nbsp;</td></tr>
 
 <tr><td bgcolor="${C.card}" style="background:${C.card};padding:34px 32px 30px;">
-${section(content, 'en', name)}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:30px 0;"><tr>
+${languagesOf(content)
+  .map((lang) => section(content, lang, name))
+  .join(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:30px 0;"><tr>
 <td style="border-top:1px dashed ${C.rule};font-size:0;line-height:0;">&nbsp;</td>
 <td width="70" align="center" style="font-family:${FONT_AR};font-size:12px;color:${C.copper};white-space:nowrap;padding:0 10px;">عربي</td>
 <td style="border-top:1px dashed ${C.rule};font-size:0;line-height:0;">&nbsp;</td>
-</tr></table>
-${section(content, 'ar', name)}
+</tr></table>`)}
 </td></tr>
 
 <tr><td bgcolor="${C.forest}" style="background:${C.forest};border-radius:0 0 18px 18px;padding:26px 28px 28px;">
@@ -226,18 +235,14 @@ function renderText(content: EmailContent, name: string, unsubscribeUrl?: string
       '',
       lang === 'ar' ? `أهلاً ${name}،` : `Hi ${name},`,
       '',
-      ...content.paragraphs.map((p) => p[lang]),
+      ...content.paragraphs.map((p) => p[lang]).filter(Boolean),
       ...(content.quote ? ['', `${content.quote.label[lang]}:`, content.quote.text] : []),
       ...(content.details ?? []).map((row) => `${row.label[lang]}: ${row.value}`),
       ...(content.cta ? ['', `${content.cta.label[lang]}: ${content.cta.url}`] : []),
     ].join('\n')
 
   return [
-    half('en'),
-    '',
-    '— — —',
-    '',
-    half('ar'),
+    languagesOf(content).map(half).join('\n\n— — —\n\n'),
     '',
     `iCAUR V27 owners' guide: ${siteUrl()}`,
     ...(unsubscribeUrl ? [`Stop emails about new posts / إيقاف رسائل المقالات الجديدة: ${unsubscribeUrl}`] : []),
@@ -510,4 +515,39 @@ export function newPostEmail(input: { title: string; excerpt: string; authorName
     quote: input.excerpt ? { label: { en: 'A taste', ar: 'مقتطف' }, text: `${input.excerpt.slice(0, 280)}…` } : undefined,
     cta: { label: { en: 'Read the post', ar: 'اقرأ المقال' }, url: pageUrl(`blog/${encodeURIComponent(input.slug)}`) },
   }
+}
+
+/** The photos an announcement may lead with. */
+export const EMAIL_IMAGES: EmailImage[] = ['hero', 'cabin', 'screen', 'rear']
+
+export type Announcement = {
+  image: EmailImage
+  subject: Lang
+  heading: Lang
+  body: Lang
+  cta?: { label: Lang; url: string }
+}
+
+/** A message an admin writes in the panel, to everyone or to one person. */
+export function announcementEmail(input: Announcement): EmailContent {
+  return {
+    tag: 'announcement',
+    subject: input.subject,
+    preheader: { en: firstLine(input.body.en), ar: firstLine(input.body.ar) },
+    image: input.image,
+    badge: { label: { en: 'From the team', ar: 'من فريق الدليل' }, tone: 'info' },
+    heading: input.heading,
+    // Blank lines separate paragraphs, the way people write in a textarea.
+    paragraphs: paragraphsOf(input.body),
+    cta: input.cta,
+  }
+}
+
+const firstLine = (text: string) => (text.trim().split('\n')[0] ?? '').slice(0, 120)
+
+function paragraphsOf(body: Lang): Lang[] {
+  const split = (text: string) => text.split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean)
+  const en = split(body.en)
+  const ar = split(body.ar)
+  return Array.from({ length: Math.max(en.length, ar.length) }, (_, index) => ({ en: en[index] ?? '', ar: ar[index] ?? '' }))
 }

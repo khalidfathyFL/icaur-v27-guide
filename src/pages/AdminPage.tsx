@@ -17,6 +17,7 @@ import { Centers } from './admin/Centers'
 import { Comments } from './admin/Comments'
 import { Dashboard } from './admin/Dashboard'
 import { Dealers } from './admin/Dealers'
+import { Emails } from './admin/Emails'
 import { Insurers } from './admin/Insurers'
 import { Orders } from './admin/Orders'
 import { Parts } from './admin/Parts'
@@ -162,6 +163,8 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
         return <Orders params={params} onChanged={refresh} />
       case 'users':
         return <Users params={params} />
+      case 'emails':
+        return <Emails />
       case 'roles':
         return <Roles />
       case 'permissions':

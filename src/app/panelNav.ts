@@ -6,6 +6,7 @@ import {
   History,
   KeyRound,
   KeySquare,
+  Mail,
   LayoutDashboard,
   ListChecks,
   MessageSquare,
@@ -170,6 +171,17 @@ export const ADMIN_SECTIONS: PanelSection[] = [
     description: {
       en: 'Where to fit PPF, ceramic and film, with each package',
       ar: 'أماكن تركيب الحماية والنانو والأفلام، بكل باقة',
+    },
+  },
+  {
+    key: 'emails',
+    group: 'people',
+    icon: Mail,
+    permission: 'emails.send',
+    label: { en: 'Emails', ar: 'البريد' },
+    description: {
+      en: 'Preview what the site sends, test it, and write announcements',
+      ar: 'معاينة رسائل الموقع وتجربتها وكتابة الإعلانات',
     },
   },
   {
