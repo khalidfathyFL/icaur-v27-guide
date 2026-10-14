@@ -155,6 +155,9 @@ function failureMessage(error?: string): string {
   if (/unrecogni[sz]ed IP|authori[sz]ed IP/i.test(detail)) {
     return 'Brevo blocked the request because it came from an IP address it does not know. In Brevo, open Security → Authorized IPs and deactivate blocking for API keys: Vercel has no fixed IP.'
   }
+  if (/not (yet )?activated|account.*(suspended|under validation|validation)/i.test(detail)) {
+    return 'Brevo has not activated sending on this account yet. New accounts must be activated before they can send: complete your profile in Brevo, or ask Brevo support (contact@brevo.com) to activate transactional email.'
+  }
   if (/401|key not found|unauthori[sz]ed/i.test(detail)) {
     return 'Brevo rejected the API key. Check BREVO_API_KEY in Vercel (it starts with xkeysib-), then redeploy.'
   }
