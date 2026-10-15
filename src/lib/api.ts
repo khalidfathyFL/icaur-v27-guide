@@ -32,7 +32,7 @@ export type ApiUser = {
   /** Whether they get an email when a new post is published. */
   emailNewPosts?: boolean
   /** For the signed-in person: the listings they run as a merchant. */
-  manages?: { insurers: string[]; centers: string[] }
+  manages?: { insurers: string[]; centers: string[]; installers: string[] }
   /**
    * For the signed-in person (`me`), everything they hold including their
    * roles. In the admin account list, only what was granted individually.
@@ -53,6 +53,37 @@ export type ApiComment = {
   authorName: string
   status: ReviewStatus
   reviewNote?: string
+  createdAt: string
+}
+
+/** A question an owner asked; plain text, in whatever language they wrote it. */
+export type ApiQuestion = {
+  id: string
+  title: string
+  body: string
+  /** Slug of the guide it is about, when the asker picked one. */
+  guide?: string
+  authorName: string
+  status: ReviewStatus
+  reviewNote?: string
+  answerCount: number
+  acceptedAnswerId?: string
+  /** The signed-in reader asked it. */
+  mine: boolean
+  createdAt: string
+  activeAt: string
+}
+
+export type ApiAnswer = {
+  id: string
+  questionId: string
+  questionTitle: string
+  body: string
+  authorName: string
+  status: ReviewStatus
+  reviewNote?: string
+  /** The signed-in reader wrote it. */
+  mine: boolean
   createdAt: string
 }
 
@@ -286,7 +317,7 @@ export type PartInput = Omit<
 >
 
 /** Owner reviews: accessories and protection centers share one shape and one set of rules. */
-export type ReviewTarget = 'part' | 'center' | 'insurer'
+export type ReviewTarget = 'part' | 'center' | 'insurer' | 'installer'
 
 export type ApiOwnerReview = {
   id: string
@@ -306,6 +337,7 @@ const REVIEW_ROUTES: Record<ReviewTarget, { route: string; id: string; name: str
   part: { route: 'part-reviews', id: 'partId', name: 'partName', slug: 'partSlug' },
   center: { route: 'center-reviews', id: 'centerId', name: 'centerName', slug: 'centerSlug' },
   insurer: { route: 'insurer-reviews', id: 'insurerId', name: 'insurerName', slug: 'insurerSlug' },
+  installer: { route: 'installer-reviews', id: 'installerId', name: 'installerName', slug: 'installerSlug' },
 }
 
 function toOwnerReview(kind: ReviewTarget, raw: Record<string, unknown>): ApiOwnerReview {
@@ -534,11 +566,120 @@ export type InsurerInput = Omit<
   'id' | 'slug' | 'plans' | 'lowestRatePct' | 'bestCashbackPct' | 'ratingAvg' | 'ratingCount' | 'active' | 'checkedAt' | 'updatedAt'
 > & { plans: InsurancePlan[] }
 
+export type InstallService =
+  | 'home-wallbox'
+  | 'site-survey'
+  | 'three-phase-upgrade'
+  | 'meter-application'
+  | 'public-station'
+  | 'maintenance'
+  | 'solar-integration'
+
+export type ChargerPhase = '1' | '3'
+export type ChargerConnector = 'gbt' | 'type2'
+
+/** One home charging package. Everything but the name is optional. */
+export type InstallerPackage = {
+  /** Assigned by the server; send it back on edit to keep the package's link. */
+  id?: string
+  name: Localized
+  chargerBrand?: string
+  powerKw?: number
+  phase?: ChargerPhase
+  connector?: ChargerConnector
+  priceEgp?: number
+  /** True when the price covers fitting it, not just the box. */
+  installIncluded?: boolean
+  cableMetersIncluded?: number
+  extraMeterEgp?: number
+  warrantyYears?: number
+  services: InstallService[]
+  installments?: Localized
+  notes?: Localized
+}
+
+export type ApiInstaller = {
+  id: string
+  slug: string
+  name: Localized
+  description: Localized
+  hotline?: string
+  phone?: string
+  whatsapp?: string
+  website?: string
+  email?: string
+  /** English governorate names; empty when not stated. */
+  governorates: string[]
+  /** On EgyptERA's list of licensed charging companies. */
+  licensed: boolean
+  services: InstallService[]
+  packages: (InstallerPackage & { id: string })[]
+  /** The cheapest package; null when none has a price. */
+  lowestPriceEgp: number | null
+  maxPowerKw: number | null
+  images: PartImage[]
+  ratingAvg: number
+  ratingCount: number
+  active: boolean
+  checkedAt: string
+  updatedAt: string
+}
+
+export type InstallerInput = Omit<
+  ApiInstaller,
+  'id' | 'slug' | 'services' | 'packages' | 'lowestPriceEgp' | 'maxPowerKw' | 'ratingAvg' | 'ratingCount' | 'active' | 'checkedAt' | 'updatedAt'
+> & { packages: InstallerPackage[] }
+
+export type StationConnector = 'type2' | 'gbt-ac' | 'gbt-dc' | 'ccs2' | 'chademo' | 'other'
+
+export type StationConnection = { type: StationConnector; powerKw?: number; count?: number }
+
+/** A public charging station, imported from Open Charge Map or added by staff. */
+export type ApiStation = {
+  id: string
+  source: 'ocm' | 'manual'
+  name: Localized
+  operator?: string
+  city?: string
+  address?: string
+  lat: number
+  lng: number
+  connections: StationConnection[]
+  connectors: StationConnector[]
+  pricePerKwh?: number
+  /** The price as the source wrote it. */
+  priceNote?: string
+  hours?: string
+  phone?: string
+  /** Who may use it: "Public - Membership Required". */
+  access?: string
+  operational: boolean
+  /** Where the record came from and its license; must be shown to readers. */
+  dataProvider?: { title: string; license?: string; url?: string }
+  active: boolean
+  /** Staff changed it; the daily import leaves it alone. */
+  adminEdited: boolean
+  checkedAt: string
+}
+
+export type StationInput = Pick<
+  ApiStation,
+  'name' | 'operator' | 'city' | 'address' | 'lat' | 'lng' | 'connections' | 'pricePerKwh' | 'priceNote' | 'hours' | 'phone' | 'access' | 'operational'
+>
+
+/** The state of the Open Charge Map import, for the panel. */
+export type StationSync = { configured: boolean; syncedAt?: string; attemptedAt?: string; lastError?: string }
+
+export type StationSyncResult = { fetched: number; added: number; updated: number; keptEdited: number; skipped: number }
+
+/** The listing kinds that can have merchant accounts, as their API paths. */
+export type MerchantListingKind = 'insurers' | 'centers' | 'installers'
+
 /**
  * Where uploaded photos go. Listing folders are open only to that listing's
  * editors; `posts` to any signed-in account.
  */
-export type UploadFolder = 'parts' | 'centers' | 'posts' | 'insurers'
+export type UploadFolder = 'parts' | 'centers' | 'posts' | 'insurers' | 'installers'
 
 export type PartFilters = {
   category?: PartCategory
@@ -706,6 +847,50 @@ export const api = {
   deleteComment: (id: string) =>
     request<{ ok: true }>(`comments/${id}`, { method: 'DELETE', auth: true }),
 
+  /* ---------- questions and answers ---------- */
+
+  listQuestions: (filter: { guide?: string; limit?: number; page?: number } = {}) => {
+    const query = new URLSearchParams()
+    if (filter.guide) query.set('guide', filter.guide)
+    if (filter.limit) query.set('limit', String(filter.limit))
+    if (filter.page) query.set('page', String(filter.page))
+    const suffix = query.toString()
+    return request<{ questions: ApiQuestion[]; total: number; page: number }>(`questions${suffix ? `?${suffix}` : ''}`)
+  },
+
+  /** Signed in when there is a token, so the asker sees their own question while it waits. */
+  readQuestion: (id: string) =>
+    request<{ question: ApiQuestion; answers: ApiAnswer[] }>(`questions/${id}`, { auth: Boolean(getToken()) }),
+
+  createQuestion: (input: { title: string; body?: string; guide?: string }) =>
+    request<{ question: ApiQuestion }>('questions', { method: 'POST', body: input, auth: true }),
+
+  acceptAnswer: (questionId: string, answerId: string | null) =>
+    request<{ ok: true; acceptedAnswerId: string | null }>(`questions/${questionId}/accept`, {
+      method: 'POST',
+      body: { answerId },
+      auth: true,
+    }),
+
+  deleteQuestion: (id: string) => request<{ ok: true }>(`questions/${id}`, { method: 'DELETE', auth: true }),
+
+  questionQueue: (status: ReviewStatus | 'all' = 'pending') =>
+    request<{ questions: ApiQuestion[] }>(`questions?queue=1&status=${status}`, { auth: true }),
+
+  reviewQuestion: (id: string, input: { status: 'approved' | 'rejected'; note?: string }) =>
+    request<{ ok: true }>(`questions/${id}/review`, { method: 'POST', body: input, auth: true }),
+
+  createAnswer: (input: { questionId: string; body: string }) =>
+    request<{ answer: ApiAnswer }>('answers', { method: 'POST', body: input, auth: true }),
+
+  deleteAnswer: (id: string) => request<{ ok: true }>(`answers/${id}`, { method: 'DELETE', auth: true }),
+
+  answerQueue: (status: ReviewStatus | 'all' = 'pending') =>
+    request<{ answers: ApiAnswer[] }>(`answers?status=${status}`, { auth: true }),
+
+  reviewAnswer: (id: string, input: { status: 'approved' | 'rejected'; note?: string }) =>
+    request<{ ok: true }>(`answers/${id}/review`, { method: 'POST', body: input, auth: true }),
+
   /* ---------- suggested edits ---------- */
 
   listSuggestions: (params: { queue?: boolean; status?: ReviewStatus | 'all' } = {}) => {
@@ -846,10 +1031,10 @@ export const api = {
     }),
 
   /** Staff: link an account to a listing as its merchant, or unlink it. */
-  addMerchant: (kind: 'insurers' | 'centers', listingId: string, email: string) =>
+  addMerchant: (kind: MerchantListingKind, listingId: string, email: string) =>
     request<{ merchant: ApiMerchant }>(`${kind}/${listingId}/merchants`, { method: 'POST', body: { email }, auth: true }),
 
-  removeMerchant: (kind: 'insurers' | 'centers', listingId: string, userId: string) =>
+  removeMerchant: (kind: MerchantListingKind, listingId: string, userId: string) =>
     request<{ ok: true }>(`${kind}/${listingId}/merchants/${userId}`, { method: 'DELETE', auth: true }),
 
   readInsurer: (idOrSlug: string) => request<{ insurer: ApiInsurer }>(`insurers/${idOrSlug}`),
@@ -861,6 +1046,39 @@ export const api = {
     request<{ insurer: ApiInsurer }>(`insurers/${id}`, { method: 'PATCH', body: input, auth: true }),
 
   removeInsurer: (id: string) => request<{ ok: true }>(`insurers/${id}`, { method: 'DELETE', auth: true }),
+
+  /* ---------- charging stations ---------- */
+
+  listStations: (params: { all?: boolean } = {}) =>
+    request<{ stations: ApiStation[]; sync?: StationSync }>(`charging/stations${params.all ? '?all=1' : ''}`, { auth: Boolean(params.all) }),
+
+  createStation: (input: StationInput) =>
+    request<{ station: ApiStation }>('charging/stations', { method: 'POST', body: input, auth: true }),
+
+  updateStation: (id: string, input: Partial<StationInput> & { active?: boolean; adminEdited?: false; checked?: boolean }) =>
+    request<{ station: ApiStation }>(`charging/stations/${id}`, { method: 'PATCH', body: input, auth: true }),
+
+  removeStation: (id: string) => request<{ ok: true }>(`charging/stations/${id}`, { method: 'DELETE', auth: true }),
+
+  syncStations: () =>
+    request<{ result: StationSyncResult; sync: StationSync }>('charging/stations/sync', { method: 'POST', auth: true }),
+
+  /* ---------- charger installers ---------- */
+
+  listInstallers: (params: ListingScope = {}) =>
+    request<{ installers: (ApiInstaller & { merchants?: ApiMerchant[] })[] }>(`installers${scopeQuery(params)}`, {
+      auth: Boolean(params.all || params.mine),
+    }),
+
+  readInstaller: (idOrSlug: string) => request<{ installer: ApiInstaller }>(`installers/${idOrSlug}`),
+
+  createInstaller: (input: InstallerInput) =>
+    request<{ installer: ApiInstaller }>('installers', { method: 'POST', body: input, auth: true }),
+
+  updateInstaller: (id: string, input: Partial<InstallerInput> & { active?: boolean; checked?: boolean }) =>
+    request<{ installer: ApiInstaller }>(`installers/${id}`, { method: 'PATCH', body: input, auth: true }),
+
+  removeInstaller: (id: string) => request<{ ok: true }>(`installers/${id}`, { method: 'DELETE', auth: true }),
 
   /* ---------- owner reviews ---------- */
 

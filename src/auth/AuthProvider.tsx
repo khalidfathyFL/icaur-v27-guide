@@ -70,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // own listings; these two keys let the panel offer them that section.
     if (user?.manages?.insurers.length) granted.add('merchant.insurer')
     if (user?.manages?.centers.length) granted.add('merchant.center')
+    if (user?.manages?.installers?.length) granted.add('merchant.installer')
     const can = (permission: string) => isAdmin || granted.has(permission)
     return { user, loading, isAdmin, can, signIn, register, signOut, refresh }
   }, [user, loading, signIn, register, signOut, refresh])

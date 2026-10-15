@@ -20,12 +20,15 @@ type KindFilter =
   | 'sensitive'
   | 'post'
   | 'comment'
+  | 'question'
   | 'suggestion'
   | 'dealer'
   | 'pricing'
   | 'part'
   | 'center'
   | 'insurer'
+  | 'installer'
+  | 'station'
   | 'order'
   | 'email'
   | 'user'
@@ -69,7 +72,12 @@ export function Activity() {
 
   const filtered =
     entries?.filter((entry) =>
-      kind === 'all' ? true : kind === 'sensitive' ? SENSITIVE_ACTIONS.has(entry.action) : entry.action.startsWith(`${kind}.`),
+      kind === 'all'
+        ? true
+        : kind === 'sensitive'
+          ? SENSITIVE_ACTIONS.has(entry.action)
+          : // Answers belong with the questions they answer.
+            entry.action.startsWith(`${kind}.`) || (kind === 'question' && entry.action.startsWith('answer.')),
     ) ?? null
 
   const describe = (entry: ApiAuditEntry) => {
@@ -101,12 +109,15 @@ export function Activity() {
               { value: 'sensitive', label: tx('Access & prices only', 'الصلاحيات والأسعار فقط') },
               { value: 'post', label: tx('Posts', 'المقالات') },
               { value: 'comment', label: tx('Comments', 'التعليقات') },
+              { value: 'question', label: tx('Questions & answers', 'الأسئلة والأجوبة') },
               { value: 'suggestion', label: tx('Corrections', 'التصحيحات') },
               { value: 'dealer', label: tx('Dealers', 'الوكلاء') },
               { value: 'pricing', label: tx('Prices', 'الأسعار') },
               { value: 'part', label: tx('Accessories', 'الإكسسوارات') },
               { value: 'center', label: tx('Protection centers', 'مراكز الحماية') },
               { value: 'insurer', label: tx('Insurance', 'التأمين') },
+              { value: 'installer', label: tx('Charger installers', 'تركيب الشواحن') },
+              { value: 'station', label: tx('Charging stations', 'محطات الشحن') },
               { value: 'order', label: tx('Orders', 'الطلبات') },
               { value: 'email', label: tx('Emails', 'البريد') },
               { value: 'user', label: tx('Accounts', 'الحسابات') },

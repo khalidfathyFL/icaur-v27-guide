@@ -7,8 +7,8 @@ import { recordAudit, type AuditAction } from './audit.js'
 import { requireEmail } from './models.js'
 
 /**
- * Merchant accounts: an insurance company or a protection center editing its
- * own listing.
+ * Merchant accounts: an insurance company, a protection center or a charger
+ * installer editing its own listing.
  *
  * Staff with `insurance.manage` or `centers.manage` look after every listing
  * of that kind. A merchant is an ordinary account that staff have linked to
@@ -16,15 +16,20 @@ import { requireEmail } from './models.js'
  * the listing (`merchantIds`), so removing an account from a listing takes
  * effect on its next request, like any other permission change.
  *
- * What only staff may do: add or remove listings, take one off the site or
- * put it back, and decide who its merchants are.
+ * A contributor holds the kind's `addPermission`: they may add listings and
+ * edit the ones they added (`createdById`), but not anybody else's.
+ *
+ * What only staff may do: remove listings, take one off the site or put it
+ * back, and decide who its merchants are.
  */
 
-export type MerchantKind = 'insurer' | 'center'
+export type MerchantKind = 'insurer' | 'center' | 'installer'
 
 type KindConfig = {
   collection: string
   permission: Permission
+  /** Lets an account add listings of this kind and edit only its own. */
+  addPermission?: Permission
   noun: string
   actions: { added: AuditAction; removed: AuditAction }
 }
@@ -33,6 +38,7 @@ export const MERCHANT_KINDS: Record<MerchantKind, KindConfig> = {
   insurer: {
     collection: 'insurers',
     permission: 'insurance.manage',
+    addPermission: 'insurance.add',
     noun: 'Insurance company',
     actions: { added: 'insurer.merchant_added', removed: 'insurer.merchant_removed' },
   },
@@ -42,12 +48,31 @@ export const MERCHANT_KINDS: Record<MerchantKind, KindConfig> = {
     noun: 'Protection center',
     actions: { added: 'center.merchant_added', removed: 'center.merchant_removed' },
   },
+  installer: {
+    collection: 'installers',
+    permission: 'installers.manage',
+    noun: 'Charger installer',
+    actions: { added: 'installer.merchant_added', removed: 'installer.merchant_removed' },
+  },
 }
 
-type MerchantListing = { _id: ObjectId; name: { en: string; ar: string }; merchantIds?: string[] }
+type MerchantListing = { _id: ObjectId; name: { en: string; ar: string }; merchantIds?: string[]; createdById?: string }
+
+/** True when the account may add listings of this kind without managing them all. */
+export function canContribute(user: SessionUser, kind: MerchantKind): boolean {
+  const permission = MERCHANT_KINDS[kind].addPermission
+  return permission !== undefined && hasPermission(user, permission)
+}
+
+/** The listings an account may edit without staff rights: the ones it runs, and the ones it added. */
+function ownListings(user: SessionUser, kind: MerchantKind): Record<string, unknown> {
+  return canContribute(user, kind)
+    ? { $or: [{ merchantIds: user.id }, { createdById: user.id }] }
+    : { merchantIds: user.id }
+}
 
 /** The listings an account is the merchant of, by kind. */
-export async function managedListings(userId: string): Promise<{ insurers: string[]; centers: string[] }> {
+export async function managedListings(userId: string): Promise<{ insurers: string[]; centers: string[]; installers: string[] }> {
   const db = await getDb()
   const ids = async (kind: MerchantKind) =>
     (
@@ -57,8 +82,8 @@ export async function managedListings(userId: string): Promise<{ insurers: strin
         .toArray()
     ).map((doc) => doc._id.toHexString())
 
-  const [insurers, centers] = await Promise.all([ids('insurer'), ids('center')])
-  return { insurers, centers }
+  const [insurers, centers, installers] = await Promise.all([ids('insurer'), ids('center'), ids('installer')])
+  return { insurers, centers, installers }
 }
 
 /** True when the account manages at least one listing of this kind. */
@@ -71,7 +96,8 @@ export async function isMerchantOf(user: SessionUser, kind: MerchantKind): Promi
 }
 
 /**
- * Who may edit this listing: staff for the kind, or one of its merchants.
+ * Who may edit this listing: staff for the kind, one of its merchants, or the
+ * contributor who added it.
  * Anyone else gets the same 404 as a listing that does not exist, so the
  * endpoint cannot be used to discover other merchants' listings.
  */
@@ -79,10 +105,10 @@ export async function requireListingEditor(
   request: Request,
   kind: MerchantKind,
   id: string,
-): Promise<{ user: SessionUser; staff: boolean }> {
+): Promise<{ user: SessionUser; staff: boolean; merchant: boolean }> {
   const config = MERCHANT_KINDS[kind]
   const user = await requireUser(request)
-  if (hasPermission(user, config.permission)) return { user, staff: true }
+  if (hasPermission(user, config.permission)) return { user, staff: true, merchant: false }
 
   const notFound = new HttpError(404, `${config.noun} not found.`)
   if (!ObjectId.isValid(id)) throw notFound
@@ -90,15 +116,15 @@ export async function requireListingEditor(
   const db = await getDb()
   const mine = await db
     .collection<MerchantListing>(config.collection)
-    .countDocuments({ _id: new ObjectId(id), merchantIds: user.id }, { limit: 1 })
-  if (mine === 0) throw notFound
+    .findOne({ _id: new ObjectId(id), ...ownListings(user, kind) }, { projection: { merchantIds: 1 } })
+  if (!mine) throw notFound
 
-  return { user, staff: false }
+  return { user, staff: false, merchant: mine.merchantIds?.includes(user.id) ?? false }
 }
 
 /**
  * The filter for the admin table. `all=1` is staff only and shows every
- * listing; `mine=1` shows the caller's own, removed ones included. `null`
+ * listing; `mine=1` shows the caller's own (run or added), removed ones included. `null`
  * means a public request.
  */
 export async function adminListFilter(request: Request, kind: MerchantKind): Promise<Record<string, unknown> | null> {
@@ -109,7 +135,7 @@ export async function adminListFilter(request: Request, kind: MerchantKind): Pro
   }
   if (params.get('mine') === '1') {
     const user = await requireUser(request)
-    return { merchantIds: user.id }
+    return ownListings(user, kind)
   }
   return null
 }

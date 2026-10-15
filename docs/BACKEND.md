@@ -154,6 +154,27 @@ promote them.
   queue rules as comments: the **Approve comments** permission works all three
   queues.
 
+## Questions and answers
+
+`#/questions` has two halves. **Answered by the guide** is the site's own FAQ,
+kept in git in `src/content/faq.ts` and held to the same verification rule as
+the guides. Entries tagged with guide slugs also appear at the bottom of those
+guides, and entries marked `featured` appear on the home page.
+
+**Asked by owners** is the community part. Anyone signed in can ask a question,
+optionally about one guide, and answer other people's questions.
+
+- Questions and answers are moderated by whoever holds **Approve comments**,
+  at `#/admin/questions` and `#/admin/answers`. **Comment without review**
+  also lets someone ask and answer without waiting.
+- The person who asked, or a moderator, can mark one published answer as the
+  one that solved it. That answer is listed first.
+- The asker is emailed when their question is decided and when someone else's
+  answer is published. Answer authors are emailed the decision on their answer.
+- Someone can have at most 5 questions and 10 answers waiting for review at once.
+- An asker can delete their question only until someone else's answer is
+  published. Moderators can delete any question, and its answers go with it.
+
 ## Car insurance
 
 Editors with **Manage insurance** (`insurance.manage`) list insurance
@@ -175,17 +196,64 @@ current list price on the Egypt page (rate x price, never below the minimum),
 and the cashback in pounds. Owners can review insurers, moderated with the
 comments.
 
+## Charger installers
+
+Editors with **Manage charger installers** (`installers.manage`) list the
+companies that sell and install home chargers at `#/admin/installers`. Only
+the company name and each package's name are required. A company records the
+governorates it installs in and whether it is on EgyptERA's list of licensed
+charging companies; only staff can set that, not the company's merchant. A
+package can record:
+
+- the charger's make, power in kW, single or three phase, and its plug
+  (GB/T or Type 2);
+- the price, whether installation is included, the cable length included and
+  the price of each extra metre, and the warranty;
+- what it includes (wall box, site survey, three-phase upgrade, meter
+  paperwork, stations for businesses, maintenance, solar), installments and
+  notes.
+
+`#/charging/installers` lists them with filters for service, governorate and
+supply phase, sorted by cheapest package, most powerful charger or rating.
+Owners can review installers, moderated with the comments.
+
+## Charging stations
+
+`#/charging` shows Egypt's public charging stations on a map (Leaflet with
+OpenStreetMap tiles), with filters for fast DC and each plug, a search, and
+"near me" ordering. The page also works out what a full charge costs at home
+and at a station, and points to the charger installers.
+
+The operators' own apps publish no API, so the stations come from
+[Open Charge Map](https://openchargemap.org), a public registry with a free
+API:
+
+1. Sign up at openchargemap.org and create an API key under **My Profile →
+   My Apps**.
+2. Add it in Vercel as `OCM_API_KEY` and redeploy.
+
+The first visitor after a day has passed triggers the import, so no second
+cron is needed. Editors with **Manage charging stations**
+(`charging.manage`) can also run it from **Admin → Charging stations →
+Import now**, where the last import time and any error are shown.
+
+Staff can add stations Open Charge Map lacks, and correct or remove imported
+ones. An edited or removed station is marked and the import leaves it alone;
+**Use Open Charge Map's version** hands it back. Without the key the import is
+off, and only stations added by hand show.
+
 ## Merchant accounts
 
-An insurance company or a protection center can keep its own listing up to
-date. Someone from the business signs up on the site like anyone else; then
-staff with **Manage insurance** or **Manage protection centers** open the
-listing in the admin panel and add that account's email under **Merchant
-accounts**.
+An insurance company, a protection center or a charger installer can keep its
+own listing up to date. Someone from the business signs up on the site like
+anyone else; then staff with **Manage insurance**, **Manage protection
+centers** or **Manage charger installers** open the listing in the admin panel
+and add that account's email under **Merchant accounts**.
 
-- The merchant sees **Car insurance** or **Protection centers** in the admin
-  panel with only their own listings in it, and can edit the details, photos
-  and plans or packages. Changes go live straight away.
+- The merchant sees **Car insurance**, **Protection centers** or **Charger
+  installers** in the admin panel with only their own listings in it, and can
+  edit the details, photos and plans or packages. Changes go live straight
+  away.
 - They cannot see other listings, add or remove a listing, take theirs off
   the site, or change who its merchants are.
 - Every change is in the activity log with the merchant's name, which fields
@@ -228,6 +296,8 @@ request numbered `IC-0001`, `IC-0002`…
 | `users` | accounts, roles and blocked status |
 | `posts` | contributor posts and their review state |
 | `suggestions` | proposed corrections and their review state |
+| `questions` | owner questions, their review state, answer count and accepted answer |
+| `answers` | answers to owner questions and their review state |
 | `dealers` | who sells at official list price, admin-maintained |
 | `pricing` | current price per trim, overrides the figures in git |
 | `parts` | accessories and protection parts: price, suppliers, specs, photo addresses |
@@ -236,6 +306,10 @@ request numbered `IC-0001`, `IC-0002`…
 | `centerReviews` | owner reviews of protection centers and their review state |
 | `insurers` | insurance companies, their contact details, logo, and their plans |
 | `insurerReviews` | owner reviews of insurance companies and their review state |
+| `installers` | charger installers: contact details, governorates, licence, logo, and their packages |
+| `installerReviews` | owner reviews of charger installers and their review state |
+| `chargingStations` | public charging stations, imported from Open Charge Map or added by staff |
+| `syncState` | when the station import last ran, and its last error |
 | `carts` | each signed-in user's request list, before they send it |
 | `orders` | sent order requests: contact details, a copy of the lines and prices, status history, payment |
 | `counters` | the running number behind request numbers such as `IC-0007` |

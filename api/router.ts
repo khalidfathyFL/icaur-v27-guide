@@ -2,9 +2,12 @@ import { handleAuth } from './_routes/auth.js'
 import { handleCart } from './_routes/cart.js'
 import { handleCenterReviews } from './_routes/centerReviews.js'
 import { handleCenters } from './_routes/centers.js'
+import { handleCharging } from './_routes/charging.js'
 import { handleComments } from './_routes/comments.js'
 import { handleDealers } from './_routes/dealers.js'
 import { handleEmail } from './_routes/email.js'
+import { handleInstallerReviews } from './_routes/installerReviews.js'
+import { handleInstallers } from './_routes/installers.js'
 import { handleInsurerReviews } from './_routes/insurerReviews.js'
 import { handleInsurers } from './_routes/insurers.js'
 import { handleOrders } from './_routes/orders.js'
@@ -12,6 +15,7 @@ import { handlePartReviews } from './_routes/partReviews.js'
 import { handleParts } from './_routes/parts.js'
 import { handlePosts } from './_routes/posts.js'
 import { handlePricing } from './_routes/pricing.js'
+import { handleAnswers, handleQuestions } from './_routes/questions.js'
 import { handleRoles } from './_routes/roles.js'
 import { handleSuggestions } from './_routes/suggestions.js'
 import { handleUploads } from './_routes/uploads.js'
@@ -23,6 +27,8 @@ const ROUTES: Record<string, RouteHandler> = {
   auth: handleAuth,
   posts: handlePosts,
   comments: handleComments,
+  questions: handleQuestions,
+  answers: handleAnswers,
   suggestions: handleSuggestions,
   dealers: handleDealers,
   pricing: handlePricing,
@@ -34,6 +40,9 @@ const ROUTES: Record<string, RouteHandler> = {
   cart: handleCart,
   insurers: handleInsurers,
   'insurer-reviews': handleInsurerReviews,
+  installers: handleInstallers,
+  charging: handleCharging,
+  'installer-reviews': handleInstallerReviews,
   orders: handleOrders,
   uploads: handleUploads,
   email: handleEmail,

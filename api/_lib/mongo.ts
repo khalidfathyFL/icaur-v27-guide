@@ -1,5 +1,5 @@
 import { MongoClient, type Db } from 'mongodb'
-import { CENTER_REVIEWS, INSURER_REVIEWS, PART_REVIEWS, reviewIndexes } from './reviewKinds.js'
+import { CENTER_REVIEWS, INSTALLER_REVIEWS, INSURER_REVIEWS, PART_REVIEWS, reviewIndexes } from './reviewKinds.js'
 
 /**
  * Serverless functions are re-invoked constantly, and a fresh connection per
@@ -63,10 +63,21 @@ async function ensureIndexes(db: Db): Promise<void> {
     db.collection('insurers').createIndex({ merchantIds: 1 }),
     db.collection('centers').createIndex({ merchantIds: 1 }),
     ...reviewIndexes(db, INSURER_REVIEWS),
+    db.collection('installers').createIndex({ slug: 1 }, { unique: true }),
+    db.collection('installers').createIndex({ active: 1 }),
+    db.collection('installers').createIndex({ merchantIds: 1 }),
+    ...reviewIndexes(db, INSTALLER_REVIEWS),
+    db.collection('chargingStations').createIndex({ source: 1, externalId: 1 }, { unique: true, partialFilterExpression: { source: 'ocm' } }),
+    db.collection('chargingStations').createIndex({ active: 1 }),
     db.collection('audit').createIndex({ at: -1 }),
     db.collection('emailQueue').createIndex({ kind: 1, failed: 1, createdAt: 1 }),
     db.collection('emailLog').createIndex({ at: -1 }),
     db.collection('audit').createIndex({ actorId: 1, at: -1 }),
+    db.collection('questions').createIndex({ status: 1, activeAt: -1 }),
+    db.collection('questions').createIndex({ guide: 1, status: 1, activeAt: -1 }),
+    db.collection('questions').createIndex({ authorId: 1, status: 1 }),
+    db.collection('answers').createIndex({ questionId: 1, status: 1, createdAt: 1 }),
+    db.collection('answers').createIndex({ status: 1, createdAt: -1 }),
   ])
 }
 

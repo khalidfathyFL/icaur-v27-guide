@@ -68,6 +68,46 @@ export type CommentDoc = {
   createdAt: string
 }
 
+/**
+ * A question an owner asks the community. Plain text in whatever language
+ * they wrote it, like comments; moderated the same way before anyone sees it.
+ */
+export type QuestionDoc = {
+  _id: ObjectId
+  title: string
+  body: string
+  /** The guide it is about, by slug, when the asker picked one. */
+  guide?: string
+  authorId: string
+  authorName: string
+  status: ReviewStatus
+  reviewedBy?: string
+  reviewedAt?: string
+  reviewNote?: string
+  /** Approved answers, kept here so the list shows counts without a join. */
+  answerCount: number
+  /** The answer the asker (or a moderator) marked as the one that solved it. */
+  acceptedAnswerId?: string
+  createdAt: string
+  /** When it was asked or last got a published answer; the list's order. */
+  activeAt: string
+}
+
+export type AnswerDoc = {
+  _id: ObjectId
+  questionId: string
+  /** Denormalised so the moderation queue reads without joining to questions. */
+  questionTitle: string
+  body: string
+  authorId: string
+  authorName: string
+  status: ReviewStatus
+  reviewedBy?: string
+  reviewedAt?: string
+  reviewNote?: string
+  createdAt: string
+}
+
 export type DealerDoc = {
   _id: ObjectId
   name: string
@@ -346,6 +386,141 @@ export type InsurerDoc = {
   /** When someone last confirmed the plans and rates. */
   checkedAt: string
   createdBy: string
+  /** The account that added it, which may keep editing it with `insurance.add`. Missing on older listings. */
+  createdById?: string
+  createdAt: string
+  updatedAt: string
+}
+
+/** What a charger installer can do for an owner. */
+export const INSTALL_SERVICES = [
+  'home-wallbox',
+  'site-survey',
+  'three-phase-upgrade',
+  'meter-application',
+  'public-station',
+  'maintenance',
+  'solar-integration',
+] as const
+export type InstallService = (typeof INSTALL_SERVICES)[number]
+
+export const CHARGER_PHASES = ['1', '3'] as const
+export type ChargerPhase = (typeof CHARGER_PHASES)[number]
+
+/** The plug on the charger's cable. */
+export const CHARGER_CONNECTORS = ['gbt', 'type2'] as const
+export type ChargerConnector = (typeof CHARGER_CONNECTORS)[number]
+
+/**
+ * One home charging package an installer sells: a wall box, usually with
+ * the installation, at a fixed price. Everything but the name is optional.
+ */
+export type InstallerPackage = {
+  /** Stable within the installer, so the page can link to one package. */
+  id: string
+  name: Localized
+  /** The wall box's maker and model, e.g. "Infinity 7 kW". */
+  chargerBrand?: string
+  powerKw?: number
+  phase?: ChargerPhase
+  connector?: ChargerConnector
+  priceEgp?: number
+  /** True when the price covers fitting it, not just the box. */
+  installIncluded?: boolean
+  /** Cable run included in the price; longer runs cost `extraMeterEgp` a metre. */
+  cableMetersIncluded?: number
+  extraMeterEgp?: number
+  warrantyYears?: number
+  services: InstallService[]
+  /** e.g. "12 monthly installments, no interest". */
+  installments?: Localized
+  /** What is not included, waiting times and anything else. */
+  notes?: Localized
+}
+
+/** The plugs a public charging point can have. GB/T comes in an AC and a DC shape. */
+export const STATION_CONNECTORS = ['type2', 'gbt-ac', 'gbt-dc', 'ccs2', 'chademo', 'other'] as const
+export type StationConnector = (typeof STATION_CONNECTORS)[number]
+
+export type StationConnection = {
+  type: StationConnector
+  powerKw?: number
+  /** How many of this plug the station has. */
+  count?: number
+}
+
+/**
+ * A public charging station. Most are imported from Open Charge Map
+ * (`source: 'ocm'`) and refreshed daily; staff may add their own or correct
+ * an imported one, which marks it `adminEdited` so the import leaves it alone.
+ */
+export type ChargingStationDoc = {
+  _id: ObjectId
+  source: 'ocm' | 'manual'
+  /** Open Charge Map's id, for imported stations. */
+  externalId?: number
+  name: Localized
+  /** Who runs it: Infinity, Elsewedy Plug, a hotel… */
+  operator?: string
+  city?: string
+  address?: string
+  lat: number
+  lng: number
+  connections: StationConnection[]
+  /** Derived from the connections, so the list can filter without unwinding them. */
+  connectors: StationConnector[]
+  /** Price per kWh in EGP, when known as a number. */
+  pricePerKwh?: number
+  /** The price as the source wrote it, e.g. "3.5 EGP/kWh, free for guests". */
+  priceNote?: string
+  hours?: string
+  phone?: string
+  /** Who may use it, as the source wrote it: "Public - Membership Required". */
+  access?: string
+  /** False when the source says it is out of order. */
+  operational: boolean
+  /**
+   * Where Open Charge Map got the record and under what license. Their terms
+   * require showing this to the reader, so the map does.
+   */
+  dataProvider?: { title: string; license?: string; url?: string }
+  active: boolean
+  /** Staff changed it by hand; the import no longer overwrites it. */
+  adminEdited: boolean
+  syncedAt?: string
+  checkedAt: string
+  createdAt: string
+  updatedAt: string
+}
+
+/** A company that sells and installs home chargers, listed like an insurer. */
+export type InstallerDoc = {
+  _id: ObjectId
+  /** Accounts that run this business and may edit this listing (see api/_lib/merchants.ts). */
+  merchantIds?: string[]
+  slug: string
+  name: Localized
+  description: Localized
+  hotline?: string
+  phone?: string
+  whatsapp?: string
+  website?: string
+  email?: string
+  /** The governorates they install in, by English name; empty means not stated. */
+  governorates: string[]
+  /** On the Egyptian Electricity Regulatory Agency's list of licensed charging companies. */
+  licensed: boolean
+  /** Derived from the packages, so the list can filter without unwinding them. */
+  services: InstallService[]
+  packages: InstallerPackage[]
+  images: PartImage[]
+  ratingAvg: number
+  ratingCount: number
+  active: boolean
+  /** When someone last confirmed the packages and prices. */
+  checkedAt: string
+  createdBy: string
+  createdById?: string
   createdAt: string
   updatedAt: string
 }

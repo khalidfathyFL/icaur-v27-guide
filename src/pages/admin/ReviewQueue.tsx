@@ -17,6 +17,7 @@ const KINDS: Record<ReviewTarget, { section: string; page: string; noun: { en: s
   part: { section: '/admin/part-reviews', page: '#/accessories/', noun: { en: 'accessory', ar: 'الإكسسوار' } },
   center: { section: '/admin/center-reviews', page: '#/protection/', noun: { en: 'center', ar: 'المركز' } },
   insurer: { section: '/admin/insurer-reviews', page: '#/insurance/', noun: { en: 'insurer', ar: 'شركة التأمين' } },
+  installer: { section: '/admin/installer-reviews', page: '#/charging/installers/', noun: { en: 'installer', ar: 'شركة التركيب' } },
 }
 
 /** Owner reviews of one kind of listing, worked by the same moderators as comments. */

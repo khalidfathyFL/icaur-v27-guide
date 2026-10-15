@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Store, UserPlus, X } from 'lucide-react'
 import { useConfirm, useToast } from '../../components/panel/feedback'
 import { useShortText } from '../../i18n/languageContext'
-import { api, type ApiMerchant } from '../../lib/api'
+import { api, type ApiMerchant, type MerchantListingKind } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
 
 /**
@@ -15,7 +15,7 @@ export function MerchantAccounts({
   listingId,
   initial,
 }: {
-  kind: 'insurers' | 'centers'
+  kind: MerchantListingKind
   listingId: string
   initial: ApiMerchant[]
 }) {

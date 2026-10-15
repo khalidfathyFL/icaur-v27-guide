@@ -26,6 +26,9 @@ export const PERMISSION_KEYS = [
   'parts.manage',
   'centers.manage',
   'insurance.manage',
+  'insurance.add',
+  'installers.manage',
+  'charging.manage',
   'orders.manage',
   'users.manage',
   'emails.send',
@@ -110,7 +113,26 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
   {
     key: 'insurance.manage',
     label: 'Manage insurance',
-    description: 'Add, edit and remove insurance companies and their plans, rates, coverage and cashback.',
+    description: 'Add, edit and remove any insurance company and its plans, rates, coverage and cashback.',
+    group: 'Market data',
+  },
+  {
+    key: 'insurance.add',
+    label: 'Add insurance companies',
+    description:
+      'Add new insurance companies and edit the ones they added. They cannot change or remove a company somebody else added.',
+    group: 'Market data',
+  },
+  {
+    key: 'installers.manage',
+    label: 'Manage charger installers',
+    description: 'Add, edit and remove the companies that install home chargers, with their packages, prices and photos.',
+    group: 'Market data',
+  },
+  {
+    key: 'charging.manage',
+    label: 'Manage charging stations',
+    description: 'Add, correct and remove public charging stations on the map, and run the Open Charge Map import.',
     group: 'Market data',
   },
   {

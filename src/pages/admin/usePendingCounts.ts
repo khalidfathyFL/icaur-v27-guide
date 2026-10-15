@@ -5,9 +5,12 @@ export type PendingCounts = {
   posts: number
   suggestions: number
   comments: number
+  questions: number
+  answers: number
   partReviews: number
   centerReviews: number
   insurerReviews: number
+  installerReviews: number
   /** Requests nobody has answered yet. */
   orders: number
 }
@@ -26,18 +29,24 @@ export function usePendingCounts(can: (permission: string) => boolean) {
       can('posts.review') ? api.listPosts({ status: 'pending' }) : none,
       can('suggestions.review') ? api.listSuggestions({ queue: true, status: 'pending' }) : none,
       can('comments.review') ? api.commentQueue('pending') : none,
+      can('comments.review') ? api.questionQueue('pending') : none,
+      can('comments.review') ? api.answerQueue('pending') : none,
       can('comments.review') ? api.reviewQueue('part', 'pending') : none,
       can('comments.review') ? api.reviewQueue('center', 'pending') : none,
       can('comments.review') ? api.reviewQueue('insurer', 'pending') : none,
+      can('comments.review') ? api.reviewQueue('installer', 'pending') : none,
       can('orders.manage') ? api.orderQueue('new') : none,
-    ]).then(([posts, suggestions, comments, partReviews, centerReviews, insurerReviews, orders]) => {
+    ]).then(([posts, suggestions, comments, questions, answers, partReviews, centerReviews, insurerReviews, installerReviews, orders]) => {
       setCounts({
         posts: posts.status === 'fulfilled' && posts.value ? posts.value.posts.length : 0,
         suggestions: suggestions.status === 'fulfilled' && suggestions.value ? suggestions.value.suggestions.length : 0,
         comments: comments.status === 'fulfilled' && comments.value ? comments.value.comments.length : 0,
+        questions: questions.status === 'fulfilled' && questions.value ? questions.value.questions.length : 0,
+        answers: answers.status === 'fulfilled' && answers.value ? answers.value.answers.length : 0,
         partReviews: partReviews.status === 'fulfilled' && partReviews.value ? partReviews.value.length : 0,
         centerReviews: centerReviews.status === 'fulfilled' && centerReviews.value ? centerReviews.value.length : 0,
         insurerReviews: insurerReviews.status === 'fulfilled' && insurerReviews.value ? insurerReviews.value.length : 0,
+        installerReviews: installerReviews.status === 'fulfilled' && installerReviews.value ? installerReviews.value.length : 0,
         orders: orders.status === 'fulfilled' && orders.value ? orders.value.orders.length : 0,
       })
     })

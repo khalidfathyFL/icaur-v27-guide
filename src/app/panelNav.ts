@@ -7,12 +7,16 @@ import {
   KeyRound,
   KeySquare,
   Mail,
+  MapPin,
   LayoutDashboard,
   ListChecks,
+  MessageCircleQuestion,
   MessageSquare,
+  MessagesSquare,
   Newspaper,
   Package,
   PenLine,
+  PlugZap,
   ShieldCheck,
   ShieldHalf,
   ShieldPlus,
@@ -43,6 +47,8 @@ export type PanelSection = {
   permission?: string
   /** Also shown to merchants of this kind, who see only their own listings in it. */
   merchant?: string
+  /** Also shown to accounts that may add listings here, who see only the ones they added. */
+  contributor?: string
 }
 
 export type PanelGroupDef = { key: string; label: Text; icon: LucideIcon }
@@ -97,6 +103,23 @@ export const ADMIN_SECTIONS: PanelSection[] = [
     description: { en: 'Comments on owner posts', ar: 'التعليقات على مقالات الملاك' },
   },
   {
+    key: 'questions',
+    group: 'moderation',
+    icon: MessageCircleQuestion,
+    // Owner questions and answers are moderated by the comment moderators.
+    permission: 'comments.review',
+    label: { en: 'Questions', ar: 'الأسئلة' },
+    description: { en: 'Questions owners ask the community', ar: 'الأسئلة التي يطرحها الملاك على المجتمع' },
+  },
+  {
+    key: 'answers',
+    group: 'moderation',
+    icon: MessagesSquare,
+    permission: 'comments.review',
+    label: { en: 'Answers', ar: 'الإجابات' },
+    description: { en: 'Answers to owner questions', ar: 'الإجابات على أسئلة الملاك' },
+  },
+  {
     key: 'part-reviews',
     group: 'moderation',
     icon: Star,
@@ -120,6 +143,14 @@ export const ADMIN_SECTIONS: PanelSection[] = [
     permission: 'comments.review',
     label: { en: 'Insurer reviews', ar: 'مراجعات التأمين' },
     description: { en: 'Owner ratings of insurance companies', ar: 'تقييمات الملاك لشركات التأمين' },
+  },
+  {
+    key: 'installer-reviews',
+    group: 'moderation',
+    icon: Star,
+    permission: 'comments.review',
+    label: { en: 'Installer reviews', ar: 'مراجعات تركيب الشواحن' },
+    description: { en: 'Owner ratings of charger installers', ar: 'تقييمات الملاك لشركات تركيب الشواحن' },
   },
   {
     key: 'dealers',
@@ -154,8 +185,26 @@ export const ADMIN_SECTIONS: PanelSection[] = [
     icon: ShieldHalf,
     permission: 'insurance.manage',
     merchant: 'merchant.insurer',
+    contributor: 'insurance.add',
     label: { en: 'Car insurance', ar: 'تأمين السيارة' },
     description: { en: 'Insurers, their plans, rates, cover and cashback', ar: 'شركات التأمين وخططها ونسبها وتغطيتها والاسترداد' },
+  },
+  {
+    key: 'installers',
+    group: 'market',
+    icon: PlugZap,
+    permission: 'installers.manage',
+    merchant: 'merchant.installer',
+    label: { en: 'Charger installers', ar: 'تركيب الشواحن' },
+    description: { en: 'Companies that install home chargers, their packages and prices', ar: 'شركات تركيب الشواحن المنزلية وباقاتها وأسعارها' },
+  },
+  {
+    key: 'stations',
+    group: 'market',
+    icon: MapPin,
+    permission: 'charging.manage',
+    label: { en: 'Charging stations', ar: 'محطات الشحن' },
+    description: { en: 'Public stations on the charging map', ar: 'المحطات العامة على خريطة الشحن' },
   },
   {
     key: 'orders',
@@ -282,6 +331,10 @@ export const ACCOUNT_SECTIONS: PanelSection[] = [
 /** The admin sections this person may open, in sidebar order. */
 export function visibleAdminSections(can: (permission: string) => boolean): PanelSection[] {
   return ADMIN_SECTIONS.filter(
-    (section) => !section.permission || can(section.permission) || (section.merchant !== undefined && can(section.merchant)),
+    (section) =>
+      !section.permission ||
+      can(section.permission) ||
+      (section.merchant !== undefined && can(section.merchant)) ||
+      (section.contributor !== undefined && can(section.contributor)),
   )
 }

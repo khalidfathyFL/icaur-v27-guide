@@ -353,6 +353,78 @@ export function commentDecisionEmail(input: {
   }
 }
 
+export function questionDecisionEmail(input: { status: Decision; title: string; id: string; note?: string }): EmailContent {
+  const ok = input.status === 'approved'
+  return {
+    tag: `question-${input.status}`,
+    subject: ok ? { en: 'Your question is live', ar: 'تم نشر سؤالك' } : { en: 'About your question', ar: 'بخصوص سؤالك' },
+    preheader: { en: input.title, ar: input.title },
+    image: 'screen',
+    badge: decided(input.status),
+    heading: ok ? { en: 'Owners can answer you now', ar: 'يستطيع الملاك الإجابة عليك الآن' } : { en: 'Your question was not published', ar: 'لم يتم نشر سؤالك' },
+    paragraphs: [
+      ok
+        ? {
+            en: `“${input.title}” is published in Questions & Answers. We will email you when someone answers.`,
+            ar: `"${input.title}" منشور الآن في الأسئلة والأجوبة. سنراسلك عندما يجيب أحد.`,
+          }
+        : {
+            en: `“${input.title}” was not published. You can ask it again with more detail.`,
+            ar: `"${input.title}" لم يُنشر. يمكنك طرحه مرة أخرى بتفاصيل أكثر.`,
+          },
+    ],
+    quote: noteQuote(input.note),
+    cta: ok
+      ? { label: { en: 'Open your question', ar: 'افتح سؤالك' }, url: pageUrl(`questions/${input.id}`) }
+      : { label: { en: 'Ask again', ar: 'اسأل مرة أخرى' }, url: pageUrl('questions') },
+  }
+}
+
+export function answerDecisionEmail(input: { status: Decision; questionTitle: string; questionId: string; note?: string }): EmailContent {
+  const ok = input.status === 'approved'
+  return {
+    tag: `answer-${input.status}`,
+    subject: ok ? { en: 'Your answer is live', ar: 'تم نشر إجابتك' } : { en: 'About your answer', ar: 'بخصوص إجابتك' },
+    preheader: { en: input.questionTitle, ar: input.questionTitle },
+    image: 'cabin',
+    badge: decided(input.status),
+    heading: ok ? { en: 'Thanks for helping another owner', ar: 'شكراً لمساعدتك مالكاً آخر' } : { en: 'Your answer was not published', ar: 'لم يتم نشر إجابتك' },
+    paragraphs: [
+      ok
+        ? {
+            en: `Your answer to “${input.questionTitle}” is now visible to everyone.`,
+            ar: `إجابتك على "${input.questionTitle}" أصبحت ظاهرة للجميع.`,
+          }
+        : {
+            en: `Your answer to “${input.questionTitle}” was not published.`,
+            ar: `إجابتك على "${input.questionTitle}" لم تُنشر.`,
+          },
+    ],
+    quote: noteQuote(input.note),
+    cta: { label: { en: 'Go to the question', ar: 'اذهب إلى السؤال' }, url: pageUrl(`questions/${input.questionId}`) },
+  }
+}
+
+/** To whoever asked, when someone else's answer is published. */
+export function newAnswerEmail(input: { questionTitle: string; questionId: string; answerAuthor: string; excerpt: string }): EmailContent {
+  return {
+    tag: 'question-answered',
+    subject: { en: 'Your question has an answer', ar: 'سؤالك له إجابة' },
+    preheader: { en: input.questionTitle, ar: input.questionTitle },
+    image: 'screen',
+    badge: { label: { en: 'New answer', ar: 'إجابة جديدة' }, tone: 'info' },
+    heading: { en: `${input.answerAuthor} answered you`, ar: `${input.answerAuthor} أجاب على سؤالك` },
+    paragraphs: [
+      {
+        en: `There is a new answer to “${input.questionTitle}”. If it solves it, mark it as the answer so other owners find it first.`,
+        ar: `هناك إجابة جديدة على "${input.questionTitle}". إذا حلّت مشكلتك، علّمها كإجابة معتمدة ليجدها الملاك الآخرون أولاً.`,
+      },
+    ],
+    quote: { label: { en: 'The answer', ar: 'الإجابة' }, text: input.excerpt },
+    cta: { label: { en: 'Read the answer', ar: 'اقرأ الإجابة' }, url: pageUrl(`questions/${input.questionId}`) },
+  }
+}
+
 export function suggestionDecisionEmail(input: { status: Decision; proposed: string; note?: string }): EmailContent {
   const ok = input.status === 'approved'
   return {
@@ -382,6 +454,7 @@ const REVIEW_PLACES: Record<string, { noun: Lang; path: string }> = {
   part: { noun: { en: 'accessory', ar: 'الإكسسوار' }, path: 'accessories' },
   center: { noun: { en: 'protection center', ar: 'مركز الحماية' }, path: 'protection' },
   insurer: { noun: { en: 'insurance company', ar: 'شركة التأمين' }, path: 'insurance' },
+  installer: { noun: { en: 'charger installer', ar: 'شركة تركيب الشواحن' }, path: 'charging/installers' },
 }
 
 export function reviewDecisionEmail(input: {

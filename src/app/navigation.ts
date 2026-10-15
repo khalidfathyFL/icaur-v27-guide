@@ -4,15 +4,19 @@ import {
   BookOpen,
   Gauge,
   House,
+  MessageCircleQuestion,
   MonitorSmartphone,
   Newspaper,
   Clapperboard,
   FileText,
   GitCompareArrows,
+  MapPin,
   Package,
+  PlugZap,
   ShieldHalf,
   ShieldPlus,
   Star,
+  Store,
   type LucideIcon,
 } from 'lucide-react'
 import { apiConfigured } from '../lib/api'
@@ -28,6 +32,7 @@ export const PRIMARY_NAV: NavItem[] = [
   // The community is the point of the site, so it earns a top-level slot
   // rather than sitting behind "More".
   { href: '/blog', en: 'Owner Posts', ar: 'مقالات الملاك' },
+  { href: '/questions', en: 'Q&A', ar: 'أسئلة وأجوبة' },
 ]
 
 /** A page in the "More" menu, with an icon and a line saying what is there. */
@@ -63,9 +68,12 @@ export const SECONDARY_GROUPS: NavGroup[] = [
     // The catalog lives in the API, so a build without one does not offer it.
     items: apiConfigured
       ? [
+          { href: '/dealers', en: 'Where to buy', ar: 'أين تشتري', icon: Store, hint: { en: 'Dealers selling at list price', ar: 'وكلاء يبيعون بالسعر الرسمي' }, isNew: true },
           { href: '/accessories', en: 'Accessories', ar: 'الإكسسوارات', icon: Package, hint: { en: 'Parts and upgrades, ordered for you', ar: 'قطع وإضافات نطلبها لك' } },
           { href: '/protection', en: 'Protection centers', ar: 'مراكز الحماية', icon: ShieldPlus, hint: { en: 'PPF, ceramic and tint', ar: 'حماية ونانو وأفلام' } },
           { href: '/insurance', en: 'Car insurance', ar: 'تأمين السيارة', icon: ShieldHalf, hint: { en: 'Plans, yearly cost and cashback', ar: 'الخطط والتكلفة السنوية والاسترداد' }, isNew: true },
+          { href: '/charging', en: 'Charging map', ar: 'خريطة الشحن', icon: MapPin, hint: { en: 'Stations, costs and home charging', ar: 'المحطات والتكلفة والشحن المنزلي' }, isNew: true },
+          { href: '/charging/installers', en: 'Home charger installers', ar: 'تركيب شواحن المنزل', icon: PlugZap, hint: { en: 'Wall boxes, installation and prices', ar: 'الشواحن الجدارية والتركيب والأسعار' }, isNew: true },
         ]
       : [],
   },
@@ -96,6 +104,7 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
       { href: '/egypt', en: 'Egypt Prices', ar: 'أسعار مصر', icon: BadgeDollarSign, hint: { en: '', ar: '' } },
       { href: '/specs', en: 'Specs', ar: 'المواصفات', icon: Gauge, hint: { en: '', ar: '' } },
       { href: '/blog', en: 'Owner Posts', ar: 'مقالات الملاك', icon: Newspaper, hint: { en: '', ar: '' } },
+      { href: '/questions', en: 'Q&A', ar: 'أسئلة وأجوبة', icon: MessageCircleQuestion, hint: { en: '', ar: '' } },
     ],
   },
   ...SECONDARY_GROUPS,

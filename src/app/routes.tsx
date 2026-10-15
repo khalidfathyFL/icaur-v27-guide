@@ -3,16 +3,20 @@ import { Redirect } from '../components/Redirect'
 import { AccessoriesPage, AccessoryPage } from '../pages/AccessoriesPage'
 import { AdminPage } from '../pages/AdminPage'
 import { CartPage } from '../pages/CartPage'
+import { ChargingInstallerPage, ChargingInstallersPage } from '../pages/ChargingInstallersPage'
+import { ChargingPage } from '../pages/ChargingPage'
 import { InsurancePage, InsurerPage } from '../pages/InsurancePage'
 import { ProtectionCenterPage, ProtectionPage } from '../pages/ProtectionPage'
 import { SignInPage } from '../pages/AccountPage'
 import { AccountPanel } from '../pages/account/AccountPanel'
 import { BlogPage, PostPage } from '../pages/BlogPage'
+import { DealersPage } from '../pages/DealersPage'
 import { EgyptPage } from '../pages/EgyptPage'
 import { GuidesPage } from '../pages/GuidesPage'
 import { HomePage } from '../pages/HomePage'
 import { FeaturePage } from '../pages/FeaturePage'
 import { ComparePage, SpecsPage } from '../pages/SpecsPage'
+import { QuestionPage, QuestionsPage } from '../pages/QuestionsPage'
 import {
   GlossaryPage,
   NotFoundPage,
@@ -26,11 +30,14 @@ const BLOG_PREFIX = '/blog/'
 const ACCESSORY_PREFIX = '/accessories/'
 const PROTECTION_PREFIX = '/protection/'
 const INSURANCE_PREFIX = '/insurance/'
+const INSTALLER_PREFIX = '/charging/installers/'
+const QUESTION_PREFIX = '/questions/'
 
 const STATIC_ROUTES: Record<string, (params: URLSearchParams) => React.ReactElement> = {
   '/': () => <HomePage />,
   '/guides': (params) => <GuidesPage topic={params.get('topic')} query={params.get('q') ?? ''} />,
   '/egypt': () => <EgyptPage />,
+  '/dealers': () => <DealersPage />,
   '/specs': () => <SpecsPage />,
   '/compare/play-vs-wild': () => <ComparePage />,
   '/reviews': () => <ReviewsPage />,
@@ -38,10 +45,20 @@ const STATIC_ROUTES: Record<string, (params: URLSearchParams) => React.ReactElem
   '/sources': () => <SourcesPage />,
   '/glossary': () => <GlossaryPage />,
   '/blog': () => <BlogPage />,
+  '/questions': (params) => (
+    <QuestionsPage
+      topic={params.get('topic')}
+      query={params.get('q') ?? ''}
+      guide={params.get('guide')}
+      ask={params.get('ask') === '1'}
+    />
+  ),
   '/accessories': (params) => <AccessoriesPage params={params} />,
   '/protection': (params) => <ProtectionPage params={params} />,
   '/cart': () => <CartPage />,
   '/insurance': () => <InsurancePage />,
+  '/charging': () => <ChargingPage />,
+  '/charging/installers': () => <ChargingInstallersPage />,
   '/signin': (params) => <SignInPage next={params.get('next')} />,
   // Both moved into the account panel; old links and bookmarks still land.
   '/contribute': () => <Redirect to="/account/new-post" />,
@@ -106,8 +123,16 @@ export function resolveRoute(path: string, params: URLSearchParams): React.React
     return <ProtectionCenterPage slug={decodeSlug(path.slice(PROTECTION_PREFIX.length))} />
   }
 
+  if (path.startsWith(QUESTION_PREFIX)) {
+    return <QuestionPage id={path.slice(QUESTION_PREFIX.length)} />
+  }
+
   if (path.startsWith(INSURANCE_PREFIX)) {
     return <InsurerPage slug={decodeSlug(path.slice(INSURANCE_PREFIX.length))} />
+  }
+
+  if (path.startsWith(INSTALLER_PREFIX)) {
+    return <ChargingInstallerPage slug={decodeSlug(path.slice(INSTALLER_PREFIX.length))} />
   }
 
   return <NotFoundPage />

@@ -18,12 +18,15 @@ import { Comments } from './admin/Comments'
 import { Dashboard } from './admin/Dashboard'
 import { Dealers } from './admin/Dealers'
 import { Emails } from './admin/Emails'
+import { Installers } from './admin/Installers'
+import { Stations } from './admin/Stations'
 import { Insurers } from './admin/Insurers'
 import { Orders } from './admin/Orders'
 import { Parts } from './admin/Parts'
 import { Permissions } from './admin/Permissions'
 import { Posts } from './admin/Posts'
 import { Pricing } from './admin/Pricing'
+import { QuestionQueue } from './admin/QuestionQueue'
 import { ReviewQueue } from './admin/ReviewQueue'
 import { Roles } from './admin/Roles'
 import { Suggestions } from './admin/Suggestions'
@@ -77,9 +80,12 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
     posts: counts?.posts,
     suggestions: counts?.suggestions,
     comments: counts?.comments,
+    questions: counts?.questions,
+    answers: counts?.answers,
     'part-reviews': counts?.partReviews,
     'center-reviews': counts?.centerReviews,
     'insurer-reviews': counts?.insurerReviews,
+    'installer-reviews': counts?.installerReviews,
     orders: counts?.orders,
   }
 
@@ -143,12 +149,18 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
         return <Suggestions params={params} onChanged={refresh} />
       case 'comments':
         return <Comments params={params} onChanged={refresh} />
+      case 'questions':
+        return <QuestionQueue kind="question" params={params} onChanged={refresh} />
+      case 'answers':
+        return <QuestionQueue kind="answer" params={params} onChanged={refresh} />
       case 'part-reviews':
         return <ReviewQueue kind="part" params={params} onChanged={refresh} />
       case 'center-reviews':
         return <ReviewQueue kind="center" params={params} onChanged={refresh} />
       case 'insurer-reviews':
         return <ReviewQueue kind="insurer" params={params} onChanged={refresh} />
+      case 'installer-reviews':
+        return <ReviewQueue kind="installer" params={params} onChanged={refresh} />
       case 'dealers':
         return <Dealers />
       case 'pricing':
@@ -159,6 +171,10 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
         return <Centers />
       case 'insurance':
         return <Insurers />
+      case 'installers':
+        return <Installers />
+      case 'stations':
+        return <Stations />
       case 'orders':
         return <Orders params={params} onChanged={refresh} />
       case 'users':
