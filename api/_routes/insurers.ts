@@ -1,10 +1,11 @@
 import { randomBytes } from 'node:crypto'
 import { ObjectId } from 'mongodb'
-import { requirePermission } from '../_lib/permissions.js'
+import { hasPermission, requirePermission } from '../_lib/permissions.js'
+import { requireUser } from '../_lib/auth.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
 import { auditableChanges, listingChanges, recordAudit } from '../_lib/audit.js'
-import { adminListFilter, handleMerchants, merchantsByListing, requireListingEditor } from '../_lib/merchants.js'
+import { adminListFilter, canContribute, handleMerchants, merchantsByListing, requireListingEditor } from '../_lib/merchants.js'
 import {
   compact,
   deleteBlobs,
@@ -30,7 +31,8 @@ import {
 /**
  * Car insurance: the companies selling it in Egypt and their plans, with the
  * rate, what each plan covers, cashback and the terms. Editors with
- * `insurance.manage` maintain them; owners review the companies.
+ * `insurance.manage` maintain them all; contributors with `insurance.add` add
+ * companies and edit only their own; owners review the companies.
  */
 
 const MAX_PLANS = 15
@@ -189,7 +191,10 @@ function readInsurerBody(body: Record<string, unknown>) {
 /* ---------- writes ---------- */
 
 async function createInsurer(request: Request): Promise<Response> {
-  const editor = await requirePermission(request, 'insurance.manage')
+  const editor = await requireUser(request)
+  if (!hasPermission(editor, 'insurance.manage') && !canContribute(editor, 'insurer')) {
+    throw new HttpError(403, 'Your account does not have permission to do that.')
+  }
   const body = await readJsonBody<Record<string, unknown>>(request)
   const fields = readInsurerBody(body)
 
@@ -202,6 +207,7 @@ async function createInsurer(request: Request): Promise<Response> {
     active: true,
     checkedAt: now,
     createdBy: editor.name,
+    createdById: editor.id,
     createdAt: now,
     updatedAt: now,
   })
@@ -217,8 +223,8 @@ async function createInsurer(request: Request): Promise<Response> {
 }
 
 async function updateInsurer(request: Request, id: string): Promise<Response> {
-  // Staff may edit any listing; a merchant only their own.
-  const { user: editor, staff } = await requireListingEditor(request, 'insurer', id)
+  // Staff may edit any listing; a merchant or the contributor who added it only their own.
+  const { user: editor, staff, merchant } = await requireListingEditor(request, 'insurer', id)
 
   const body = await readJsonBody<Record<string, unknown>>(request)
   const db = await getDb()
@@ -258,7 +264,7 @@ async function updateInsurer(request: Request, id: string): Promise<Response> {
     changes: {
       ...auditableChanges(body.name !== undefined ? listingChanges(existing as unknown as Record<string, unknown>, set, 'plans') : set),
       // A merchant's edit is marked, so staff can tell it from their own.
-      ...(staff ? {} : { byMerchant: true }),
+      ...(merchant ? { byMerchant: true } : {}),
     },
   })
 

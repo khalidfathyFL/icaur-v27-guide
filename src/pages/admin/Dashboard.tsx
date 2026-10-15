@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Check, FileEdit, FileText, MessageSquare, Newspaper, PartyPopper, Users, X } from 'lucide-react'
+import { Check, FileEdit, FileText, MessageCircleQuestion, MessageSquare, Newspaper, PartyPopper, Users, X } from 'lucide-react'
 import { Avatar, Card, CardLink, EmptyState, StatCard } from '../../components/panel/blocks'
 import { useToast } from '../../components/panel/feedback'
 import { useAuth } from '../../auth/authContext'
@@ -161,6 +161,16 @@ export function Dashboard({ counts, onChanged }: { counts: PendingCounts | null;
             label={tx('Comments to review', 'تعليقات للمراجعة')}
             value={counts ? counts.comments : null}
             href="#/admin/comments"
+            linkLabel={tx('Open queue', 'افتح القائمة')}
+          />
+        )}
+        {can('comments.review') && (
+          <StatCard
+            icon={MessageCircleQuestion}
+            tone={counts?.questions || counts?.answers ? 'warn' : 'neutral'}
+            label={tx('Questions and answers to review', 'أسئلة وإجابات للمراجعة')}
+            value={counts ? counts.questions + counts.answers : null}
+            href={counts && counts.questions === 0 && counts.answers > 0 ? '#/admin/answers' : '#/admin/questions'}
             linkLabel={tx('Open queue', 'افتح القائمة')}
           />
         )}

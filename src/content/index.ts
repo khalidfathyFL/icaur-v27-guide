@@ -1,4 +1,5 @@
 import { categories } from './categories'
+import { faq, faqTopics } from './faq'
 import { features } from './features'
 import { glossary } from './glossary'
 import { reviews } from './reviews'
@@ -6,9 +7,9 @@ import { sources } from './sources'
 import { comparison, specs } from './specs'
 import * as egypt from './egypt'
 import { videos } from './videos'
-import type { Category, CategoryId, Feature, Source, Video } from './types'
+import type { Category, CategoryId, FaqEntry, Feature, Source, Video } from './types'
 
-export { categories, comparison, features, glossary, reviews, sources, specs, videos }
+export { categories, comparison, faq, faqTopics, features, glossary, reviews, sources, specs, videos }
 export { egypt }
 export * from './types'
 export { imageUrls } from './images'
@@ -35,6 +36,9 @@ export const getVideos = (ids: readonly string[] = []): Video[] => resolve(video
 
 export const getFeatures = (slugs: readonly string[]): Feature[] =>
   resolve(featuresBySlug, slugs)
+
+/** The site's own answers that belong to one guide. */
+export const getFaqForGuide = (slug: string): FaqEntry[] => faq.filter((entry) => entry.guides?.includes(slug))
 
 /** Features grouped in the category order defined by `categories`. */
 export const featuresByCategory = (): { category: Category; features: Feature[] }[] =>

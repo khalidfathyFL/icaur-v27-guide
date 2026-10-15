@@ -88,3 +88,16 @@ export function toPlainText(html: string): string {
     .replace(/\s+/g, ' ')
     .trim()
 }
+
+/**
+ * Plain text that keeps its line breaks. Questions and answers are often a
+ * list of steps or symptoms, and flattening them to one line loses that.
+ */
+export function toPlainParagraphs(text: string): string {
+  return text
+    .split(/\r?\n/)
+    .map((line) => toPlainText(line))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}

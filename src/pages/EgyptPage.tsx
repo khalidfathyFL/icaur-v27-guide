@@ -1,4 +1,4 @@
-import { BadgeCheck, Building2, Palette, Phone, ShieldCheck, Store } from 'lucide-react'
+import { BadgeCheck, Building2, Palette, ShieldCheck } from 'lucide-react'
 import { getSources } from '../content'
 import {
   EGYPT_SOURCE_IDS,
@@ -159,8 +159,6 @@ export function EgyptPage() {
 
       <OwnerReports />
 
-      <DealerList />
-
       <InfoBlock icon={<BadgeCheck size={20} />} title={tx('Sources', 'المصادر')}>
         <div className="source-list">
           {egyptSources.map((source) => (
@@ -174,45 +172,5 @@ export function EgyptPage() {
         </div>
       </InfoBlock>
     </PageFrame>
-  )
-}
-
-/** Dealers reported as selling at the official list price. Admin-maintained. */
-function DealerList() {
-  const { tx } = useLanguage()
-  const { dealers, loading } = useMarketData()
-
-  if (loading || dealers.length === 0) return null
-
-  return (
-    <InfoBlock icon={<Store size={20} />} title={tx('Where to buy at list price', 'أين تشتري بالسعر الرسمي')}>
-      <div className="dealer-list">
-        {dealers.map((dealer) => (
-          <div className="dealer-card" key={dealer.id}>
-            <div>
-              <strong>{dealer.name}</strong>
-              <small>{dealer.area}</small>
-              {dealer.notes && <p>{dealer.notes}</p>}
-            </div>
-            <div className="dealer-meta">
-              {dealer.sellsAtListPrice && (
-                <span className="badge ok">{tx('Sells at list price', 'يبيع بالسعر الرسمي')}</span>
-              )}
-              {dealer.phone && (
-                <a className="dealer-phone" href={`tel:${dealer.phone}`}>
-                  <Phone size={14} /> {dealer.phone}
-                </a>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-      <p className="muted-note dealer-disclaimer">
-        {tx(
-          'Reported by owners and checked by an admin. Prices and availability change, so confirm before you travel.',
-          'مُبلّغ عنها من الملاك ومراجعة من المشرف. الأسعار والتوفر تتغير، لذلك تأكد قبل أن تذهب.',
-        )}
-      </p>
-    </InfoBlock>
   )
 }

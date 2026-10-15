@@ -1,17 +1,22 @@
-import { BookOpen, ChevronRight, MonitorSmartphone, Search } from 'lucide-react'
-import { POPULAR_SLUGS, featuresByCategory, features, getFeatures, imageUrls } from '../content'
+import { BookOpen, ChevronRight, MessageCircleQuestion, MonitorSmartphone, Search } from 'lucide-react'
+import { POPULAR_SLUGS, faq, featuresByCategory, features, getFeatures, imageUrls } from '../content'
 import { CategoryIcon } from '../components/CategoryIcon'
 import { FeatureGrid } from '../components/FeatureGrid'
+import { FaqList } from '../features/questions/FaqList'
 import { SectionHeading } from '../components/layout'
 import { useDocumentTitle } from '../lib/useDocumentTitle'
 import { TrimSwitch } from '../components/SiteHeader'
 import { VerificationLegend } from '../components/VerificationBadge'
 import { useSearch } from '../features/search/searchContext'
 import { useLanguage, useShortText } from '../i18n/languageContext'
+import { apiConfigured } from '../lib/api'
 import { guideHref } from '../lib/links'
 
 /** The four questions asked most at the car, shown as one-tap shortcuts under the search. */
 const QUICK_SLUGS = POPULAR_SLUGS.slice(0, 4)
+
+/** The site's own answers picked for the home page. */
+const FEATURED_FAQ = faq.filter((entry) => entry.featured)
 
 export function HomePage() {
   const { t, tx, pair, isBilingual } = useLanguage()
@@ -106,6 +111,31 @@ export function HomePage() {
         }
       />
       <FeatureGrid features={popular} />
+
+      <SectionHeading
+        eyebrow={tx('Q&A', 'أسئلة وأجوبة')}
+        title={tx('Quick answers', 'إجابات سريعة')}
+        action={
+          <a className="inline-link" href="#/questions">
+            {tx('All questions', 'كل الأسئلة')} <ChevronRight size={16} className="flip-rtl" aria-hidden="true" />
+          </a>
+        }
+      />
+      <section className="home-faq">
+        <FaqList entries={FEATURED_FAQ} />
+        {apiConfigured && (
+          <aside className="correction-prompt">
+            <MessageCircleQuestion size={20} aria-hidden="true" />
+            <div>
+              <strong>{tx('Have a question that is not here?', 'عندك سؤال غير موجود هنا؟')}</strong>
+              <span>{tx('Ask other V27 owners. A moderator checks every question and answer.', 'اسأل ملاك V27 الآخرين. يراجع المشرف كل سؤال وإجابة.')}</span>
+            </div>
+            <a className="secondary-button" href="#/questions?ask=1">
+              {tx('Ask the community', 'اسأل المجتمع')}
+            </a>
+          </aside>
+        )}
+      </section>
 
       <section className="split-section">
         <div>

@@ -1,5 +1,8 @@
 import {
+  answerDecisionEmail,
   commentDecisionEmail,
+  newAnswerEmail,
+  questionDecisionEmail,
   newPostEmail,
   orderEmail,
   postDecisionEmail,
@@ -26,6 +29,7 @@ export type EmailSample = {
 }
 
 const POST_TITLE = 'Six months with my V27 Wild: what I would change'
+const QUESTION_TITLE = 'Why does the engine start when the battery is still at 20%?'
 
 export const EMAIL_SAMPLES: EmailSample[] = [
   { key: 'welcome', group: 'Account', name: 'Welcome', when: 'Someone registers', build: () => welcomeEmail({ owner: true }) },
@@ -70,6 +74,33 @@ export const EMAIL_SAMPLES: EmailSample[] = [
     name: 'Comment approved',
     when: 'A comment is approved or rejected (to its author)',
     build: () => commentDecisionEmail({ status: 'approved', postTitle: 'Charging at home in Cairo', postId: 'sample' }),
+  },
+  {
+    key: 'question-approved',
+    group: 'Questions',
+    name: 'Question approved',
+    when: 'A question is approved or rejected (to whoever asked)',
+    build: () => questionDecisionEmail({ status: 'approved', title: QUESTION_TITLE, id: 'sample' }),
+  },
+  {
+    key: 'answer-approved',
+    group: 'Questions',
+    name: 'Answer approved',
+    when: 'An answer is approved or rejected (to its author)',
+    build: () => answerDecisionEmail({ status: 'approved', questionTitle: QUESTION_TITLE, questionId: 'sample' }),
+  },
+  {
+    key: 'question-answered',
+    group: 'Questions',
+    name: 'New answer',
+    when: "Someone else's answer to a question is published (to whoever asked)",
+    build: () =>
+      newAnswerEmail({
+        questionTitle: QUESTION_TITLE,
+        questionId: 'sample',
+        answerAuthor: 'Mona Adel',
+        excerpt: 'Mine does the same below 20%. Charge it overnight and it stops; the service center said it is the generator protecting the battery.',
+      }),
   },
   {
     key: 'suggestion-approved',

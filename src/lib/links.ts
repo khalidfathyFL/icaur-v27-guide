@@ -8,3 +8,5 @@ export function sourceHref(url: string): string {
 }
 
 export const guideHref = (slug: string) => `#/guides/${slug}`
+
+export const questionHref = (id: string) => `#/questions/${id}`

@@ -32,8 +32,11 @@ export function Insurers() {
   const [editing, setEditing] = useState<Editing>(null)
 
   const { can } = useAuth()
-  // Staff see every listing; a merchant sees only the ones they run.
+  // Staff see every listing; a merchant sees only the ones they run, and a
+  // contributor the ones they added. The server enforces the same split.
   const staff = can('insurance.manage')
+  const contributor = can('insurance.add')
+  const canAdd = staff || contributor
 
   const load = useCallback(() => {
     api
@@ -89,10 +92,17 @@ export function Insurers() {
     <>
       {!staff && (
         <PageHeader
-          description={tx(
-            'The listings you run. Edit your details, photos and plans; changes go live on the site straight away and are recorded with your name.',
-            'الصفحات التي تديرها. عدّل بياناتك وصورك والخطط؛ تظهر التغييرات على الموقع فورا وتسجل باسمك.',
-          )}
+          description={
+            contributor
+              ? tx(
+                  'The insurance companies you added, and any you run. You can add new ones and edit these; companies other people added are not yours to change.',
+                  'شركات التأمين التي أضفتها والتي تديرها. يمكنك إضافة شركات جديدة وتعديل هذه؛ أما الشركات التي أضافها غيرك فلا يمكنك تعديلها.',
+                )
+              : tx(
+                  'The listings you run. Edit your details, photos and plans; changes go live on the site straight away and are recorded with your name.',
+                  'الصفحات التي تديرها. عدّل بياناتك وصورك والخطط؛ تظهر التغييرات على الموقع فورا وتسجل باسمك.',
+                )
+          }
         />
       )}
       <DataTable
@@ -101,14 +111,14 @@ export function Insurers() {
         error={error}
         searchText={(insurer) => `${insurer.name.en} ${insurer.name.ar} ${insurer.plans.map((plan) => `${plan.name.en} ${plan.name.ar}`).join(' ')}`}
         searchPlaceholder={tx('Search insurer or plan…', 'ابحث عن شركة أو خطة…')}
-        actions={staff ? addButton : undefined}
+        actions={canAdd ? addButton : undefined}
         onRowClick={(insurer) => setEditing(insurer)}
         empty={
           <EmptyState
             icon={ShieldHalf}
             title={tx('No insurers yet', 'لا توجد شركات تأمين بعد')}
             text={tx('Add the first insurance company with its plans.', 'أضف أول شركة تأمين بخططها.')}
-            action={staff ? addButton : undefined}
+            action={canAdd ? addButton : undefined}
           />
         }
         columns={[

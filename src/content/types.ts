@@ -130,3 +130,24 @@ export type Review = {
   positives: LocalizedList
   watchouts: LocalizedList
 }
+
+export type FaqTopicId = 'buying' | 'energy' | 'using' | 'service' | 'site'
+
+export type FaqTopic = {
+  id: FaqTopicId
+  name: Localized
+}
+
+/** A question the site answers itself, from the content above. */
+export type FaqEntry = {
+  id: string
+  topic: FaqTopicId
+  question: Localized
+  answer: Localized
+  /** Guide slugs it belongs to; it is listed at the bottom of each. */
+  guides?: string[]
+  /** Pages other than guides that carry the full answer. */
+  links?: { href: string; label: Localized }[]
+  /** Shown on the home page. */
+  featured?: boolean
+}

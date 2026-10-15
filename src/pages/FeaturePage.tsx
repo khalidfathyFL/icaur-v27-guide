@@ -14,6 +14,7 @@ import { FeatureGrid } from '../components/FeatureGrid'
 import { AltBlock, InfoBlock, PageFrame, SectionHeading } from '../components/layout'
 import { StatusRow } from '../components/VerificationBadge'
 import { InfotainmentSimulator } from '../features/infotainment/InfotainmentSimulator'
+import { GuideQuestions } from '../features/questions/GuideQuestions'
 import { useLanguage } from '../i18n/languageContext'
 import { apiConfigured } from '../lib/api'
 import { sourceHref } from '../lib/links'
@@ -145,6 +146,8 @@ export function FeaturePage({ feature }: { feature: Feature }) {
               {apiConfigured ? tx('Suggest a correction', 'اقترح تصحيحا') : tx('See sources', 'المصادر')}
             </a>
           </aside>
+
+          <GuideQuestions slug={feature.slug} />
         </article>
       </div>
 
