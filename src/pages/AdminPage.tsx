@@ -21,6 +21,7 @@ import { Emails } from './admin/Emails'
 import { Installers } from './admin/Installers'
 import { Stations } from './admin/Stations'
 import { Insurers } from './admin/Insurers'
+import { ManualAssistant } from './admin/ManualAssistant'
 import { Orders } from './admin/Orders'
 import { Parts } from './admin/Parts'
 import { Permissions } from './admin/Permissions'
@@ -185,6 +186,8 @@ function AdminPanel({ section, params, routeKey }: { section: string; params: UR
         return <Roles />
       case 'permissions':
         return <Permissions />
+      case 'manual-assistant':
+        return <ManualAssistant />
       default:
         return null
     }

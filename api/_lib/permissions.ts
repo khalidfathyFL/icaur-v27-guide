@@ -39,6 +39,7 @@ export const PERMISSION_KEYS = [
   'emails.send',
   'audit.read',
   'stats.read',
+  'assistant.use',
 ] as const
 
 export type Permission = (typeof PERMISSION_KEYS)[number]
@@ -206,6 +207,13 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     label: 'See owner statistics',
     description: 'View the counts of who owns what and where, without seeing individual details.',
     group: 'Administration',
+  },
+  {
+    key: 'assistant.use',
+    label: 'Try the manual assistant',
+    description:
+      'Ask the test owner-manual assistant in the admin panel. It runs on their own device and reads the V27 owner manual, which is not public yet.',
+    group: 'Tools',
   },
 ]
 

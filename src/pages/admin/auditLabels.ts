@@ -27,6 +27,7 @@ export const ACTION_LABELS: Record<string, { en: string; ar: string }> = {
   'dealer.updated': { en: 'edited a dealer', ar: 'عدّل وكيلا' },
   'dealer.removed': { en: 'removed a dealer', ar: 'أزال وكيلا' },
   'pricing.updated': { en: 'changed a price', ar: 'غيّر سعرا' },
+  'manual.uploaded': { en: 'uploaded the owner manual', ar: 'رفع دليل المالك' },
   'part.created': { en: 'added an accessory', ar: 'أضاف إكسسوارا' },
   'part.updated': { en: 'edited an accessory', ar: 'عدّل إكسسوارا' },
   'part.removed': { en: 'removed an accessory', ar: 'أزال إكسسوارا' },

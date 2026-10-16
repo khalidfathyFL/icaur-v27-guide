@@ -1,5 +1,6 @@
 import {
   BadgeDollarSign,
+  BookOpenText,
   FileEdit,
   FilePlus2,
   FileText,
@@ -59,6 +60,7 @@ export const ADMIN_GROUPS: PanelGroupDef[] = [
   { key: 'market', label: { en: 'Market data', ar: 'بيانات السوق' }, icon: Wrench },
   { key: 'orders', label: { en: 'Orders', ar: 'الطلبات' }, icon: ShoppingBag },
   { key: 'people', label: { en: 'People', ar: 'الأشخاص' }, icon: Users },
+  { key: 'tools', label: { en: 'Tools', ar: 'الأدوات' }, icon: Wrench },
 ]
 
 export const ADMIN_SECTIONS: PanelSection[] = [
@@ -265,6 +267,15 @@ export const ADMIN_SECTIONS: PanelSection[] = [
     permission: 'users.manage',
     label: { en: 'Permissions', ar: 'الصلاحيات' },
     description: { en: 'Who can do what, at a glance', ar: 'من يستطيع فعل ماذا، بنظرة واحدة' },
+  },
+  {
+    key: 'manual-assistant',
+    group: 'tools',
+    icon: BookOpenText,
+    // A test: the manual is not cleared for owners yet, so it is not on the public site.
+    permission: 'assistant.use',
+    label: { en: 'Manual assistant', ar: 'مساعد الدليل' },
+    description: { en: 'Ask the V27 owner manual (test, runs on your device)', ar: 'اسأل دليل مالك V27 (تجربة، يعمل على جهازك)' },
   },
 ]
 

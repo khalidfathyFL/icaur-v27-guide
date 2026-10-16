@@ -27,3 +27,6 @@ dist-ssr
 .env.local
 .vercel
 .env.secrets.local
+
+# Generated from the V27 owner manual (copyrighted); kept out of git until publishing is cleared.
+public/manual/

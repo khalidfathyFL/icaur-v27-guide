@@ -10,6 +10,7 @@ import { handleInstallerReviews } from './_routes/installerReviews.js'
 import { handleInstallers } from './_routes/installers.js'
 import { handleInsurerReviews } from './_routes/insurerReviews.js'
 import { handleInsurers } from './_routes/insurers.js'
+import { handleManual } from './_routes/manual.js'
 import { handleOrders } from './_routes/orders.js'
 import { handlePartReviews } from './_routes/partReviews.js'
 import { handleParts } from './_routes/parts.js'
@@ -46,6 +47,7 @@ const ROUTES: Record<string, RouteHandler> = {
   orders: handleOrders,
   uploads: handleUploads,
   email: handleEmail,
+  manual: handleManual,
 }
 
 /**

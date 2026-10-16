@@ -235,6 +235,17 @@ export type ApiDealer = {
   verifiedAt: string
 }
 
+export type ApiManualStatus = {
+  uploaded: boolean
+  sections: number
+  pages: number
+  uploadedAt?: string
+  uploadedBy?: string
+}
+
+/** The owner-manual search index; `vectors` is the Float32 file, base64-encoded. */
+export type ApiManualIndex<Section> = { model: string; dimensions: number; sections: Section[]; vectors: string }
+
 export type ApiPricing = {
   trim: Trim
   priceEgp: number
@@ -954,6 +965,31 @@ export const api = {
   drainEmails: () => request<{ sent: number; deferred: number; error?: string; status: ApiEmailStatus }>('email/drain', { method: 'POST', auth: true }),
 
   listPricing: () => request<{ pricing: ApiPricing[] }>('pricing'),
+
+  /* ---------- owner manual (admin test) ---------- */
+
+  manualStatus: () => request<ApiManualStatus>('manual/status', { auth: true }),
+  manualIndex: <Section>() => request<ApiManualIndex<Section>>('manual/index', { auth: true }),
+  uploadManualIndex: <Section>(index: ApiManualIndex<Section>) =>
+    request<{ ok: true; sections: number }>('manual/index', { method: 'PUT', body: index, auth: true }),
+  uploadManualPage: (page: number, image: string) =>
+    request<{ ok: true }>(`manual/page?n=${page}`, { method: 'PUT', body: { image }, auth: true }),
+
+  /** A page image needs the sign-in header, so it cannot be a plain <img src>. */
+  async manualPage(page: number): Promise<Blob> {
+    const token = getToken()
+    if (!apiConfigured || !token) throw new ApiError(401, 'Sign in to continue.')
+    const response = await fetch(`${BASE_URL}/api/router?p=manual/page&n=${page}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch(() => {
+      throw new ApiError(0, 'Could not reach the server. Check your connection and try again.')
+    })
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as { error?: string }
+      throw new ApiError(response.status, payload.error ?? 'Could not load the page.')
+    }
+    return response.blob()
+  },
 
   savePricing: (input: { trim: Trim; priceEgp: number; note?: string }) =>
     request<{ ok: true }>('pricing', { method: 'PUT', body: input, auth: true }),

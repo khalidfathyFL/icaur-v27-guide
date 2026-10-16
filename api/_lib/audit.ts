@@ -40,6 +40,7 @@ export type AuditAction =
   | 'dealer.updated'
   | 'dealer.removed'
   | 'pricing.updated'
+  | 'manual.uploaded'
   | 'part.created'
   | 'part.updated'
   | 'part.removed'

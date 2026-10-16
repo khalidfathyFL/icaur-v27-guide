@@ -289,6 +289,31 @@ request numbered `IC-0001`, `IC-0002`…
   contact details. A user can have at most three requests waiting for a first
   answer at once.
 
+## Manual assistant (admin test)
+
+**Admin → Tools → Manual assistant** answers questions from the V27 owner
+manual. Search and answers run in the browser: a small multilingual search
+model finds the sections, and a small Qwen model (WebLLM, needs WebGPU) writes
+the answer from them. Nothing is billed and no AI key is needed.
+
+The manual is copyrighted and not cleared for owners, so it is never in git or
+public storage. It lives in the `manual` and `manualPages` collections, and
+the API serves it only to accounts with **Try the manual assistant**
+(`assistant.use`). Admins hold it already.
+
+To load or replace the manual:
+
+```bash
+python -m pip install pymupdf
+python scripts/manual/extract.py "V27 User Manual.pdf" pages.json
+node scripts/manual/build-index.mjs pages.json            # writes public/manual/
+mkdir -p public/manual/pages
+pdftoppm -jpeg -jpegopt quality=72 -r 90 "V27 User Manual.pdf" public/manual/pages/p
+```
+
+Then open the assistant and use **Upload or replace the manual** to choose the
+`public/manual` folder. That folder is in `.gitignore`.
+
 ## Collections
 
 | Collection | Holds |
@@ -313,6 +338,8 @@ request numbered `IC-0001`, `IC-0002`…
 | `carts` | each signed-in user's request list, before they send it |
 | `orders` | sent order requests: contact details, a copy of the lines and prices, status history, payment |
 | `counters` | the running number behind request numbers such as `IC-0007` |
+| `manual` | the owner manual's search index (sections and vectors), for the admin assistant |
+| `manualPages` | the owner manual's page images, one JPEG per PDF page |
 
 Indexes are created automatically on the first request after a cold start.
 
