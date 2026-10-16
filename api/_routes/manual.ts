@@ -39,7 +39,8 @@ const MAX_IMAGE_BYTES = 2_500_000
 const MAX_VECTOR_BYTES = 3_000_000
 
 export async function handleManual(request: Request, segments: string[]): Promise<Response> {
-  const [, action] = segments
+  // The router has already taken off the leading "manual".
+  const [action] = segments
   if (request.method === 'GET' && action === 'status') return status(request)
   if (request.method === 'GET' && action === 'index') return readIndex(request)
   if (request.method === 'GET' && action === 'page') return readPage(request)
