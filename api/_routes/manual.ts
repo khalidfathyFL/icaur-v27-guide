@@ -16,7 +16,7 @@ import { requirePermission } from '../_lib/permissions.js'
  *   PUT  manual/index      replace the index (account managers only)
  *   PUT  manual/page?n=40  store one page image (account managers only)
  *
- * The files come from scripts/manual/ and are uploaded from the admin screen.
+ * The admin screen reads the PDF in the browser and uploads the pages, then the index.
  */
 
 type ManualIndexDoc = {
@@ -119,14 +119,19 @@ async function writeIndex(request: Request): Promise<Response> {
   const dimensions = Number(body.dimensions)
   const sections = Array.isArray(body.sections) ? body.sections : null
   if (!model || !Number.isInteger(dimensions) || dimensions < 1 || dimensions > 4096 || !sections?.length) {
-    throw new HttpError(400, 'That is not a manual index from scripts/manual/build-index.mjs.')
+    throw new HttpError(400, 'That is not a manual index.')
   }
   const vectors = decodeBase64(body.vectors, 'Vectors', MAX_VECTOR_BYTES)
   if (vectors.length !== sections.length * dimensions * 4) {
-    throw new HttpError(400, 'The vectors do not match the sections. Upload sections.json and vectors.bin from the same build.')
+    throw new HttpError(400, 'The vectors do not match the sections.')
   }
 
+  const pageCount = Number(body.pageCount)
   const db = await getDb()
+  // A shorter manual replacing a longer one must not leave its old last pages behind.
+  if (Number.isInteger(pageCount) && pageCount > 0) {
+    await db.collection<ManualPageDoc>('manualPages').deleteMany({ _id: { $gt: pageCount } })
+  }
   await db.collection<ManualIndexDoc>('manual').replaceOne(
     { _id: 'index' },
     { model, dimensions, sections, sectionCount: sections.length, vectors: new Binary(vectors), uploadedAt: new Date().toISOString(), uploadedBy: admin.name },

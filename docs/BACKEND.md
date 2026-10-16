@@ -301,18 +301,12 @@ public storage. It lives in the `manual` and `manualPages` collections, and
 the API serves it only to accounts with **Try the manual assistant**
 (`assistant.use`). Admins hold it already.
 
-To load or replace the manual:
-
-```bash
-python -m pip install pymupdf
-python scripts/manual/extract.py "V27 User Manual.pdf" pages.json
-node scripts/manual/build-index.mjs pages.json            # writes public/manual/
-mkdir -p public/manual/pages
-pdftoppm -jpeg -jpegopt quality=72 -r 90 "V27 User Manual.pdf" public/manual/pages/p
-```
-
-Then open the assistant and use **Upload or replace the manual** to choose the
-`public/manual` folder. That folder is in `.gitignore`.
+To load or replace the manual, open the assistant, choose **Upload or replace
+the manual** and pick the PDF. The browser reads it, splits it into sections
+by heading (from the font sizes), draws each page as an image and builds the
+search index, then saves the images and the index; the PDF itself is not
+uploaded. The V27 manual takes 5 to 10 minutes. Only accounts with
+**Manage accounts** see the upload.
 
 ## Collections
 

@@ -3,9 +3,10 @@ import { BookOpenText, Cpu, FileImage, Send, Square, Upload } from 'lucide-react
 import { useAuth } from '../../auth/authContext'
 import { PageHeader } from '../../components/panel/blocks'
 import { ANSWER_MODELS, answerQuestion, isArabic, loadAnswerModel, toEnglishSearchQuery, webGpuAvailable } from '../../features/manual/answer'
-import { loadEmbedder, loadIndex, pageImageUrl, resetIndex, searchManual, type ManualHit, type ManualSection } from '../../features/manual/search'
+import { importManualPdf, type ImportProgress } from '../../features/manual/importManual'
+import { loadEmbedder, loadIndex, pageImageUrl, resetIndex, searchManual, type ManualHit } from '../../features/manual/search'
 import { useLanguage } from '../../i18n/languageContext'
-import { api, type ApiManualStatus } from '../../lib/api'
+import { api, ApiError, type ApiManualStatus } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
 import { formatDate } from '../../lib/format'
 
@@ -37,6 +38,17 @@ type Turn = {
 }
 
 type Loading = { label: string; fraction: number } | null
+
+/**
+ * A test screen, so the real reason is shown: the models fail in browser- and
+ * GPU-specific ways that "Something went wrong" would hide.
+ */
+function describe(caught: unknown, fallback: string): string {
+  console.error('Manual assistant:', caught)
+  if (caught instanceof ApiError) return caught.message
+  if (caught instanceof Error && caught.message) return `${fallback} ${caught.message}`
+  return fallback
+}
 
 /**
  * Test bench for the free "ask the manual" assistant: search and answer both
@@ -123,7 +135,7 @@ export function ManualAssistant() {
       update(index, { status: 'done', answerMs: performance.now() - answerStart })
     } catch (caught) {
       setLoading(null)
-      update(index, { status: 'error', error: errorMessage(caught, tx('Something went wrong.', 'حدث خطأ.')) })
+      update(index, { status: 'error', error: describe(caught, tx('Something went wrong:', 'حدث خطأ:')) })
     } finally {
       abort.current = null
       setBusy(false)
@@ -350,79 +362,56 @@ function PageThumb({ page }: { page: number }) {
   )
 }
 
-type UploadProgress = { done: number; total: number; failed: number[] }
-
-/** The base64 part of a data URL, without building a huge string by hand. */
-function fileToBase64(file: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = String(reader.result)
-      resolve(result.slice(result.indexOf(',') + 1))
-    }
-    reader.onerror = () => reject(reader.error ?? new Error('Could not read the file.'))
-    reader.readAsDataURL(file)
-  })
+function progressText(progress: ImportProgress, tx: (en: string, ar: string) => string): string {
+  if (progress.stage === 'reading') {
+    return tx(`Reading page ${progress.done + 1} of ${progress.total}…`, `جارٍ قراءة الصفحة ${progress.done + 1} من ${progress.total}…`)
+  }
+  if (progress.stage === 'indexing') {
+    return tx(`Building the search index: ${progress.done} of ${progress.total} sections…`, `جارٍ بناء فهرس البحث: ${progress.done} من ${progress.total} قسم…`)
+  }
+  return tx('Saving…', 'جارٍ الحفظ…')
 }
 
 /**
- * Uploads the output of scripts/manual/ (the public/manual folder: sections.json,
- * vectors.bin and pages/p-001.jpg…) into the database, so the manual never
- * goes into git or public storage. Account managers only, like the route.
+ * Loads or replaces the manual from its PDF. The work happens in this browser
+ * (importManual.ts); only the page images and the search index are sent, to
+ * the database, never to git or public storage. Account managers only, like
+ * the route.
  */
 function ManualUpload({ open, onDone }: { open: boolean; onDone: () => void }) {
   const { tx } = useLanguage()
-  const [progress, setProgress] = useState<UploadProgress | null>(null)
+  const [progress, setProgress] = useState<ImportProgress | null>(null)
+  const [result, setResult] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [running, setRunning] = useState(false)
+  const running = progress !== null
 
   async function upload(event: ChangeEvent<HTMLInputElement>) {
-    const files = [...(event.target.files ?? [])]
+    const file = event.target.files?.[0]
     event.target.value = ''
-    const sections = files.find((file) => file.name === 'sections.json')
-    const vectors = files.find((file) => file.name === 'vectors.bin')
-    const pages = files
-      .map((file) => ({ file, page: Number(file.name.match(/^p-(\d+)\.jpe?g$/i)?.[1]) }))
-      .filter((entry) => entry.page > 0)
-      .sort((a, b) => a.page - b.page)
-    if (!sections || !vectors) {
-      setError(
-        tx(
-          'Choose the public/manual folder: it must hold sections.json and vectors.bin.',
-          'اختر مجلد public/manual: يجب أن يحتوي على sections.json و vectors.bin.',
-        ),
-      )
+    if (!file) return
+    if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) {
+      setError(tx('Choose the manual as a PDF file.', 'اختر الدليل كملف PDF.'))
       return
     }
 
     setError(null)
-    setRunning(true)
+    setResult(null)
+    setProgress({ stage: 'reading', done: 0, total: 0 })
     try {
-      const meta = JSON.parse(await sections.text()) as { model: string; dimensions: number; sections: ManualSection[] }
-      await api.uploadManualIndex({ ...meta, vectors: await fileToBase64(vectors) })
-
-      const state: UploadProgress = { done: 0, total: pages.length, failed: [] }
-      setProgress({ ...state })
-      let next = 0
-      // A few at a time: fast enough, and gentle on the function and the database.
-      const worker = async () => {
-        while (next < pages.length) {
-          const { file, page } = pages[next++]
-          try {
-            await api.uploadManualPage(page, await fileToBase64(file))
-          } catch {
-            state.failed.push(page)
-          }
-          state.done++
-          setProgress({ ...state, failed: [...state.failed] })
-        }
-      }
-      await Promise.all([worker(), worker(), worker(), worker()])
+      const done = await importManualPdf(file, setProgress)
+      setResult(
+        done.failedPages.length
+          ? tx(
+              `Loaded ${done.sections} sections from ${done.pages} pages. These page images did not upload: ${done.failedPages.join(', ')}. Upload the PDF again to retry.`,
+              `تم تحميل ${done.sections} قسم من ${done.pages} صفحة. لم تُرفع صور هذه الصفحات: ${done.failedPages.join(', ')}. ارفع الملف مرة أخرى للمحاولة.`,
+            )
+          : tx(`Loaded ${done.sections} sections from ${done.pages} pages.`, `تم تحميل ${done.sections} قسم من ${done.pages} صفحة.`),
+      )
       onDone()
     } catch (caught) {
-      setError(errorMessage(caught, tx('Could not upload the manual.', 'تعذر رفع الدليل.')))
+      setError(describe(caught, tx('Could not read the manual:', 'تعذرت قراءة الدليل:')))
     } finally {
-      setRunning(false)
+      setProgress(null)
     }
   }
 
@@ -433,24 +422,26 @@ function ManualUpload({ open, onDone }: { open: boolean; onDone: () => void }) {
       </summary>
       <p className="muted-note">
         {tx(
-          'Run scripts/manual/extract.py and build-index.mjs, render the pages with pdftoppm, then choose the public/manual folder. It is stored in the database and only accounts allowed to use the assistant can read it.',
-          'شغّل scripts/manual/extract.py و build-index.mjs، واستخرج الصفحات بـ pdftoppm، ثم اختر مجلد public/manual. يُحفظ في قاعدة البيانات ولا يقرؤه إلا من لديهم صلاحية المساعد.',
+          'Choose the owner manual PDF. This browser reads it, finds the sections and draws each page, which takes 5 to 10 minutes for the V27 manual: keep this tab open. Only the page images and the search index are saved, and only accounts allowed to use the assistant can read them.',
+          'اختر ملف PDF لدليل المالك. هذا المتصفح يقرؤه ويقسمه ويرسم كل صفحة، ويستغرق ذلك من 5 إلى 10 دقائق لدليل V27: أبقِ هذه الصفحة مفتوحة. تُحفظ صور الصفحات وفهرس البحث فقط، ولا يقرؤها إلا من لديهم صلاحية المساعد.',
         )}
       </p>
       <label className="secondary-button manual-upload-button">
         <Upload size={15} aria-hidden="true" />
-        {running ? tx('Uploading…', 'جارٍ الرفع…') : tx('Choose the manual folder', 'اختر مجلد الدليل')}
-        <input type="file" multiple hidden disabled={running} onChange={upload} {...{ webkitdirectory: '' }} />
+        {running ? tx('Working…', 'جارٍ العمل…') : tx('Choose the manual PDF', 'اختر ملف الدليل PDF')}
+        <input type="file" accept="application/pdf,.pdf" hidden disabled={running} onChange={upload} />
       </label>
       {progress && (
         <div className="manual-progress" role="status">
-          <span>
-            {tx(`Pages: ${progress.done} of ${progress.total}`, `الصفحات: ${progress.done} من ${progress.total}`)}
-            {progress.failed.length > 0 && ` · ${tx('failed', 'فشل')}: ${progress.failed.join(', ')}`}
-          </span>
-          <progress value={progress.done} max={Math.max(progress.total, 1)} />
+          <span>{progressText(progress, tx)}</span>
+          {progress.stage === 'saving' ? (
+            <progress />
+          ) : (
+            <progress value={progress.done} max={Math.max(progress.total, 1)} />
+          )}
         </div>
       )}
+      {result && <p className="form-success">{result}</p>}
       {error && <p className="form-error">{error}</p>}
     </details>
   )

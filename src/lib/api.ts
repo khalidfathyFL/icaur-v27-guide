@@ -244,7 +244,14 @@ export type ApiManualStatus = {
 }
 
 /** The owner-manual search index; `vectors` is the Float32 file, base64-encoded. */
-export type ApiManualIndex<Section> = { model: string; dimensions: number; sections: Section[]; vectors: string }
+export type ApiManualIndex<Section> = {
+  model: string
+  dimensions: number
+  sections: Section[]
+  vectors: string
+  /** Pages in the PDF; images past it, left from a longer manual, are removed. */
+  pageCount?: number
+}
 
 export type ApiPricing = {
   trim: Trim

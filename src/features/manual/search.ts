@@ -1,5 +1,8 @@
 import type { FeatureExtractionPipeline } from '@huggingface/transformers'
 import { api } from '../../lib/api'
+import type { ManualSection } from './buildManual'
+
+export type { ManualSection }
 
 /**
  * Finds the owner-manual sections that answer a question, entirely in the
@@ -7,23 +10,12 @@ import { api } from '../../lib/api'
  * Arabic question still finds the English manual) and exact words (so "AUTO
  * HOLD" lands on the section that names it, whatever the model thinks).
  *
- * The index is built by scripts/manual/build-index.mjs and uploaded from the
- * admin screen. The API serves it only to accounts with `assistant.use`.
+ * The index is built from the PDF in the admin screen (importManual.ts). The API serves it only to accounts with `assistant.use`.
  */
 
-/** Must match the build script, or the stored vectors mean nothing. */
-const EMBEDDING_MODEL = 'Xenova/multilingual-e5-small'
+/** The index is built with this model too (importManual.ts), or the stored vectors mean nothing. */
+export const EMBEDDING_MODEL = 'Xenova/multilingual-e5-small'
 
-export type ManualSection = {
-  id: number
-  chapter: string
-  title: string
-  /** Pages in the PDF, 1-based, which is how the page images are numbered. */
-  pages: number[]
-  /** Page numbers printed in the manual, for "see page 35". */
-  printed: number[]
-  text: string
-}
 
 export type ManualHit = { section: ManualSection; score: number }
 
@@ -83,11 +75,11 @@ export function loadIndex(): Promise<Index> {
 export function loadEmbedder(onProgress?: (fraction: number) => void): Promise<FeatureExtractionPipeline> {
   embedderPromise ??= (async () => {
     const { pipeline } = await import('@huggingface/transformers')
-    const device = 'gpu' in navigator ? 'webgpu' : 'wasm'
     const loaded = new Map<string, { loaded: number; total: number }>()
     return pipeline('feature-extraction', EMBEDDING_MODEL, {
       dtype: 'q8',
-      device,
+      // The CPU is quick enough for this small model, and it leaves the GPU to the answer model.
+      device: 'wasm',
       progress_callback: (event: { status: string; file?: string; loaded?: number; total?: number }) => {
         if (event.status !== 'progress' || !event.file || !event.total) return
         loaded.set(event.file, { loaded: event.loaded ?? 0, total: event.total })

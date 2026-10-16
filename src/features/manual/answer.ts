@@ -23,6 +23,21 @@ let engine: MLCEngine | null = null
 let engineModel: string | null = null
 let enginePromise: Promise<MLCEngine> | null = null
 
+/**
+ * The q4f16 builds need the GPU's 16-bit float feature; plenty of graphics
+ * cards lack it, and the same model in q4f32 runs there instead.
+ */
+async function buildFor(modelId: string): Promise<string> {
+  try {
+    const gpu = (navigator as Navigator & { gpu?: { requestAdapter(): Promise<{ features: Set<string> } | null> } }).gpu
+    const adapter = await gpu?.requestAdapter()
+    if (adapter && !adapter.features.has('shader-f16')) return modelId.replace('q4f16_1', 'q4f32_1')
+  } catch {
+    // Unknown: try the model as chosen and let WebLLM report what is missing.
+  }
+  return modelId
+}
+
 export function loadAnswerModel(modelId: string, onProgress: (text: string, fraction: number) => void): Promise<MLCEngine> {
   if (engine && engineModel === modelId) return Promise.resolve(engine)
   enginePromise = (async () => {
@@ -31,7 +46,8 @@ export function loadAnswerModel(modelId: string, onProgress: (text: string, frac
       await engine.unload()
       engine = null
     }
-    const created = await CreateMLCEngine(modelId, {
+    const build = await buildFor(modelId)
+    const created = await CreateMLCEngine(build, {
       initProgressCallback: (report) => onProgress(report.text, report.progress),
     })
     engine = created
