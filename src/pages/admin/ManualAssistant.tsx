@@ -3,7 +3,7 @@ import { BookOpenText, Cpu, FileImage, Send, Square, Upload } from 'lucide-react
 import { useAuth } from '../../auth/authContext'
 import { PageHeader } from '../../components/panel/blocks'
 import { ANSWER_MODELS, answerQuestion, isArabic, loadAnswerModel, toEnglishSearchQuery, webGpuAvailable } from '../../features/manual/answer'
-import { importManualPdf, type ImportProgress } from '../../features/manual/importManual'
+import { importManualFolder, importManualPdf, type ImportProgress, type ImportResult } from '../../features/manual/importManual'
 import { loadEmbedder, loadIndex, pageImageUrl, resetIndex, searchManual, type ManualHit } from '../../features/manual/search'
 import { useLanguage } from '../../i18n/languageContext'
 import { api, ApiError, type ApiManualStatus } from '../../lib/api'
@@ -366,6 +366,9 @@ function progressText(progress: ImportProgress, tx: (en: string, ar: string) => 
   if (progress.stage === 'reading') {
     return tx(`Reading page ${progress.done + 1} of ${progress.total}…`, `جارٍ قراءة الصفحة ${progress.done + 1} من ${progress.total}…`)
   }
+  if (progress.stage === 'uploading') {
+    return tx(`Uploading page ${progress.done} of ${progress.total}…`, `جارٍ رفع الصفحة ${progress.done} من ${progress.total}…`)
+  }
   if (progress.stage === 'indexing') {
     return tx(`Building the search index: ${progress.done} of ${progress.total} sections…`, `جارٍ بناء فهرس البحث: ${progress.done} من ${progress.total} قسم…`)
   }
@@ -385,20 +388,12 @@ function ManualUpload({ open, onDone }: { open: boolean; onDone: () => void }) {
   const [error, setError] = useState<string | null>(null)
   const running = progress !== null
 
-  async function upload(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-    if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) {
-      setError(tx('Choose the manual as a PDF file.', 'اختر الدليل كملف PDF.'))
-      return
-    }
-
+  async function run(work: () => Promise<ImportResult>) {
     setError(null)
     setResult(null)
     setProgress({ stage: 'reading', done: 0, total: 0 })
     try {
-      const done = await importManualPdf(file, setProgress)
+      const done = await work()
       setResult(
         done.failedPages.length
           ? tx(
@@ -415,6 +410,23 @@ function ManualUpload({ open, onDone }: { open: boolean; onDone: () => void }) {
     }
   }
 
+  function choosePdf(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) {
+      setError(tx('Choose the manual as a PDF file.', 'اختر الدليل كملف PDF.'))
+      return
+    }
+    void run(() => importManualPdf(file, setProgress))
+  }
+
+  function chooseFolder(event: ChangeEvent<HTMLInputElement>) {
+    const files = [...(event.target.files ?? [])]
+    event.target.value = ''
+    if (files.length) void run(() => importManualFolder(files, setProgress))
+  }
+
   return (
     <details className="manual-upload" open={open || running}>
       <summary>
@@ -426,11 +438,24 @@ function ManualUpload({ open, onDone }: { open: boolean; onDone: () => void }) {
           'اختر ملف PDF لدليل المالك. هذا المتصفح يقرؤه ويقسمه ويرسم كل صفحة، ويستغرق ذلك من 5 إلى 10 دقائق لدليل V27: أبقِ هذه الصفحة مفتوحة. تُحفظ صور الصفحات وفهرس البحث فقط، ولا يقرؤها إلا من لديهم صلاحية المساعد.',
         )}
       </p>
-      <label className="secondary-button manual-upload-button">
-        <Upload size={15} aria-hidden="true" />
-        {running ? tx('Working…', 'جارٍ العمل…') : tx('Choose the manual PDF', 'اختر ملف الدليل PDF')}
-        <input type="file" accept="application/pdf,.pdf" hidden disabled={running} onChange={upload} />
-      </label>
+      <div className="manual-actions">
+        <label className="secondary-button manual-upload-button">
+          <Upload size={15} aria-hidden="true" />
+          {running ? tx('Working…', 'جارٍ العمل…') : tx('Choose the manual PDF', 'اختر ملف الدليل PDF')}
+          <input type="file" accept="application/pdf,.pdf" hidden disabled={running} onChange={choosePdf} />
+        </label>
+        <label className="secondary-button manual-upload-button">
+          <Upload size={15} aria-hidden="true" />
+          {tx('Or a prepared folder', 'أو مجلد جاهز')}
+          <input type="file" multiple hidden disabled={running} onChange={chooseFolder} {...{ webkitdirectory: '' }} />
+        </label>
+      </div>
+      <p className="muted-note">
+        {tx(
+          'A prepared folder holds sections.json, vectors.bin and a pages folder of p-001.jpg… images. Choose the folder that contains them, not the pages folder.',
+          'المجلد الجاهز يحتوي على sections.json و vectors.bin ومجلد pages بصور p-001.jpg… اختر المجلد الذي يحتويها، وليس مجلد pages.',
+        )}
+      </p>
       {progress && (
         <div className="manual-progress" role="status">
           <span>{progressText(progress, tx)}</span>

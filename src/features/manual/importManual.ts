@@ -1,5 +1,5 @@
 import { api } from '../../lib/api'
-import { buildSections, passageText, readPage, type PageText, type TextRun } from './buildManual'
+import { buildSections, passageText, readPage, type ManualSection, type PageText, type TextRun } from './buildManual'
 import { EMBEDDING_MODEL, loadEmbedder } from './search'
 
 /**
@@ -11,6 +11,7 @@ import { EMBEDDING_MODEL, loadEmbedder } from './search'
 export type ImportProgress =
   | { stage: 'reading'; done: number; total: number }
   | { stage: 'indexing'; done: number; total: number }
+  | { stage: 'uploading'; done: number; total: number }
   | { stage: 'saving' }
 
 export type ImportResult = { sections: number; pages: number; failedPages: number[] }
@@ -126,4 +127,46 @@ export async function importManualPdf(file: File, onProgress: (progress: ImportP
   })
 
   return { sections: sections.length, pages: total, failedPages: failedPages.sort((a, b) => a - b) }
+}
+
+/**
+ * The other way in: a folder prepared earlier (sections.json, vectors.bin and
+ * pages/p-001.jpg…), uploaded as it is. Quicker than reading the PDF again.
+ */
+export async function importManualFolder(files: File[], onProgress: (progress: ImportProgress) => void): Promise<ImportResult> {
+  const sectionsFile = files.find((file) => file.name === 'sections.json')
+  const vectorsFile = files.find((file) => file.name === 'vectors.bin')
+  if (!sectionsFile || !vectorsFile) {
+    throw new Error('The folder must hold sections.json and vectors.bin, with the page images in pages/.')
+  }
+  const pages = files
+    .map((file) => ({ file, page: Number(file.name.match(/^p-(\d+)\.jpe?g$/i)?.[1]) }))
+    .filter((entry) => entry.page > 0)
+    .sort((a, b) => a.page - b.page)
+
+  const meta = JSON.parse(await sectionsFile.text()) as { model: string; dimensions: number; sections: ManualSection[] }
+  if (meta.model !== EMBEDDING_MODEL) throw new Error(`This index was built with ${meta.model}, not ${EMBEDDING_MODEL}.`)
+
+  const failedPages: number[] = []
+  let done = 0
+  let next = 0
+  onProgress({ stage: 'uploading', done, total: pages.length })
+  const worker = async () => {
+    while (next < pages.length) {
+      const { file, page } = pages[next++]
+      try {
+        await api.uploadManualPage(page, await blobToBase64(file))
+      } catch {
+        failedPages.push(page)
+      }
+      onProgress({ stage: 'uploading', done: ++done, total: pages.length })
+    }
+  }
+  await Promise.all(Array.from({ length: PARALLEL_UPLOADS }, worker))
+
+  onProgress({ stage: 'saving' })
+  const pageCount = pages.length ? pages[pages.length - 1].page : undefined
+  await api.uploadManualIndex({ ...meta, vectors: await blobToBase64(vectorsFile), pageCount })
+
+  return { sections: meta.sections.length, pages: pages.length, failedPages: failedPages.sort((a, b) => a - b) }
 }
