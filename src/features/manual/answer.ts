@@ -60,7 +60,31 @@ export function loadAnswerModel(modelId: string, onProgress: (text: string, frac
   return enginePromise
 }
 
-const ARABIC = /[؀-ۿ]/
+export const isAnswerModelLoaded = (modelId: string) => engine !== null && engineModel === modelId
+
+/** Whether the model's files are already in this browser's storage, so loading needs no download. */
+export async function isAnswerModelDownloaded(modelId: string): Promise<boolean> {
+  try {
+    const { hasModelInCache } = await import('@mlc-ai/web-llm')
+    return await hasModelInCache(await buildFor(modelId))
+  } catch {
+    return false
+  }
+}
+
+/** Frees the gigabytes a model takes in this browser's storage. */
+export async function removeAnswerModel(modelId: string): Promise<void> {
+  if (engine && engineModel === modelId) {
+    await engine.unload()
+    engine = null
+    engineModel = null
+    enginePromise = null
+  }
+  const { deleteModelAllInfoInCache } = await import('@mlc-ai/web-llm')
+  await deleteModelAllInfoInCache(await buildFor(modelId))
+}
+
+const ARABIC = /[\u0600-\u06FF]/
 
 export const isArabic = (text: string) => ARABIC.test(text)
 

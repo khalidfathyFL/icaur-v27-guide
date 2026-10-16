@@ -6361,3 +6361,24 @@ ol.path-pills li:last-child {
   justify-self: start;
   cursor: pointer;
 }
+
+.manual-models {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.manual-model-line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.manual-model-line.missing strong { color: var(--warn); }
+.manual-model-line.downloaded strong { color: var(--info); }
+.manual-model-line.ready strong { color: var(--ok); }

@@ -1,10 +1,20 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
-import { BookOpenText, Cpu, FileImage, Send, Square, Upload } from 'lucide-react'
+import { BookOpenText, Cpu, Download, FileImage, Send, Square, Trash2, Upload } from 'lucide-react'
 import { useAuth } from '../../auth/authContext'
 import { PageHeader } from '../../components/panel/blocks'
-import { ANSWER_MODELS, answerQuestion, isArabic, loadAnswerModel, toEnglishSearchQuery, webGpuAvailable } from '../../features/manual/answer'
+import {
+  ANSWER_MODELS,
+  answerQuestion,
+  isAnswerModelDownloaded,
+  isAnswerModelLoaded,
+  isArabic,
+  loadAnswerModel,
+  removeAnswerModel,
+  toEnglishSearchQuery,
+  webGpuAvailable,
+} from '../../features/manual/answer'
 import { importManualFolder, importManualPdf, type ImportProgress, type ImportResult } from '../../features/manual/importManual'
-import { loadEmbedder, loadIndex, pageImageUrl, resetIndex, searchManual, type ManualHit } from '../../features/manual/search'
+import { isEmbedderDownloaded, isEmbedderReady, loadEmbedder, loadIndex, pageImageUrl, resetIndex, searchManual, type ManualHit } from '../../features/manual/search'
 import { useLanguage } from '../../i18n/languageContext'
 import { api, ApiError, type ApiManualStatus } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
@@ -39,6 +49,17 @@ type Turn = {
 
 type Loading = { label: string; fraction: number } | null
 
+/** Where a model is: not on this computer, stored by the browser, or loaded and ready to use. */
+type ModelState = 'missing' | 'downloaded' | 'ready'
+
+async function readModelStates(gpu: boolean, modelId: string): Promise<{ search: ModelState; answer: ModelState }> {
+  const [searchStored, answerStored] = await Promise.all([isEmbedderDownloaded(), gpu ? isAnswerModelDownloaded(modelId) : false])
+  return {
+    search: isEmbedderReady() ? 'ready' : searchStored ? 'downloaded' : 'missing',
+    answer: isAnswerModelLoaded(modelId) ? 'ready' : answerStored ? 'downloaded' : 'missing',
+  }
+}
+
 /**
  * A test screen, so the real reason is shown: the models fail in browser- and
  * GPU-specific ways that "Something went wrong" would hide.
@@ -68,7 +89,22 @@ export function ManualAssistant() {
   const [busy, setBusy] = useState(false)
   const [setupError, setSetupError] = useState<string | null>(null)
   const [manual, setManual] = useState<ApiManualStatus | null>(null)
+  const [models, setModels] = useState<{ search: ModelState; answer: ModelState } | null>(null)
   const abort = useRef<AbortController | null>(null)
+
+  const checkModels = useCallback(() => {
+    void readModelStates(gpu, modelId).then(setModels)
+  }, [gpu, modelId])
+
+  useEffect(() => {
+    let cancelled = false
+    void readModelStates(gpu, modelId).then((next) => {
+      if (!cancelled) setModels(next)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [gpu, modelId])
 
   const loadStatus = useCallback(() => {
     api
@@ -95,6 +131,40 @@ export function ManualAssistant() {
       setLoadedModel(id)
     } finally {
       setLoading(null)
+    }
+  }
+
+  /** Downloads (or, when already stored, just loads) both models ahead of the first question. */
+  async function downloadModels() {
+    setBusy(true)
+    setSetupError(null)
+    try {
+      await loadEmbedder((fraction) =>
+        setLoading(fraction < 1 ? { label: tx('Downloading the search model…', 'جارٍ تنزيل نموذج البحث…'), fraction } : null),
+      )
+      setLoading(null)
+      if (gpu) await prepareModel(modelId)
+    } catch (caught) {
+      setLoading(null)
+      setSetupError(describe(caught, tx('Could not download the models:', 'تعذر تنزيل النماذج:')))
+    } finally {
+      setBusy(false)
+      checkModels()
+    }
+  }
+
+  async function removeModel() {
+    const model = ANSWER_MODELS.find((entry) => entry.id === modelId)
+    if (!window.confirm(tx(`Remove ${model?.label ?? 'the AI model'} from this computer? It will download again when you next ask.`, `حذف ${model?.label ?? 'النموذج'} من هذا الجهاز؟ سيُنزّل مرة أخرى عند السؤال التالي.`))) return
+    setBusy(true)
+    try {
+      await removeAnswerModel(modelId)
+      setLoadedModel(null)
+    } catch (caught) {
+      setSetupError(describe(caught, tx('Could not remove the model:', 'تعذر حذف النموذج:')))
+    } finally {
+      setBusy(false)
+      checkModels()
     }
   }
 
@@ -139,6 +209,7 @@ export function ManualAssistant() {
     } finally {
       abort.current = null
       setBusy(false)
+      checkModels()
     }
   }
 
@@ -180,6 +251,38 @@ export function ManualAssistant() {
               ))}
             </select>
           </label>
+        )}
+        {models && (
+          <div className="manual-models">
+            <ModelLine label={tx('Search model · about 120 MB', 'نموذج البحث · حوالي 120 ميجابايت')} state={models.search} />
+            {gpu && (
+              <ModelLine
+                label={`${tx('AI model', 'نموذج الإجابة')} · ${ANSWER_MODELS.find((entry) => entry.id === modelId)?.size ?? ''}`}
+                state={models.answer}
+              />
+            )}
+            <div className="manual-actions">
+              {(models.search !== 'ready' || (gpu && models.answer !== 'ready')) && (
+                <button type="button" className="primary-action" onClick={() => void downloadModels()} disabled={busy || loading !== null}>
+                  <Download size={15} aria-hidden="true" />
+                  {models.search === 'missing' || (gpu && models.answer === 'missing')
+                    ? tx('Download models', 'تنزيل النماذج')
+                    : tx('Load models', 'تحميل النماذج')}
+                </button>
+              )}
+              {gpu && models.answer !== 'missing' && (
+                <button type="button" className="secondary-button" onClick={() => void removeModel()} disabled={busy || loading !== null}>
+                  <Trash2 size={15} aria-hidden="true" /> {tx('Remove AI model from this computer', 'حذف نموذج الإجابة من هذا الجهاز')}
+                </button>
+              )}
+            </div>
+            <p className="muted-note">
+              {tx(
+                'Downloaded once, then kept by this browser. Asking a question also downloads them if you have not.',
+                'تُنزّل مرة واحدة ثم يحتفظ بها المتصفح. السؤال ينزّلها أيضًا إن لم تكن نزّلتها.',
+              )}
+            </p>
+          </div>
         )}
         {loading && (
           <div className="manual-progress" role="status">
@@ -253,6 +356,21 @@ export function ManualAssistant() {
         </div>
       </form>
     </>
+  )
+}
+
+function ModelLine({ label, state }: { label: string; state: ModelState }) {
+  const { tx } = useLanguage()
+  const text = {
+    missing: tx('Not downloaded', 'غير منزّل'),
+    downloaded: tx('Downloaded, on this computer', 'منزّل على هذا الجهاز'),
+    ready: tx('Ready', 'جاهز'),
+  }[state]
+  return (
+    <p className={`manual-model-line ${state}`}>
+      <span>{label}</span>
+      <strong>{text}</strong>
+    </p>
   )
 }
 

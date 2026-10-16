@@ -71,6 +71,20 @@ export function loadIndex(): Promise<Index> {
   return indexPromise
 }
 
+let embedderReady = false
+export const isEmbedderReady = () => embedderReady
+
+/** Whether the search model's files are already stored by this browser. */
+export async function isEmbedderDownloaded(): Promise<boolean> {
+  try {
+    if (!(await caches.has('transformers-cache'))) return false
+    const cache = await caches.open('transformers-cache')
+    return (await cache.keys()).some((request) => request.url.includes('multilingual-e5-small') && request.url.endsWith('.onnx'))
+  } catch {
+    return false
+  }
+}
+
 /** About 120 MB on first use, then cached by the browser. */
 export function loadEmbedder(onProgress?: (fraction: number) => void): Promise<FeatureExtractionPipeline> {
   embedderPromise ??= (async () => {
@@ -88,9 +102,14 @@ export function loadEmbedder(onProgress?: (fraction: number) => void): Promise<F
       },
     }) as Promise<FeatureExtractionPipeline>
   })()
-  embedderPromise.catch(() => {
-    embedderPromise = null
-  })
+  embedderPromise.then(
+    () => {
+      embedderReady = true
+    },
+    () => {
+      embedderPromise = null
+    },
+  )
   return embedderPromise
 }
 
