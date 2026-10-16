@@ -118,6 +118,9 @@ export type DealerDoc = {
   notes?: string
   active: boolean
   verifiedAt: string
+  createdBy?: string
+  /** The account that added it, which may keep editing it with the `*.add` permission. Missing on older items. */
+  createdById?: string
   createdAt: string
   updatedAt: string
 }
@@ -210,6 +213,8 @@ export type PartDoc = {
   /** When someone last confirmed the price, which drifts fast for imports. */
   priceCheckedAt: string
   createdBy: string
+  /** The account that added it, which may keep editing it with the `*.add` permission. Missing on older items. */
+  createdById?: string
   createdAt: string
   updatedAt: string
 }
@@ -306,6 +311,8 @@ export type CenterDoc = {
   /** When someone last confirmed the packages and prices. */
   checkedAt: string
   createdBy: string
+  /** The account that added it, which may keep editing it with the `*.add` permission. Missing on older items. */
+  createdById?: string
   createdAt: string
   updatedAt: string
 }
@@ -489,6 +496,9 @@ export type ChargingStationDoc = {
   adminEdited: boolean
   syncedAt?: string
   checkedAt: string
+  createdBy?: string
+  /** The account that added it, which may keep editing it with the `*.add` permission. Missing on older items. */
+  createdById?: string
   createdAt: string
   updatedAt: string
 }

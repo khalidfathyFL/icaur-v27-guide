@@ -1,10 +1,10 @@
 import { randomBytes } from 'node:crypto'
 import { ObjectId } from 'mongodb'
-import { requirePermission } from '../_lib/permissions.js'
+import { hasPermission, requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
 import { auditableChanges, listingChanges, recordAudit } from '../_lib/audit.js'
-import { adminListFilter, handleMerchants, merchantsByListing, requireListingEditor } from '../_lib/merchants.js'
+import { adminListFilter, handleMerchants, merchantsByListing, requireListingAdder, requireListingEditor } from '../_lib/merchants.js'
 import {
   compact,
   deleteBlobs,
@@ -32,8 +32,9 @@ import {
 /**
  * Charger installers: the companies that sell and fit home chargers in Egypt,
  * with their packages, prices and the governorates they cover. Editors with
- * `installers.manage` maintain them all; a linked merchant edits its own;
- * owners review the companies.
+ * `installers.manage` maintain them all; a linked merchant edits its own, and
+ * a contributor with `installers.add` the ones they added; owners review the
+ * companies.
  */
 
 const MAX_PACKAGES = 15
@@ -207,9 +208,11 @@ function readInstallerBody(body: Record<string, unknown>) {
 /* ---------- writes ---------- */
 
 async function createInstaller(request: Request): Promise<Response> {
-  const editor = await requirePermission(request, 'installers.manage')
+  const editor = await requireListingAdder(request, 'installer')
   const body = await readJsonBody<Record<string, unknown>>(request)
   const fields = readInstallerBody(body)
+  // Whether a company is licensed is the site's to confirm, so a contributor's listing starts unconfirmed.
+  if (!hasPermission(editor, 'installers.manage')) fields.licensed = false
 
   const now = new Date().toISOString()
   const doc = compact({
@@ -236,7 +239,7 @@ async function createInstaller(request: Request): Promise<Response> {
 }
 
 async function updateInstaller(request: Request, id: string): Promise<Response> {
-  // Staff may edit any listing; a merchant only their own.
+  // Staff may edit any listing; a merchant or the contributor who added it only their own.
   const { user: editor, staff, merchant } = await requireListingEditor(request, 'installer', id)
 
   const body = await readJsonBody<Record<string, unknown>>(request)

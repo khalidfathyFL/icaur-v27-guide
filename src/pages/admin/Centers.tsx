@@ -51,8 +51,11 @@ export function Centers() {
   const [service, setService] = useState<ProtectionService | 'all'>('all')
 
   const { can } = useAuth()
-  // Staff see every listing; a merchant sees only the ones they run.
+  // Staff see every listing; a merchant sees only the ones they run, and a
+  // contributor the ones they added. The server enforces the same split.
   const staff = can('centers.manage')
+  const contributor = can('centers.add')
+  const canAdd = staff || contributor
 
   const load = useCallback(() => {
     api
@@ -113,10 +116,17 @@ export function Centers() {
     <>
       {!staff && (
         <PageHeader
-          description={tx(
-            'The listings you run. Edit your details, photos and packages; changes go live on the site straight away and are recorded with your name.',
-            'الصفحات التي تديرها. عدّل بياناتك وصورك والباقات؛ تظهر التغييرات على الموقع فورا وتسجل باسمك.',
-          )}
+          description={
+            contributor
+              ? tx(
+                  'The protection centers you added, and any you run. You can add new ones and edit these; ones other people added are not yours to change.',
+                  'مراكز الحماية التي أضفتها والتي تديرها. يمكنك إضافة جديد وتعديل هذه؛ أما ما أضافه غيرك فلا يمكنك تعديله.',
+                )
+              : tx(
+                  'The listings you run. Edit your details, photos and packages; changes go live on the site straight away and are recorded with your name.',
+                  'الصفحات التي تديرها. عدّل بياناتك وصورك والباقات؛ تظهر التغييرات على الموقع فورا وتسجل باسمك.',
+                )
+          }
         />
       )}
       <DataTable
@@ -138,7 +148,7 @@ export function Centers() {
             ]}
           />
         }
-        actions={staff ? addButton : undefined}
+        actions={canAdd ? addButton : undefined}
         onRowClick={(center) => setEditing(center)}
         empty={
           <EmptyState
@@ -148,7 +158,7 @@ export function Centers() {
               'Add the first center with its packages and it will appear on the protection page.',
               'أضف أول مركز بباقاته وسيظهر في صفحة الحماية.',
             )}
-            action={staff ? addButton : undefined}
+            action={canAdd ? addButton : undefined}
           />
         }
         columns={[

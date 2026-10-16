@@ -40,6 +40,8 @@ export function Comments({ params, onChanged }: { params: URLSearchParams; onCha
     try {
       await api.reviewComment(comment.id, { status: decision, note: note || undefined })
       toast(decision === 'approved' ? tx('Comment published.', 'تم نشر التعليق.') : tx('Comment rejected.', 'تم رفض التعليق.'))
+      // A decision made from the drawer closes it, like every other drawer.
+      if (record.openId === comment.id) record.close()
       load()
       onChanged()
     } catch (caught) {

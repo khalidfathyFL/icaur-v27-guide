@@ -5,6 +5,7 @@ import { HttpError, json, readJsonBody, searchParams } from './http.js'
 import { getDb } from './mongo.js'
 import { recordAudit, type AuditAction } from './audit.js'
 import { requireEmail } from './models.js'
+import { requireAdder } from './ownership.js'
 
 /**
  * Merchant accounts: an insurance company, a protection center or a charger
@@ -28,8 +29,8 @@ export type MerchantKind = 'insurer' | 'center' | 'installer'
 type KindConfig = {
   collection: string
   permission: Permission
-  /** Lets an account add listings of this kind and edit only its own. */
-  addPermission?: Permission
+  /** Lets an account add listings of this kind and edit only its own (see ownership.ts). */
+  addPermission: Permission
   noun: string
   actions: { added: AuditAction; removed: AuditAction }
 }
@@ -45,12 +46,14 @@ export const MERCHANT_KINDS: Record<MerchantKind, KindConfig> = {
   center: {
     collection: 'centers',
     permission: 'centers.manage',
+    addPermission: 'centers.add',
     noun: 'Protection center',
     actions: { added: 'center.merchant_added', removed: 'center.merchant_removed' },
   },
   installer: {
     collection: 'installers',
     permission: 'installers.manage',
+    addPermission: 'installers.add',
     noun: 'Charger installer',
     actions: { added: 'installer.merchant_added', removed: 'installer.merchant_removed' },
   },
@@ -59,9 +62,14 @@ export const MERCHANT_KINDS: Record<MerchantKind, KindConfig> = {
 type MerchantListing = { _id: ObjectId; name: { en: string; ar: string }; merchantIds?: string[]; createdById?: string }
 
 /** True when the account may add listings of this kind without managing them all. */
-export function canContribute(user: SessionUser, kind: MerchantKind): boolean {
-  const permission = MERCHANT_KINDS[kind].addPermission
-  return permission !== undefined && hasPermission(user, permission)
+function canContribute(user: SessionUser, kind: MerchantKind): boolean {
+  return hasPermission(user, MERCHANT_KINDS[kind].addPermission)
+}
+
+/** Anyone who may add a listing of this kind: staff, or a contributor. */
+export function requireListingAdder(request: Request, kind: MerchantKind): Promise<SessionUser> {
+  const config = MERCHANT_KINDS[kind]
+  return requireAdder(request, { manage: config.permission, add: config.addPermission })
 }
 
 /** The listings an account may edit without staff rights: the ones it runs, and the ones it added. */

@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb'
+import { CATALOGS, ownListFilter, refuseUnlessStaff, requireAdder, requireItemEditor } from '../_lib/ownership.js'
 import { requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
@@ -19,9 +20,10 @@ import {
  * Public charging stations, shown on the map at `#/charging`.
  *
  * - `GET charging/stations`: every active station; `all=1` (staff) adds
- *   removed ones and the import status.
- * - `POST charging/stations`: staff add a station by hand.
- * - `PATCH`/`DELETE charging/stations/:id`: staff correct or remove one.
+ *   removed ones and the import status; `mine=1` is the stations the caller added.
+ * - `POST charging/stations`: staff, or a contributor with `charging.add`, add a station by hand.
+ * - `PATCH charging/stations/:id`: staff correct any station; a contributor only their own.
+ * - `DELETE charging/stations/:id`: staff remove one.
  * - `POST charging/stations/sync`: staff run the Open Charge Map import now.
  */
 
@@ -73,9 +75,10 @@ export async function handleCharging(request: Request, segments: string[]): Prom
 }
 
 async function listStations(request: Request): Promise<Response> {
+  // `all=1` is the managers' table, `mine=1` a contributor's: the stations they added.
+  const scope = await ownListFilter(request, CATALOGS.station)
   const staff = searchParams(request).get('all') === '1'
-  if (staff) await requirePermission(request, 'charging.manage')
-  else {
+  if (!scope) {
     // The first visitor of the day refreshes the list; a failure only means yesterday's stations.
     await syncStationsIfStale().catch((error: unknown) => console.error('Station refresh failed:', error))
   }
@@ -83,7 +86,7 @@ async function listStations(request: Request): Promise<Response> {
   const db = await getDb()
   const stations = await db
     .collection<ChargingStationDoc>('chargingStations')
-    .find(staff ? {} : { active: true })
+    .find(scope ?? { active: true })
     .sort({ city: 1, 'name.en': 1 })
     .limit(3000)
     .toArray()
@@ -142,11 +145,21 @@ function readStationBody(body: Record<string, unknown>) {
 /* ---------- writes ---------- */
 
 async function createStation(request: Request): Promise<Response> {
-  const editor = await requirePermission(request, 'charging.manage')
+  const editor = await requireAdder(request, CATALOGS.station)
   const fields = readStationBody(await readJsonBody<Record<string, unknown>>(request))
 
   const now = new Date().toISOString()
-  const doc = compact({ ...fields, source: 'manual' as const, active: true, adminEdited: true, checkedAt: now, createdAt: now, updatedAt: now })
+  const doc = compact({
+    ...fields,
+    source: 'manual' as const,
+    active: true,
+    adminEdited: true,
+    checkedAt: now,
+    createdBy: editor.name,
+    createdById: editor.id,
+    createdAt: now,
+    updatedAt: now,
+  })
 
   const db = await getDb()
   const result = await db.collection<ChargingStationDoc>('chargingStations').insertOne(doc as ChargingStationDoc)
@@ -159,8 +172,8 @@ async function createStation(request: Request): Promise<Response> {
 }
 
 async function updateStation(request: Request, id: string): Promise<Response> {
-  const editor = await requirePermission(request, 'charging.manage')
-  if (!ObjectId.isValid(id)) throw new HttpError(404, 'Station not found.')
+  // Managers may correct any station; a contributor only the ones they added.
+  const { user: editor, staff } = await requireItemEditor(request, CATALOGS.station, id)
 
   const body = await readJsonBody<Record<string, unknown>>(request)
   const db = await getDb()
@@ -176,6 +189,7 @@ async function updateStation(request: Request, id: string): Promise<Response> {
     Object.assign(update, readStationBody(body), { adminEdited: true, checkedAt: now })
   }
   if (body.active !== undefined) {
+    refuseUnlessStaff(staff)
     update.active = body.active === true
     // Removing an imported station must survive the next import.
     if (existing.source === 'ocm') update.adminEdited = true

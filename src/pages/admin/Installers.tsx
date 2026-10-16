@@ -44,8 +44,11 @@ export function Installers() {
   const [editing, setEditing] = useState<Editing>(null)
 
   const { can } = useAuth()
-  // Staff see every listing; a merchant sees only the ones they run. The server enforces the same split.
+  // Staff see every listing; a merchant sees only the ones they run, and a
+  // contributor the ones they added. The server enforces the same split.
   const staff = can('installers.manage')
+  const contributor = can('installers.add')
+  const canAdd = staff || contributor
 
   const load = useCallback(() => {
     api
@@ -101,10 +104,17 @@ export function Installers() {
     <>
       {!staff && (
         <PageHeader
-          description={tx(
-            'The listings you run. Edit your details, photos and packages; changes go live on the site straight away and are recorded with your name.',
-            'الصفحات التي تديرها. عدّل بياناتك وصورك والباقات؛ تظهر التغييرات على الموقع فورا وتسجل باسمك.',
-          )}
+          description={
+            contributor
+              ? tx(
+                  'The installers you added, and any you run. You can add new ones and edit these; ones other people added are not yours to change.',
+                  'شركات التركيب التي أضفتها والتي تديرها. يمكنك إضافة جديد وتعديل هذه؛ أما ما أضافه غيرك فلا يمكنك تعديله.',
+                )
+              : tx(
+                  'The listings you run. Edit your details, photos and packages; changes go live on the site straight away and are recorded with your name.',
+                  'الصفحات التي تديرها. عدّل بياناتك وصورك والباقات؛ تظهر التغييرات على الموقع فورا وتسجل باسمك.',
+                )
+          }
         />
       )}
       <DataTable
@@ -115,14 +125,14 @@ export function Installers() {
           `${installer.name.en} ${installer.name.ar} ${installer.packages.map((item) => `${item.name.en} ${item.name.ar} ${item.chargerBrand ?? ''}`).join(' ')}`
         }
         searchPlaceholder={tx('Search installer or package…', 'ابحث عن شركة أو باقة…')}
-        actions={staff ? addButton : undefined}
+        actions={canAdd ? addButton : undefined}
         onRowClick={(installer) => setEditing(installer)}
         empty={
           <EmptyState
             icon={PlugZap}
             title={tx('No installers yet', 'لا توجد شركات تركيب بعد')}
             text={tx('Add the first company that installs home chargers, with its packages.', 'أضف أول شركة تركب الشواحن المنزلية بباقاتها.')}
-            action={staff ? addButton : undefined}
+            action={canAdd ? addButton : undefined}
           />
         }
         columns={[

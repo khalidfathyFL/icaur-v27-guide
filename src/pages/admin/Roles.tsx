@@ -164,10 +164,10 @@ export function Roles() {
           role={editing === 'new' ? null : editing}
           definitions={definitions}
           onClose={() => setEditing(null)}
-          onSaved={(saved) => {
+          onSaved={() => {
             load()
-            // A new role stays open so people can be added to it straight away.
-            setEditing(saved)
+            // Every drawer closes once its change is saved; reopen a new role to add people to it.
+            setEditing(null)
           }}
           onMembersChanged={load}
         />

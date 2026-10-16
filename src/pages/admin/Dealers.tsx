@@ -2,12 +2,13 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Pencil, Plus, Store, Trash2 } from 'lucide-react'
 import { DataTable } from '../../components/panel/DataTable'
 import { Drawer } from '../../components/panel/Drawer'
-import { EmptyState } from '../../components/panel/blocks'
+import { EmptyState, PageHeader } from '../../components/panel/blocks'
 import { useConfirm, useToast } from '../../components/panel/feedback'
 import { useLanguage, useShortText } from '../../i18n/languageContext'
 import { api, type ApiDealer } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
 import { formatDate } from '../../lib/format'
+import { useAuth } from '../../auth/authContext'
 
 /** `null` while closed; `'new'` for the add form, or the dealer being edited. */
 type Editing = null | 'new' | ApiDealer
@@ -21,15 +22,19 @@ export function Dealers() {
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<Editing>(null)
 
+  const { can } = useAuth()
+  // Staff see every dealer; a contributor only the ones they added. The server enforces the same split.
+  const staff = can('dealers.manage')
+
   const load = useCallback(() => {
     api
-      .listDealers()
+      .listDealers(staff ? {} : { mine: true })
       .then(({ dealers: list }) => {
         setDealers(list)
         setError(null)
       })
       .catch((caught) => setError(errorMessage(caught, tx('Could not load.', 'تعذر التحميل.'))))
-  }, [tx])
+  }, [tx, staff])
 
   useEffect(load, [load])
 
@@ -59,6 +64,14 @@ export function Dealers() {
 
   return (
     <>
+      {!staff && (
+        <PageHeader
+          description={tx(
+            'The dealers you added. You can add new ones and edit these; dealers other people added are not yours to change.',
+            'الوكلاء الذين أضفتهم. يمكنك إضافة وكلاء جدد وتعديل هؤلاء؛ أما الوكلاء الذين أضافهم غيرك فلا يمكنك تعديلهم.',
+          )}
+        />
+      )}
       <DataTable
         rows={dealers}
         rowKey={(dealer) => dealer.id}
@@ -126,15 +139,17 @@ export function Dealers() {
                 >
                   <Pencil size={15} />
                 </button>
-                <button
-                  type="button"
-                  className="panel-icon-button danger"
-                  onClick={() => remove(dealer)}
-                  aria-label={tx('Remove', 'حذف')}
-                  title={tx('Remove', 'حذف')}
-                >
-                  <Trash2 size={15} />
-                </button>
+                {staff && (
+                  <button
+                    type="button"
+                    className="panel-icon-button danger"
+                    onClick={() => remove(dealer)}
+                    aria-label={tx('Remove', 'حذف')}
+                    title={tx('Remove', 'حذف')}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
               </span>
             ),
           },

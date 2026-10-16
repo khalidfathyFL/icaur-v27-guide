@@ -22,13 +22,18 @@ export const PERMISSION_KEYS = [
   'comments.review',
   'comments.publishDirectly',
   'dealers.manage',
+  'dealers.add',
   'pricing.manage',
   'parts.manage',
+  'parts.add',
   'centers.manage',
+  'centers.add',
   'insurance.manage',
   'insurance.add',
   'installers.manage',
+  'installers.add',
   'charging.manage',
+  'charging.add',
   'orders.manage',
   'users.manage',
   'emails.send',
@@ -89,7 +94,14 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
   {
     key: 'dealers.manage',
     label: 'Manage dealers',
-    description: 'Add, edit and remove the dealers listed as selling at the official price.',
+    description: 'Add, edit and remove any of the dealers listed as selling at the official price.',
+    group: 'Market data',
+  },
+  {
+    key: 'dealers.add',
+    label: 'Add dealers',
+    description:
+      'Add new dealers and edit the ones they added. They cannot change or remove a dealer somebody else added.',
     group: 'Market data',
   },
   {
@@ -101,13 +113,27 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
   {
     key: 'parts.manage',
     label: 'Manage accessories',
-    description: 'Add, edit and remove accessories and protection parts, with their prices, suppliers and photos.',
+    description: 'Add, edit and remove any accessory or protection part, with its prices, suppliers and photos.',
+    group: 'Market data',
+  },
+  {
+    key: 'parts.add',
+    label: 'Add accessories',
+    description:
+      'Add new accessories and edit the ones they added. They cannot change or remove an accessory somebody else added.',
     group: 'Market data',
   },
   {
     key: 'centers.manage',
     label: 'Manage protection centers',
-    description: 'Add, edit and remove protection centers and their packages, prices and photos.',
+    description: 'Add, edit and remove any protection center and its packages, prices and photos.',
+    group: 'Market data',
+  },
+  {
+    key: 'centers.add',
+    label: 'Add protection centers',
+    description:
+      'Add new protection centers and edit the ones they added. They cannot change or remove a center somebody else added.',
     group: 'Market data',
   },
   {
@@ -126,13 +152,27 @@ export const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
   {
     key: 'installers.manage',
     label: 'Manage charger installers',
-    description: 'Add, edit and remove the companies that install home chargers, with their packages, prices and photos.',
+    description: 'Add, edit and remove any of the companies that install home chargers, with their packages, prices and photos.',
+    group: 'Market data',
+  },
+  {
+    key: 'installers.add',
+    label: 'Add charger installers',
+    description:
+      'Add new charger installers and edit the ones they added. They cannot change or remove an installer somebody else added.',
     group: 'Market data',
   },
   {
     key: 'charging.manage',
     label: 'Manage charging stations',
-    description: 'Add, correct and remove public charging stations on the map, and run the Open Charge Map import.',
+    description: 'Add, correct and remove any public charging station on the map, and run the Open Charge Map import.',
+    group: 'Market data',
+  },
+  {
+    key: 'charging.add',
+    label: 'Add charging stations',
+    description:
+      'Add new charging stations and correct the ones they added. They cannot change or remove a station somebody else added or one that was imported.',
     group: 'Market data',
   },
   {

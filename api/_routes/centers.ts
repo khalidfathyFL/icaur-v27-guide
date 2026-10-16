@@ -4,7 +4,7 @@ import { requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
 import { auditableChanges, listingChanges, recordAudit } from '../_lib/audit.js'
-import { adminListFilter, handleMerchants, merchantsByListing, requireListingEditor } from '../_lib/merchants.js'
+import { adminListFilter, handleMerchants, merchantsByListing, requireListingAdder, requireListingEditor } from '../_lib/merchants.js'
 import {
   compact,
   deleteBlobs,
@@ -33,7 +33,8 @@ import {
 /**
  * Protection centers: the workshops in Egypt that fit PPF, ceramic coating,
  * window film and the like, each with the packages it sells. Editors with
- * `centers.manage` maintain them; owners review them.
+ * `centers.manage` maintain them all; a linked merchant edits its own, and a
+ * contributor with `centers.add` the ones they added; owners review them.
  */
 
 const MAX_PACKAGES = 20
@@ -216,7 +217,7 @@ function readCenterBody(body: Record<string, unknown>) {
 /* ---------- writes ---------- */
 
 async function createCenter(request: Request): Promise<Response> {
-  const editor = await requirePermission(request, 'centers.manage')
+  const editor = await requireListingAdder(request, 'center')
   const body = await readJsonBody<Record<string, unknown>>(request)
   const fields = readCenterBody(body)
 
@@ -229,6 +230,7 @@ async function createCenter(request: Request): Promise<Response> {
     active: true,
     checkedAt: now,
     createdBy: editor.name,
+    createdById: editor.id,
     createdAt: now,
     updatedAt: now,
   })
@@ -244,8 +246,8 @@ async function createCenter(request: Request): Promise<Response> {
 }
 
 async function updateCenter(request: Request, id: string): Promise<Response> {
-  // Staff may edit any listing; a merchant only their own.
-  const { user: editor, staff } = await requireListingEditor(request, 'center', id)
+  // Staff may edit any listing; a merchant or the contributor who added it only their own.
+  const { user: editor, staff, merchant } = await requireListingEditor(request, 'center', id)
 
   const body = await readJsonBody<Record<string, unknown>>(request)
   const db = await getDb()
@@ -285,7 +287,7 @@ async function updateCenter(request: Request, id: string): Promise<Response> {
     changes: {
       ...auditableChanges(body.name !== undefined ? listingChanges(existing as unknown as Record<string, unknown>, set, 'packages') : set),
       // A merchant's edit is marked, so staff can tell it from their own.
-      ...(staff ? {} : { byMerchant: true }),
+      ...(merchant ? { byMerchant: true } : {}),
     },
   })
 

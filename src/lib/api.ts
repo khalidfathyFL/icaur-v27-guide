@@ -188,7 +188,7 @@ export type ApiEmailLogEntry = {
 /** An account linked to a listing as its merchant. */
 export type ApiMerchant = { id: string; name: string; email: string }
 
-/** Staff see every listing; a merchant only their own. */
+/** Staff see every listing; a merchant or contributor only their own. */
 export type ListingScope = { all?: boolean; mine?: boolean }
 
 const scopeQuery = (params: ListingScope) => (params.all ? '?all=1' : params.mine ? '?mine=1' : '')
@@ -688,6 +688,8 @@ export type PartFilters = {
   q?: string
   /** Include removed parts; admin only. */
   all?: boolean
+  /** Only the parts the caller added, removed ones included. */
+  mine?: boolean
 }
 
 export class ApiError extends Error {
@@ -913,7 +915,8 @@ export const api = {
 
   /* ---------- dealers and pricing ---------- */
 
-  listDealers: () => request<{ dealers: ApiDealer[] }>('dealers'),
+  listDealers: (params: ListingScope = {}) =>
+    request<{ dealers: ApiDealer[] }>(`dealers${scopeQuery(params)}`, { auth: Boolean(params.all || params.mine) }),
 
   createDealer: (input: Omit<ApiDealer, 'id' | 'verifiedAt'>) =>
     request<{ dealer: ApiDealer }>('dealers', { method: 'POST', body: input, auth: true }),
@@ -964,8 +967,9 @@ export const api = {
     if (filters.trim) query.set('trim', filters.trim)
     if (filters.q) query.set('q', filters.q)
     if (filters.all) query.set('all', '1')
+    else if (filters.mine) query.set('mine', '1')
     const suffix = query.toString() ? `?${query}` : ''
-    return request<{ parts: ApiPart[] }>(`parts${suffix}`, { auth: Boolean(filters.all) })
+    return request<{ parts: ApiPart[] }>(`parts${suffix}`, { auth: Boolean(filters.all || filters.mine) })
   },
 
   // Not encoded here: `request` encodes the whole route, and slugs never hold / or ?.
@@ -1049,8 +1053,10 @@ export const api = {
 
   /* ---------- charging stations ---------- */
 
-  listStations: (params: { all?: boolean } = {}) =>
-    request<{ stations: ApiStation[]; sync?: StationSync }>(`charging/stations${params.all ? '?all=1' : ''}`, { auth: Boolean(params.all) }),
+  listStations: (params: ListingScope = {}) =>
+    request<{ stations: ApiStation[]; sync?: StationSync }>(`charging/stations${scopeQuery(params)}`, {
+      auth: Boolean(params.all || params.mine),
+    }),
 
   createStation: (input: StationInput) =>
     request<{ station: ApiStation }>('charging/stations', { method: 'POST', body: input, auth: true }),

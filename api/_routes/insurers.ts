@@ -1,11 +1,10 @@
 import { randomBytes } from 'node:crypto'
 import { ObjectId } from 'mongodb'
-import { hasPermission, requirePermission } from '../_lib/permissions.js'
-import { requireUser } from '../_lib/auth.js'
+import { requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
 import { auditableChanges, listingChanges, recordAudit } from '../_lib/audit.js'
-import { adminListFilter, canContribute, handleMerchants, merchantsByListing, requireListingEditor } from '../_lib/merchants.js'
+import { adminListFilter, handleMerchants, merchantsByListing, requireListingAdder, requireListingEditor } from '../_lib/merchants.js'
 import {
   compact,
   deleteBlobs,
@@ -191,10 +190,7 @@ function readInsurerBody(body: Record<string, unknown>) {
 /* ---------- writes ---------- */
 
 async function createInsurer(request: Request): Promise<Response> {
-  const editor = await requireUser(request)
-  if (!hasPermission(editor, 'insurance.manage') && !canContribute(editor, 'insurer')) {
-    throw new HttpError(403, 'Your account does not have permission to do that.')
-  }
+  const editor = await requireListingAdder(request, 'insurer')
   const body = await readJsonBody<Record<string, unknown>>(request)
   const fields = readInsurerBody(body)
 

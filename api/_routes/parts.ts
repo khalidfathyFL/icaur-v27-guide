@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb'
+import { CATALOGS, ownListFilter, refuseUnlessStaff, requireAdder, requireItemEditor } from '../_lib/ownership.js'
 import { requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody, searchParams } from '../_lib/http.js'
 import { getDb } from '../_lib/mongo.js'
@@ -83,18 +84,13 @@ export async function handleParts(request: Request, segments: string[]): Promise
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 /**
- * Public: the catalog. `all=1` also returns removed parts, for the admin table,
- * and needs the permission.
+ * Public: the catalog. `all=1` also returns removed parts, for the admin
+ * table, and needs the permission; `mine=1` is a contributor's table, the
+ * parts they added.
  */
 async function listParts(request: Request): Promise<Response> {
   const params = searchParams(request)
-  const filter: Record<string, unknown> = {}
-
-  if (params.get('all') === '1') {
-    await requirePermission(request, 'parts.manage')
-  } else {
-    filter.active = true
-  }
+  const filter: Record<string, unknown> = (await ownListFilter(request, CATALOGS.part)) ?? { active: true }
 
   const category = params.get('category')
   if (category) filter.category = requireEnum(category, PART_CATEGORIES, 'Category')
@@ -225,7 +221,7 @@ function readPartBody(body: Record<string, unknown>) {
 /* ---------- writes ---------- */
 
 async function createPart(request: Request): Promise<Response> {
-  const editor = await requirePermission(request, 'parts.manage')
+  const editor = await requireAdder(request, CATALOGS.part)
   const body = await readJsonBody<Record<string, unknown>>(request)
   const fields = readPartBody(body)
 
@@ -238,6 +234,7 @@ async function createPart(request: Request): Promise<Response> {
     active: true,
     priceCheckedAt: now,
     createdBy: editor.name,
+    createdById: editor.id,
     createdAt: now,
     updatedAt: now,
   })
@@ -253,8 +250,8 @@ async function createPart(request: Request): Promise<Response> {
 }
 
 async function updatePart(request: Request, id: string): Promise<Response> {
-  const editor = await requirePermission(request, 'parts.manage')
-  if (!ObjectId.isValid(id)) throw new HttpError(404, 'Accessory not found.')
+  // Managers may edit any part; a contributor only the ones they added.
+  const { user: editor, staff } = await requireItemEditor(request, CATALOGS.part, id)
 
   const body = await readJsonBody<Record<string, unknown>>(request)
   const db = await getDb()
@@ -277,7 +274,10 @@ async function updatePart(request: Request, id: string): Promise<Response> {
     const kept = new Set(fields.images.map((image) => image.url))
     removedImages = existing.images.map((image) => image.url).filter((url) => !kept.has(url))
   }
-  if (body.active !== undefined) update.active = body.active === true
+  if (body.active !== undefined) {
+    refuseUnlessStaff(staff)
+    update.active = body.active === true
+  }
   if (body.priceChecked === true) update.priceCheckedAt = now
 
   // Unset what the form cleared, so an optional field can be emptied.

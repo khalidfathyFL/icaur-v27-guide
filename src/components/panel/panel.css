@@ -1507,8 +1507,16 @@ html[dir='rtl'] .panel-drawer {
 
 .panel-toasts {
   position: fixed;
+  /* A popover (see FeedbackProvider); undo the browser's centred, boxed popover look. */
+  inset: auto;
   inset-block-end: 20px;
   inset-inline-end: 20px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  overflow: visible;
   z-index: 1000;
   display: grid;
   gap: 8px;

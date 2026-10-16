@@ -2,7 +2,7 @@ import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
 import { requireUser } from '../_lib/auth.js'
 import { hasPermission, type Permission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody } from '../_lib/http.js'
-import { canContribute, isMerchantOf, type MerchantKind } from '../_lib/merchants.js'
+import { isMerchantOf, type MerchantKind } from '../_lib/merchants.js'
 
 /**
  * Issues short-lived tokens for the browser to upload listing and post photos straight
@@ -26,11 +26,12 @@ const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 /** A merchant may upload photos for their own listing, so these folders also open to them. */
 const MERCHANT_FOLDERS: Record<string, MerchantKind> = { centers: 'center', insurers: 'insurer', installers: 'installer' }
 
-const FOLDERS: Record<string, Permission | 'signedIn'> = {
-  parts: 'parts.manage',
-  centers: 'centers.manage',
-  insurers: 'insurance.manage',
-  installers: 'installers.manage',
+/** Any one of the listed permissions opens the folder; `*.add` lets a contributor add photos to a new item. */
+const FOLDERS: Record<string, Permission[] | 'signedIn'> = {
+  parts: ['parts.manage', 'parts.add'],
+  centers: ['centers.manage', 'centers.add'],
+  insurers: ['insurance.manage', 'insurance.add'],
+  installers: ['installers.manage', 'installers.add'],
   posts: 'signedIn',
 }
 
@@ -54,15 +55,14 @@ export async function handleUploads(request: Request, segments: string[]): Promi
     body,
     onBeforeGenerateToken: async (pathname) => {
       const match = /^([a-z]+)\/[A-Za-z0-9._-]{1,120}$/.exec(pathname)
-      const permission = match ? FOLDERS[match[1] ?? ''] : undefined
-      if (!permission) {
+      const permissions = match ? FOLDERS[match[1] ?? ''] : undefined
+      if (!permissions) {
         throw new HttpError(400, 'Photos are stored under parts/, centers/, insurers/, installers/ or posts/ with a plain file name.')
       }
       // requireUser above has already established the account is signed in.
-      if (permission !== 'signedIn' && !hasPermission(editor, permission)) {
+      if (permissions !== 'signedIn' && !permissions.some((permission) => hasPermission(editor, permission))) {
         const merchantKind = MERCHANT_FOLDERS[match?.[1] ?? '']
-        // A contributor adding a new listing has no listing yet, so the permission alone opens the folder.
-        if (!merchantKind || !(canContribute(editor, merchantKind) || (await isMerchantOf(editor, merchantKind)))) {
+        if (!merchantKind || !(await isMerchantOf(editor, merchantKind))) {
           throw new HttpError(403, 'Your account does not have permission to do that.')
         }
       }

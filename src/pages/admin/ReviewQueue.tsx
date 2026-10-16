@@ -58,6 +58,8 @@ export function ReviewQueue({
     try {
       await api.decideReview(kind, review.id, { status: decision, note: note || undefined })
       toast(decision === 'approved' ? tx('Review published.', 'تم نشر المراجعة.') : tx('Review rejected.', 'تم رفض المراجعة.'))
+      // A decision made from the drawer closes it, like every other drawer.
+      if (record.openId === review.id) record.close()
       load()
       onChanged()
     } catch (caught) {

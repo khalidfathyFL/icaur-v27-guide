@@ -21,6 +21,18 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
   const [pending, setPending] = useState<(ConfirmOptions & { resolve: (ok: boolean) => void }) | null>(null)
   const nextId = useRef(0)
+  const stack = useRef<HTMLDivElement>(null)
+
+  // Drawers and the confirm box are modal <dialog>s, which sit in the
+  // browser's top layer above any z-index. The toast stack is a popover so it
+  // joins that layer too; showing it again moves it above whatever dialog is
+  // open now, so an error raised from inside a drawer is not hidden under it.
+  useEffect(() => {
+    const element = stack.current
+    if (!element || typeof element.showPopover !== 'function') return
+    if (element.matches(':popover-open')) element.hidePopover()
+    if (toasts.length > 0) element.showPopover()
+  }, [toasts])
 
   const dismiss = useCallback((id: number) => {
     setToasts((current) => current.filter((toast) => toast.id !== id))
@@ -46,7 +58,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     <FeedbackContext.Provider value={value}>
       {children}
 
-      <div className="panel-toasts" role="status" aria-live="polite">
+      <div ref={stack} className="panel-toasts" popover="manual" role="status" aria-live="polite">
         {toasts.map((item) => {
           const Icon = TOAST_ICONS[item.tone]
           return (

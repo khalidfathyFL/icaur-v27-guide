@@ -112,7 +112,9 @@ export function Suggestions({ params, onChanged }: { params: URLSearchParams; on
           suggestion={selected}
           kindLabel={kindLabels[selected.target.kind]}
           onClose={record.close}
+          // Every drawer closes once its change is saved.
           onChanged={() => {
+            record.close()
             load()
             onChanged()
           }}

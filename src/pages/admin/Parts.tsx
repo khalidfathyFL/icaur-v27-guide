@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { BadgeCheck, Package, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import { DataTable } from '../../components/panel/DataTable'
 import { Drawer } from '../../components/panel/Drawer'
-import { EmptyState, FilterSelect } from '../../components/panel/blocks'
+import { EmptyState, FilterSelect, PageHeader } from '../../components/panel/blocks'
 import { useConfirm, useToast } from '../../components/panel/feedback'
 import type { Trim } from '../../content/types'
 import {
@@ -17,6 +17,7 @@ import {
   priceOrAsk,
 } from '../../features/parts/labels'
 import { useLanguage, useShortText } from '../../i18n/languageContext'
+import { useAuth } from '../../auth/authContext'
 import {
   api,
   type ApiPart,
@@ -48,15 +49,19 @@ export function Parts() {
   const [category, setCategory] = useState<PartCategory | 'all'>('all')
   const [source, setSource] = useState<PartSource | 'all'>('all')
 
+  const { can } = useAuth()
+  // Staff see every part; a contributor only the ones they added. The server enforces the same split.
+  const staff = can('parts.manage')
+
   const load = useCallback(() => {
     api
-      .listParts({ all: true })
+      .listParts(staff ? { all: true } : { mine: true })
       .then(({ parts: list }) => {
         setParts(list)
         setError(null)
       })
       .catch((caught) => setError(errorMessage(caught, tx('Could not load.', 'تعذر التحميل.'))))
-  }, [tx])
+  }, [tx, staff])
 
   useEffect(load, [load])
 
@@ -108,6 +113,14 @@ export function Parts() {
 
   return (
     <>
+      {!staff && (
+        <PageHeader
+          description={tx(
+            'The accessories you added. You can add new ones and edit these; accessories other people added are not yours to change.',
+            'الإكسسوارات التي أضفتها. يمكنك إضافة إكسسوارات جديدة وتعديل هذه؛ أما ما أضافه غيرك فلا يمكنك تعديله.',
+          )}
+        />
+      )}
       <DataTable
         rows={shown}
         rowKey={(part) => part.id}
@@ -225,27 +238,28 @@ export function Parts() {
                 >
                   <Pencil size={15} />
                 </button>
-                {part.active ? (
-                  <button
-                    type="button"
-                    className="panel-icon-button danger"
-                    onClick={() => remove(part)}
-                    aria-label={tx('Remove', 'حذف')}
-                    title={tx('Remove', 'حذف')}
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="panel-icon-button success"
-                    onClick={() => restore(part)}
-                    aria-label={tx('Restore', 'استعادة')}
-                    title={tx('Restore', 'استعادة')}
-                  >
-                    <RotateCcw size={15} />
-                  </button>
-                )}
+                {staff &&
+                  (part.active ? (
+                    <button
+                      type="button"
+                      className="panel-icon-button danger"
+                      onClick={() => remove(part)}
+                      aria-label={tx('Remove', 'حذف')}
+                      title={tx('Remove', 'حذف')}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="panel-icon-button success"
+                      onClick={() => restore(part)}
+                      aria-label={tx('Restore', 'استعادة')}
+                      title={tx('Restore', 'استعادة')}
+                    >
+                      <RotateCcw size={15} />
+                    </button>
+                  ))}
               </span>
             ),
           },

@@ -133,6 +133,7 @@ export function Orders({ params, onChanged }: { params: URLSearchParams; onChang
           order={selected}
           onClose={record.close}
           onSaved={() => {
+            record.close()
             load()
             onChanged()
           }}

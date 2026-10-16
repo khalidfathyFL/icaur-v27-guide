@@ -10,6 +10,7 @@ import { useLanguage, useShortText } from '../../i18n/languageContext'
 import { api, type ApiStation, type StationConnector, type StationInput, type StationSync } from '../../lib/api'
 import { errorMessage } from '../../lib/errors'
 import { formatDate } from '../../lib/format'
+import { useAuth } from '../../auth/authContext'
 
 /** `null` while closed; `'new'` for the add form, or the station being edited. */
 type Editing = null | 'new' | ApiStation
@@ -25,16 +26,20 @@ export function Stations() {
   const [editing, setEditing] = useState<Editing>(null)
   const [syncing, setSyncing] = useState(false)
 
+  const { can } = useAuth()
+  // Staff see every station; a contributor only the ones they added. The server enforces the same split.
+  const staff = can('charging.manage')
+
   const load = useCallback(() => {
     api
-      .listStations({ all: true })
+      .listStations(staff ? { all: true } : { mine: true })
       .then(({ stations: list, sync: state }) => {
         setStations(list)
         setSync(state ?? null)
         setError(null)
       })
       .catch((caught) => setError(errorMessage(caught, tx('Could not load.', 'تعذر التحميل.'))))
-  }, [tx])
+  }, [tx, staff])
 
   useEffect(load, [load])
 
@@ -87,9 +92,11 @@ export function Stations() {
 
   const actions = (
     <>
-      <button type="button" className="panel-button" onClick={runSync} disabled={syncing || sync?.configured === false}>
-        <RefreshCw size={16} aria-hidden="true" /> {syncing ? tx('Importing…', 'جارٍ الاستيراد…') : tx('Import now', 'استورد الآن')}
-      </button>
+      {staff && (
+        <button type="button" className="panel-button" onClick={runSync} disabled={syncing || sync?.configured === false}>
+          <RefreshCw size={16} aria-hidden="true" /> {syncing ? tx('Importing…', 'جارٍ الاستيراد…') : tx('Import now', 'استورد الآن')}
+        </button>
+      )}
       <button type="button" className="panel-button primary" onClick={() => setEditing('new')}>
         <Plus size={16} aria-hidden="true" /> {tx('Add station', 'أضف محطة')}
       </button>
@@ -100,7 +107,12 @@ export function Stations() {
     <>
       <PageHeader
         description={
-          sync?.configured === false
+          !staff
+            ? tx(
+                'The stations you added. You can add new ones and correct these; stations other people added, and imported ones, are not yours to change.',
+                'المحطات التي أضفتها. يمكنك إضافة محطات جديدة وتصحيح هذه؛ أما المحطات التي أضافها غيرك أو المستوردة فلا يمكنك تعديلها.',
+              )
+            : sync?.configured === false
             ? tx(
                 'The Open Charge Map import is off: set OCM_API_KEY on the server to turn it on. Stations added here still show on the map.',
                 'استيراد Open Charge Map متوقف: أضف OCM_API_KEY على السيرفر لتشغيله. المحطات المضافة هنا تظهر على الخريطة.',
@@ -196,15 +208,16 @@ export function Stations() {
                 <button type="button" className="panel-icon-button" onClick={() => setEditing(station)} aria-label={tx('Edit', 'تعديل')} title={tx('Edit', 'تعديل')}>
                   <Pencil size={15} />
                 </button>
-                {station.active ? (
-                  <button type="button" className="panel-icon-button danger" onClick={() => remove(station)} aria-label={tx('Remove', 'حذف')} title={tx('Remove', 'حذف')}>
-                    <Trash2 size={15} />
-                  </button>
-                ) : (
-                  <button type="button" className="panel-icon-button success" onClick={() => restore(station)} aria-label={tx('Restore', 'استعادة')} title={tx('Restore', 'استعادة')}>
-                    <RotateCcw size={15} />
-                  </button>
-                )}
+                {staff &&
+                  (station.active ? (
+                    <button type="button" className="panel-icon-button danger" onClick={() => remove(station)} aria-label={tx('Remove', 'حذف')} title={tx('Remove', 'حذف')}>
+                      <Trash2 size={15} />
+                    </button>
+                  ) : (
+                    <button type="button" className="panel-icon-button success" onClick={() => restore(station)} aria-label={tx('Restore', 'استعادة')} title={tx('Restore', 'استعادة')}>
+                      <RotateCcw size={15} />
+                    </button>
+                  ))}
               </span>
             ),
           },

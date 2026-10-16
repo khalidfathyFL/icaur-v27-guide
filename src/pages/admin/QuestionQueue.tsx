@@ -110,6 +110,8 @@ export function QuestionQueue({ kind, params, onChanged }: { kind: Kind; params:
             ? tx('Question rejected.', 'تم رفض السؤال.')
             : tx('Answer rejected.', 'تم رفض الإجابة.'),
       )
+      // A decision made from the drawer closes it, like every other drawer.
+      if (record.openId === row.id) record.close()
       load()
       onChanged()
     } catch (caught) {

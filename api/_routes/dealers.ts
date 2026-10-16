@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { requirePermission } from '../_lib/permissions.js'
 import { HttpError, json, readJsonBody } from '../_lib/http.js'
+import { CATALOGS, ownListFilter, refuseUnlessStaff, requireAdder, requireItemEditor } from '../_lib/ownership.js'
 import { getDb } from '../_lib/mongo.js'
 import { auditableChanges, recordAudit } from '../_lib/audit.js'
 import { optionalString, requireString, type DealerDoc } from '../_lib/models.js'
@@ -32,12 +33,16 @@ export async function handleDealers(request: Request, segments: string[]): Promi
   throw new HttpError(405, 'Method not allowed.')
 }
 
-/** Public: the site reads this to show who sells at the official price. */
+/**
+ * Public: the site reads this to show who sells at the official price.
+ * `mine=1` is a contributor's table: the dealers they added.
+ */
 async function listDealers(request: Request): Promise<Response> {
+  const scope = await ownListFilter(request, CATALOGS.dealer)
   const db = await getDb()
   const dealers = await db
     .collection<DealerDoc>('dealers')
-    .find({ active: true })
+    .find(scope ?? { active: true })
     .sort({ sellsAtListPrice: -1, name: 1 })
     .limit(200)
     .toArray()
@@ -45,7 +50,7 @@ async function listDealers(request: Request): Promise<Response> {
   return json(request, { dealers: dealers.map(toPublic) })
 }
 
-/** Dealer records are facts about the market, so only admins write them. */
+/** Dealer records are facts about the market: managers write them, and contributors their own. */
 function readDealerBody(body: Record<string, unknown>) {
   return {
     name: requireString(body.name, 'Dealer name', { min: 2, max: 160 }),
@@ -57,7 +62,7 @@ function readDealerBody(body: Record<string, unknown>) {
 }
 
 async function createDealer(request: Request): Promise<Response> {
-  const admin = await requirePermission(request, 'dealers.manage')
+  const admin = await requireAdder(request, CATALOGS.dealer)
   const body = await readJsonBody<Record<string, unknown>>(request)
 
   const now = new Date().toISOString()
@@ -65,6 +70,8 @@ async function createDealer(request: Request): Promise<Response> {
     ...readDealerBody(body),
     active: true,
     verifiedAt: now,
+    createdBy: admin.name,
+    createdById: admin.id,
     createdAt: now,
     updatedAt: now,
   }
@@ -80,8 +87,8 @@ async function createDealer(request: Request): Promise<Response> {
 }
 
 async function updateDealer(request: Request, id: string): Promise<Response> {
-  const admin = await requirePermission(request, 'dealers.manage')
-  if (!ObjectId.isValid(id)) throw new HttpError(404, 'Dealer not found.')
+  // Managers may edit any dealer; a contributor only the ones they added.
+  const { user: admin, staff } = await requireItemEditor(request, CATALOGS.dealer, id)
 
   const body = await readJsonBody<Record<string, unknown>>(request)
   const update: Record<string, unknown> = { updatedAt: new Date().toISOString() }
@@ -91,7 +98,10 @@ async function updateDealer(request: Request, id: string): Promise<Response> {
   if (body.phone !== undefined) update.phone = optionalString(body.phone, 'Phone', { max: 60 })
   if (body.notes !== undefined) update.notes = optionalString(body.notes, 'Notes', { max: 1000 })
   if (body.sellsAtListPrice !== undefined) update.sellsAtListPrice = body.sellsAtListPrice === true
-  if (body.active !== undefined) update.active = body.active === true
+  if (body.active !== undefined) {
+    refuseUnlessStaff(staff)
+    update.active = body.active === true
+  }
   if (body.verified === true) update.verifiedAt = new Date().toISOString()
 
   const db = await getDb()

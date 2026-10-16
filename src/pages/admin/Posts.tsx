@@ -100,7 +100,9 @@ export function Posts({ params, onChanged }: { params: URLSearchParams; onChange
           key={selected.id}
           post={selected}
           onClose={record.close}
+          // Every drawer closes once its change is saved.
           onChanged={() => {
+            record.close()
             load()
             onChanged()
           }}
