@@ -88,19 +88,48 @@ const ARABIC = /[\u0600-\u06FF]/
 
 export const isArabic = (text: string) => ARABIC.test(text)
 
-/** Turns "إزاي أشحن العربية في البيت؟" into words the English manual uses. */
-export async function toEnglishSearchQuery(question: string): Promise<string> {
+/** An earlier question and its answer, so the next one can follow on from it. */
+export type ChatTurn = { question: string; answer: string }
+
+/** Small models have short memories: only the latest turns go back in, and long answers are cut. */
+const HISTORY_TURNS = 3
+const HISTORY_ANSWER_CHARS = 600
+
+const recent = (history: ChatTurn[]) =>
+  history.slice(-HISTORY_TURNS).map(({ question, answer }) => ({
+    question,
+    answer: answer.length > HISTORY_ANSWER_CHARS ? `${answer.slice(0, HISTORY_ANSWER_CHARS)}…` : answer,
+  }))
+
+/**
+ * Turns the owner's question into one English search query in the manual's own
+ * words. "إزاي أشحن العربية في البيت؟" becomes "AC charging at home", and a
+ * follow-up such as "and how do I turn it off?" is resolved against the chat so
+ * far, so the search knows what "it" is.
+ */
+export async function toEnglishSearchQuery(question: string, history: ChatTurn[] = []): Promise<string> {
   if (!engine) throw new Error('The answer model is not loaded.')
+  const context = recent(history)
+    .map(({ question: asked, answer }) => `Owner: ${asked}\nAssistant: ${answer}`)
+    .join('\n\n')
   const reply = await engine.chat.completions.create({
     temperature: 0,
     max_tokens: 40,
     messages: [
       {
         role: 'system',
-        content:
-          'Translate the car owner\'s question (often Egyptian Arabic) into one short English search query for the car\'s owner manual. Use manual terms such as tailgate, spare tire, tire pressure, AC charging, DC charging, warning light, seat folding, range extender. Output only the query.',
+        content: [
+          'Turn the car owner\'s latest question (often Egyptian Arabic) into one short English search query for the car\'s owner manual.',
+          'Use manual terms such as tailgate, spare tire, tire pressure, AC charging, DC charging, warning light, seat folding, range extender.',
+          context
+            ? 'The question may be a follow-up: use the conversation to replace words like "it", "that" or "this" with what they refer to.'
+            : '',
+          'Output only the query.',
+        ]
+          .filter(Boolean)
+          .join(' '),
       },
-      { role: 'user', content: question },
+      { role: 'user', content: context ? `Conversation so far:\n${context}\n\nLatest question: ${question}` : question },
     ],
     extra_body: { enable_thinking: false },
   })
@@ -134,15 +163,27 @@ function excerpts(hits: ManualHit[]): string {
 /** Some Qwen builds still open with a <think> block; the reader should never see it. */
 const stripThinking = (text: string) => text.replace(/<think>[\s\S]*?(<\/think>|$)/g, '').trimStart()
 
-export async function answerQuestion(question: string, hits: ManualHit[], onText: (text: string) => void, signal?: AbortSignal): Promise<string> {
+export async function answerQuestion(
+  question: string,
+  hits: ManualHit[],
+  onText: (text: string) => void,
+  signal?: AbortSignal,
+  history: ChatTurn[] = [],
+): Promise<string> {
   if (!engine) throw new Error('The answer model is not loaded.')
   const arabic = ARABIC.test(question)
+  // Earlier turns go in as plain questions and answers; only the latest question carries manual excerpts.
+  const earlier = recent(history).flatMap(({ question: asked, answer }) => [
+    { role: 'user' as const, content: `Owner's question: ${asked}` },
+    { role: 'assistant' as const, content: answer },
+  ])
   const stream = await engine.chat.completions.create({
     stream: true,
     temperature: 0.2,
     max_tokens: 500,
     messages: [
       { role: 'system', content: systemPrompt(arabic) },
+      ...earlier,
       { role: 'user', content: `Manual excerpts:\n\n${excerpts(hits)}\n\nOwner's question: ${question}` },
     ],
     extra_body: { enable_thinking: false },

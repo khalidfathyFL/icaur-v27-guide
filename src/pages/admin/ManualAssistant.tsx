@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
-import { BookOpenText, Cpu, Download, FileImage, Send, Square, Trash2, Upload } from 'lucide-react'
+import { BookOpenText, Cpu, Download, FileImage, MessageSquarePlus, Send, Square, Trash2, Upload } from 'lucide-react'
 import { useAuth } from '../../auth/authContext'
 import { PageHeader } from '../../components/panel/blocks'
 import {
@@ -11,6 +11,7 @@ import {
   loadAnswerModel,
   removeAnswerModel,
   toEnglishSearchQuery,
+  type ChatTurn,
   webGpuAvailable,
 } from '../../features/manual/answer'
 import { importManualFolder, importManualPdf, type ImportProgress, type ImportResult } from '../../features/manual/importManual'
@@ -174,6 +175,10 @@ export function ManualAssistant() {
     setBusy(true)
     setQuestion('')
     const index = turns.length
+    // Only turns with a finished answer give the model something to follow on from.
+    const history: ChatTurn[] = turns
+      .filter((turn) => turn.status === 'done' && turn.answer)
+      .map(({ question: asked, answer }) => ({ question: asked, answer }))
     setTurns((previous) => [...previous, { question: trimmed, hits: [], answer: '', status: 'searching' }])
 
     try {
@@ -183,9 +188,10 @@ export function ManualAssistant() {
       )
       setLoading(null)
       const queries = [trimmed]
-      if (gpu && isArabic(trimmed)) {
+      // Arabic needs English search words, and a follow-up needs its "it" spelled out.
+      if (gpu && (isArabic(trimmed) || history.length > 0)) {
         await prepareModel(modelId)
-        const english = await toEnglishSearchQuery(trimmed)
+        const english = await toEnglishSearchQuery(trimmed, history)
         if (english) queries.push(english)
         update(index, { searchedFor: english })
       }
@@ -201,7 +207,7 @@ export function ManualAssistant() {
       update(index, { status: 'answering' })
       const answerStart = performance.now()
       abort.current = new AbortController()
-      await answerQuestion(trimmed, hits, (partial) => update(index, { answer: partial }), abort.current.signal)
+      await answerQuestion(trimmed, hits, (partial) => update(index, { answer: partial }), abort.current.signal, history)
       update(index, { status: 'done', answerMs: performance.now() - answerStart })
     } catch (caught) {
       setLoading(null)
@@ -344,6 +350,11 @@ export function ManualAssistant() {
           ) : (
             <button className="primary-action" type="submit" disabled={busy || !question.trim() || !ready}>
               <Send size={15} aria-hidden="true" /> {tx('Ask', 'اسأل')}
+            </button>
+          )}
+          {turns.length > 0 && (
+            <button type="button" className="secondary-button" onClick={() => setTurns([])} disabled={busy}>
+              <MessageSquarePlus size={15} aria-hidden="true" /> {tx('New chat', 'محادثة جديدة')}
             </button>
           )}
         </div>
