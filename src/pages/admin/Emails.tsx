@@ -583,6 +583,7 @@ function EmailLog() {
               <span className="panel-cell-main">
                 <strong>{entry.to.name}</strong>
                 <small dir="ltr">{entry.to.email}</small>
+                {entry.cc?.length ? <small dir="ltr">{tx('CC', 'نسخة')}: {entry.cc.join(', ')}</small> : null}
               </span>
             ),
           },

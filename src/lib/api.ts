@@ -178,6 +178,7 @@ export type ApiEmailLogEntry = {
   at: string
   to: { email: string; name: string }
   userId?: string
+  cc?: string[]
   subject: string
   tag: string
   kind: 'transactional' | 'broadcast'

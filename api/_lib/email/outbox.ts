@@ -81,6 +81,8 @@ export type EmailLogEntry = {
   to: { email: string; name: string }
   userId?: string
   subject: string
+  /** Who was copied in, if anyone. */
+  cc?: string[]
   /** Which email it was, e.g. post-approved or announcement. */
   tag: string
   kind: Kind
@@ -119,6 +121,24 @@ export async function emailLog(options: { page: number; search?: string }) {
     .toArray()
 
   return entries.map(({ _id, ...entry }) => ({ id: _id.toHexString(), ...entry }))
+}
+
+/* ---------- copying in the admins ---------- */
+
+/**
+ * Every email about something a reader did (welcome, approval, order update)
+ * copies in the super admins, the accounts with the full `admin` role, so
+ * they see what the site tells people. Broadcasts do not: admins already get
+ * those as subscribers, and copying every recipient's would flood them.
+ * Worked out at send time, so a queued email reaches whoever is admin then.
+ */
+async function adminCc(db: Db, to: string): Promise<{ email: string; name: string }[]> {
+  const admins = await db
+    .collection<UserDoc>('users')
+    .find({ role: 'admin', status: { $ne: 'blocked' } }, { projection: { email: 1, name: 1 } })
+    .toArray()
+  // An admin is not copied in on their own email.
+  return admins.filter((admin) => admin.email.toLowerCase() !== to.toLowerCase()).map(({ email, name }) => ({ email, name }))
 }
 
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -268,8 +288,17 @@ export async function sendTransactional(
       tags: [content.tag],
     }
 
-    const record = (status: EmailLogStatus, error?: string) =>
-      logEmail(db, { to: job.to, userId: to.userId, subject: job.subject, tag: content.tag, kind: 'transactional', status, error })
+    const record = (status: EmailLogStatus, error?: string, cc?: { email: string }[]) =>
+      logEmail(db, {
+        to: job.to,
+        ...(cc?.length ? { cc: cc.map((person) => person.email) } : {}),
+        userId: to.userId,
+        subject: job.subject,
+        tag: content.tag,
+        kind: 'transactional',
+        status,
+        error,
+      })
 
     if ((await reserve(db, 'transactional', 1)) === 0) {
       await queue(db).insertOne({ ...job, attempts: 0, createdAt: new Date().toISOString() } as EmailJob)
@@ -277,12 +306,13 @@ export async function sendTransactional(
       return { outcome: 'queued' }
     }
 
+    const cc = await adminCc(db, job.to.email)
     try {
-      await sendViaBrevo({ to: job.to, subject: job.subject, html: job.html, text: job.text, tags: job.tags })
-      await record('sent')
+      await sendViaBrevo({ to: job.to, cc, subject: job.subject, html: job.html, text: job.text, tags: job.tags })
+      await record('sent', undefined, cc)
       return { outcome: 'sent' }
     } catch (error) {
-      await record(error instanceof BrevoError && error.quotaExhausted ? 'queued' : 'failed', String(error).slice(0, 500))
+      await record(error instanceof BrevoError && error.quotaExhausted ? 'queued' : 'failed', String(error).slice(0, 500), cc)
       await release(db, 'transactional', 1)
       const quota = error instanceof BrevoError && error.quotaExhausted
       if (quota) await markDaySpent(db)
@@ -469,6 +499,7 @@ async function sendBatch(db: Db, jobs: Collection<EmailJob>, batch: EmailJob[]) 
     if (quotaExhausted) return
     let subject = job.subject ?? ''
     let tag = job.tags?.[0] ?? job.kind
+    let cc: { email: string; name: string }[] = []
     try {
       if (job.kind === 'broadcast') {
         const content = job.announcementId
@@ -487,15 +518,17 @@ async function sendBatch(db: Db, jobs: Collection<EmailJob>, batch: EmailJob[]) 
         tag = content.tag
         await sendViaBrevo({ to: job.to, ...rendered, unsubscribeUrl: unsubscribe, tags: [content.tag] })
       } else {
-        await sendViaBrevo({ to: job.to, subject: job.subject!, html: job.html!, text: job.text!, tags: job.tags })
+        cc = await adminCc(db, job.to.email)
+        await sendViaBrevo({ to: job.to, cc, subject: job.subject!, html: job.html!, text: job.text!, tags: job.tags })
       }
       await jobs.deleteOne({ _id: job._id })
       sent++
-      await logEmail(db, { to: job.to, userId: job.userId, subject, tag, kind: job.kind, status: 'sent' })
+      await logEmail(db, { to: job.to, ...(cc.length ? { cc: cc.map((person) => person.email) } : {}), userId: job.userId, subject, tag, kind: job.kind, status: 'sent' })
     } catch (error) {
       if (error instanceof BrevoError && error.quotaExhausted) quotaExhausted = true
       await logEmail(db, {
         to: job.to,
+        ...(cc.length ? { cc: cc.map((person) => person.email) } : {}),
         userId: job.userId,
         subject,
         tag,

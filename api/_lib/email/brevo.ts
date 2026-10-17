@@ -9,6 +9,8 @@ const ENDPOINT = 'https://api.brevo.com/v3/smtp/email'
 
 export type OutgoingEmail = {
   to: { email: string; name?: string }
+  /** Copied in openly, so the reader sees who else got it. */
+  cc?: { email: string; name?: string }[]
   subject: string
   html: string
   text: string
@@ -53,6 +55,8 @@ export async function sendViaBrevo(email: OutgoingEmail): Promise<void> {
       sender: { email: from, name: process.env.EMAIL_FROM_NAME ?? 'iCAUR V27' },
       ...(process.env.EMAIL_REPLY_TO ? { replyTo: { email: process.env.EMAIL_REPLY_TO } } : {}),
       to: [email.to],
+      // Brevo rejects an empty list, as it does empty headers.
+      ...(email.cc?.length ? { cc: email.cc } : {}),
       subject: email.subject,
       htmlContent: email.html,
       textContent: email.text,
